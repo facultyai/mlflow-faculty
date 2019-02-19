@@ -27,4 +27,7 @@ setup(
     use_scm_version={"version_scheme": "post-release"},
     setup_requires=["setuptools_scm"],
     install_requires=["faculty", "mlflow"],
+    entry_points={
+        "mlflow.tracking_store": "faculty=mlflow_faculty:FacultyRestStore"
+    },
 )
