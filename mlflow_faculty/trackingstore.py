@@ -28,7 +28,7 @@ class FacultyRestStore(AbstractStore):
         :return: a list of Experiment objects stored in store for requested
             view.
         """
-        pass
+        raise NotImplementedError()
 
     def create_experiment(self, name, artifact_location):
         """
@@ -42,7 +42,7 @@ class FacultyRestStore(AbstractStore):
         :return: experiment_id (integer) for the newly created experiment if
             successful, else None
         """
-        pass
+        raise NotImplementedError()
 
     def get_experiment(self, experiment_id):
         """
@@ -53,7 +53,7 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Experiment` object if it
             exists, otherwise raises an exception.
         """
-        pass
+        raise NotImplementedError()
 
     def get_experiment_by_name(self, experiment_name):
         """
@@ -75,7 +75,7 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: Integer id for the experiment
         """
-        pass
+        raise NotImplementedError()
 
     def restore_experiment(self, experiment_id):
         """
@@ -83,7 +83,7 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: Integer id for the experiment
         """
-        pass
+        raise NotImplementedError()
 
     def rename_experiment(self, experiment_id, new_name):
         """
@@ -91,7 +91,7 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: Integer id for the experiment
         """
-        pass
+        raise NotImplementedError()
 
     def get_run(self, run_uuid):
         """
@@ -102,7 +102,7 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Run` object if it exists,
             otherwise raises an exception
         """
-        pass
+        raise NotImplementedError()
 
     def update_run_info(self, run_uuid, run_status, end_time):
         """
@@ -111,7 +111,7 @@ class FacultyRestStore(AbstractStore):
         :return: :py:class:`mlflow.entities.RunInfo` describing the updated
             run.
         """
-        pass
+        raise NotImplementedError()
 
     def create_run(
         self,
@@ -136,21 +136,21 @@ class FacultyRestStore(AbstractStore):
 
         :return: The created Run object
         """
-        pass
+        raise NotImplementedError()
 
     def delete_run(self, run_id):
         """
         Deletes a run.
         :param run_id:
         """
-        pass
+        raise NotImplementedError()
 
     def restore_run(self, run_id):
         """
         Restores a run.
         :param run_id:
         """
-        pass
+        raise NotImplementedError()
 
     def log_metric(self, run_uuid, metric):
         """
@@ -158,7 +158,7 @@ class FacultyRestStore(AbstractStore):
         :param run_uuid: String id for the run
         :param metric: :py:class:`mlflow.entities.Metric` instance to log
         """
-        pass
+        raise NotImplementedError()
 
     def log_param(self, run_uuid, param):
         """
@@ -166,7 +166,7 @@ class FacultyRestStore(AbstractStore):
         :param run_uuid: String id for the run
         :param param: :py:class:`mlflow.entities.Param` instance to log
         """
-        pass
+        raise NotImplementedError()
 
     def set_tag(self, run_uuid, tag):
         """
@@ -174,7 +174,7 @@ class FacultyRestStore(AbstractStore):
         :param run_uuid: String id for the run
         :param tag: :py:class:`mlflow.entities.RunTag` instance to set
         """
-        pass
+        raise NotImplementedError()
 
     def get_metric_history(self, run_uuid, metric_key):
         """
@@ -186,7 +186,7 @@ class FacultyRestStore(AbstractStore):
         :return: A list of float values logged for the give metric if logged,
             else empty list
         """
-        pass
+        raise NotImplementedError()
 
     def search_runs(self, experiment_ids, search_expressions, run_view_type):
         """ Returns runs that match the given list of search expressions within
@@ -199,4 +199,4 @@ class FacultyRestStore(AbstractStore):
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        pass
+        raise NotImplementedError()
