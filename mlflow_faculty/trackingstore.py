@@ -12,13 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 
+import faculty
 from mlflow.store.abstract_store import AbstractStore
-from mlflow.entities import ViewType
+from mlflow.entities import ViewType, Experiment
+
+ATLAS_URL = "{}://atlas.{}".format(
+    os.getenv('SHERLOCKML_PROTOCOL'),
+    os.getenv('SHERLOCKML_DOMAIN')
+)
 
 
 class FacultyRestStore(AbstractStore):
     def __init__(self, store_uri, **_):
+        self.faculty_client = faculty.client("experiment")
         pass
 
     def list_experiments(self, view_type=ViewType.ACTIVE_ONLY):
@@ -42,7 +50,20 @@ class FacultyRestStore(AbstractStore):
         :return: experiment_id (integer) for the newly created experiment if
             successful, else None
         """
-        raise NotImplementedError()
+        experiment_creation_response = self.faculty_client.create(
+            os.getenv("FACULTY_PROJECT_ID"),
+            name,
+            "",
+            artifact_location
+        )
+        experiment_body = experiment_creation_response.json()
+
+        return Experiment(
+            experiment_body['experimentId'],
+            experiment_body['name'],
+            experiment_body['artifact_location'],
+            'active'
+        )
 
     def get_experiment(self, experiment_id):
         """
