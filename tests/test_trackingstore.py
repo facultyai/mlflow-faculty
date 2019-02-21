@@ -17,12 +17,14 @@ from uuid import uuid4
 
 import faculty
 from faculty.clients.experiment import Experiment
+from faculty.clients.base import HttpError
 from mlflow.entities import Experiment as MLExperiment
 from mlflow_faculty.trackingstore import FacultyRestStore
 from pytz import UTC
 import pytest
 
 PROJECT_ID = uuid4()
+STORE_URI = "faculty:{}".format(PROJECT_ID)
 EXPERIMENT_ID = 12345
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
@@ -46,7 +48,7 @@ FACULTY_EXPERIMENT = Experiment(
 @pytest.mark.parametrize(
     "store_uri",
     [
-        "faculty:{}".format(PROJECT_ID),
+        STORE_URI,
         "faculty:/{}".format(PROJECT_ID),
         "faculty:///{}".format(PROJECT_ID),
         "faculty:///{}/".format(PROJECT_ID),
@@ -72,3 +74,34 @@ def test_init(mocker, store_uri):
 def test_init_invalid_uri(store_uri):
     with pytest.raises(ValueError):
         FacultyRestStore(store_uri)
+
+
+def test_create_experiment(mocker):
+    mock_client = mocker.Mock()
+    mock_client.create.return_value = FACULTY_EXPERIMENT
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    returned_experiment_id = store.create_experiment(
+        MLFLOW_EXPERIMENT.name, MLFLOW_EXPERIMENT.artifact_location
+    )
+
+    assert returned_experiment_id == FACULTY_EXPERIMENT.id
+    mock_client.create.assert_called_once_with(
+        PROJECT_ID,
+        MLFLOW_EXPERIMENT.name,
+        artifact_location=MLFLOW_EXPERIMENT.artifact_location,
+    )
+
+
+def test_create_experiment_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.create.side_effect = HttpError(mocker.Mock(), mocker.Mock())
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    returned_experiment_id = store.create_experiment(
+        MLFLOW_EXPERIMENT.name, MLFLOW_EXPERIMENT.artifact_location
+    )
+    assert returned_experiment_id is None

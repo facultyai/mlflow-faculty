@@ -60,20 +60,14 @@ class FacultyRestStore(AbstractStore):
         :return: experiment_id (integer) for the newly created experiment if
             successful, else None
         """
-        experiment_creation_response = self.faculty_client.create(
-            os.getenv("FACULTY_PROJECT_ID"),
-            name,
-            "",
-            artifact_location
-        )
-        experiment_body = experiment_creation_response.json()
-
-        return Experiment(
-            experiment_body['experimentId'],
-            experiment_body['name'],
-            experiment_body['artifact_location'],
-            'active'
-        )
+        try:
+            faculty_experiment = self._client.create(
+                self._project_id, name, artifact_location=artifact_location
+            )
+        except faculty.clients.base.HttpError:
+            return None
+        else:
+            return faculty_experiment.id
 
     def get_experiment(self, experiment_id):
         """
@@ -84,7 +78,16 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Experiment` object if it
             exists, otherwise raises an exception.
         """
-        raise NotImplementedError()
+        faculty_experiment = self._client.get(
+            os.getenv("FACULTY_PROJECT_ID"), experiment_id
+        )
+
+        return Experiment(
+            faculty_experiment.id,
+            faculty_experiment.name,
+            faculty_experiment.artifact_location,
+            "active" if faculty_experiment.deleted_at else "deleted",
+        )
 
     def get_experiment_by_name(self, experiment_name):
         """
