@@ -15,8 +15,9 @@
 from uuid import UUID
 
 import faculty
-from mlflow.store.abstract_store import AbstractStore
 from mlflow.entities import ViewType, Experiment, LifecycleStage
+from mlflow.exceptions import MlflowException
+from mlflow.store.abstract_store import AbstractStore
 from six.moves import urllib
 
 from mlflow_faculty.utils import faculty_experiment_to_mlflow_experiment
@@ -70,8 +71,12 @@ class FacultyRestStore(AbstractStore):
             faculty_experiment = self._client.create(
                 self._project_id, name, artifact_location=artifact_location
             )
-        except faculty.clients.base.HttpError:
-            return None
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
         else:
             return faculty_experiment.id
 
@@ -87,7 +92,7 @@ class FacultyRestStore(AbstractStore):
 
         faculty_experiment = self._client.get(self._project_id, experiment_id)
 
-        return faculty_experiment_to_mlflow_experiment(faculty_experiment) 
+        return faculty_experiment_to_mlflow_experiment(faculty_experiment)
 
     def get_experiment_by_name(self, experiment_name):
         """

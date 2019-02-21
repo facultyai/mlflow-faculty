@@ -15,13 +15,16 @@
 from datetime import datetime
 from uuid import uuid4
 
-import pytest
-from pytz import UTC
 import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import Experiment
 from mlflow.entities import Experiment as MLExperiment, LifecycleStage
+from mlflow.exceptions import MlflowException
+import pytest
+from pytz import UTC
+
 from mlflow_faculty.trackingstore import FacultyRestStore
+
 
 PROJECT_ID = uuid4()
 STORE_URI = "faculty:{}".format(PROJECT_ID)
@@ -104,13 +107,14 @@ def test_create_experiment(mocker):
 
 def test_create_experiment_client_error(mocker):
     mock_client = mocker.Mock()
+    mock_response = mocker.Mock()
     mock_client.create.side_effect = HttpError(mocker.Mock(), mocker.Mock())
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
 
-    returned_experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
-    assert returned_experiment_id is None
+    with pytest.raises(MlflowException):
+        store.create_experiment(NAME, ARTIFACT_LOCATION)
 
 
 def test_get_experiment(mocker):
