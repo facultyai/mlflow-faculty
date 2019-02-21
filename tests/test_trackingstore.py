@@ -15,33 +15,36 @@
 from datetime import datetime
 from uuid import uuid4
 
-import faculty
-from faculty.clients.experiment import Experiment
-from faculty.clients.base import HttpError
-from mlflow.entities import Experiment as MLExperiment
-from mlflow_faculty.trackingstore import FacultyRestStore
-from pytz import UTC
 import pytest
+from pytz import UTC
+import faculty
+from faculty.clients.base import HttpError
+from faculty.clients.experiment import Experiment
+from mlflow.entities import Experiment as MLExperiment, LifecycleStage
+from mlflow_faculty.trackingstore import FacultyRestStore
 
 PROJECT_ID = uuid4()
 STORE_URI = "faculty:{}".format(PROJECT_ID)
-EXPERIMENT_ID = 12345
-CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
-LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
-DELETED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
+
+EXPERIMENT_ID = 12
+CREATED_AT = datetime.now(tz=UTC)
+LAST_UPDATED_AT = CREATED_AT
+
+NAME = "experiment name"
+ARTIFACT_LOCATION = "scheme://artifact-location"
 
 MLFLOW_EXPERIMENT = MLExperiment(
-    EXPERIMENT_ID, "test-name", "file://test", "active"
+    EXPERIMENT_ID, NAME, ARTIFACT_LOCATION, LifecycleStage.ACTIVE
 )
 
 FACULTY_EXPERIMENT = Experiment(
-    id=12,
-    name="experiment name",
-    description="experiment description",
-    artifact_location="https://example.com",
-    created_at=CREATED_AT,
-    last_updated_at=LAST_UPDATED_AT,
-    deleted_at=DELETED_AT,
+    id=EXPERIMENT_ID,
+    name=NAME,
+    description="not used",
+    artifact_location=ARTIFACT_LOCATION,
+    created_at=datetime.now(tz=UTC),
+    last_updated_at=datetime.now(tz=UTC),
+    deleted_at=None,
 )
 
 
@@ -82,15 +85,11 @@ def test_create_experiment(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    returned_experiment_id = store.create_experiment(
-        MLFLOW_EXPERIMENT.name, MLFLOW_EXPERIMENT.artifact_location
-    )
+    returned_experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
 
     assert returned_experiment_id == FACULTY_EXPERIMENT.id
     mock_client.create.assert_called_once_with(
-        PROJECT_ID,
-        MLFLOW_EXPERIMENT.name,
-        artifact_location=MLFLOW_EXPERIMENT.artifact_location,
+        PROJECT_ID, NAME, artifact_location=ARTIFACT_LOCATION
     )
 
 
@@ -101,7 +100,5 @@ def test_create_experiment_client_error(mocker):
 
     store = FacultyRestStore(STORE_URI)
 
-    returned_experiment_id = store.create_experiment(
-        MLFLOW_EXPERIMENT.name, MLFLOW_EXPERIMENT.artifact_location
-    )
+    returned_experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
     assert returned_experiment_id is None
