@@ -48,6 +48,15 @@ FACULTY_EXPERIMENT = Experiment(
 )
 
 
+def experiments_equal(one, two):
+    return (
+        one.experiment_id == two.experiment_id
+        and one.name == two.name
+        and one.artifact_location == two.artifact_location
+        and one.lifecycle_stage == two.lifecycle_stage
+    )
+
+
 @pytest.mark.parametrize(
     "store_uri",
     [
@@ -85,9 +94,9 @@ def test_create_experiment(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    returned_experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
+    experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
 
-    assert returned_experiment_id == FACULTY_EXPERIMENT.id
+    assert experiment_id == FACULTY_EXPERIMENT.id
     mock_client.create.assert_called_once_with(
         PROJECT_ID, NAME, artifact_location=ARTIFACT_LOCATION
     )
@@ -102,3 +111,26 @@ def test_create_experiment_client_error(mocker):
 
     returned_experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
     assert returned_experiment_id is None
+
+
+def test_get_experiment(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get.return_value = FACULTY_EXPERIMENT
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    experiment = store.get_experiment(EXPERIMENT_ID)
+
+    assert experiments_equal(experiment, MLFLOW_EXPERIMENT)
+    mock_client.get.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
+
+
+def test_get_experiment_deleted(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get.return_value.deleted_at = datetime.now(tz=UTC)
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    experiment = store.get_experiment(EXPERIMENT_ID)
+
+    assert experiment.lifecycle_stage == LifecycleStage.DELETED

@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from uuid import UUID
 
 import faculty
 from mlflow.store.abstract_store import AbstractStore
-from mlflow.entities import ViewType, Experiment
+from mlflow.entities import ViewType, Experiment, LifecycleStage
 from six.moves import urllib
 
 
@@ -78,15 +77,15 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Experiment` object if it
             exists, otherwise raises an exception.
         """
-        faculty_experiment = self._client.get(
-            os.getenv("FACULTY_PROJECT_ID"), experiment_id
-        )
 
+        faculty_experiment = self._client.get(self._project_id, experiment_id)
+
+        active = faculty_experiment.deleted_at is None
         return Experiment(
             faculty_experiment.id,
             faculty_experiment.name,
             faculty_experiment.artifact_location,
-            "active" if faculty_experiment.deleted_at else "deleted",
+            LifecycleStage.ACTIVE if active else LifecycleStage.DELETED,
         )
 
     def get_experiment_by_name(self, experiment_name):
