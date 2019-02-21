@@ -134,3 +134,16 @@ def test_get_experiment_deleted(mocker):
     experiment = store.get_experiment(EXPERIMENT_ID)
 
     assert experiment.lifecycle_stage == LifecycleStage.DELETED
+
+
+def test_list_experiments(mocker):
+    mock_client = mocker.Mock()
+    mock_client.list.return_value = [FACULTY_EXPERIMENT]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    experiments = store.list_experiments(PROJECT_ID)
+
+    assert len(experiments) == 1
+    assert experiments_equal(experiments[0],MLFLOW_EXPERIMENT)
+    mock_client.list.assert_called_once_with(PROJECT_ID)

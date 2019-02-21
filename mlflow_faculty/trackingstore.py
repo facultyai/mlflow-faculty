@@ -19,6 +19,8 @@ from mlflow.store.abstract_store import AbstractStore
 from mlflow.entities import ViewType, Experiment, LifecycleStage
 from six.moves import urllib
 
+from mlflow_faculty.utils import faculty_experiment_to_mlflow_experiment
+
 
 class FacultyRestStore(AbstractStore):
     def __init__(self, store_uri, **_):
@@ -45,7 +47,12 @@ class FacultyRestStore(AbstractStore):
         :return: a list of Experiment objects stored in store for requested
             view.
         """
-        raise NotImplementedError()
+        faculty_experiments = self._client.list(self._project_id)
+
+        return [
+            faculty_experiment_to_mlflow_experiment(faculty_experiment)
+            for faculty_experiment in faculty_experiments
+        ]
 
     def create_experiment(self, name, artifact_location):
         """
@@ -80,13 +87,7 @@ class FacultyRestStore(AbstractStore):
 
         faculty_experiment = self._client.get(self._project_id, experiment_id)
 
-        active = faculty_experiment.deleted_at is None
-        return Experiment(
-            faculty_experiment.id,
-            faculty_experiment.name,
-            faculty_experiment.artifact_location,
-            LifecycleStage.ACTIVE if active else LifecycleStage.DELETED,
-        )
+        return faculty_experiment_to_mlflow_experiment(faculty_experiment) 
 
     def get_experiment_by_name(self, experiment_name):
         """
