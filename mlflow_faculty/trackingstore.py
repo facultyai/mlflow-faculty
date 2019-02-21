@@ -20,7 +20,9 @@ from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
 from six.moves import urllib
 
-from mlflow_faculty.utils import faculty_experiment_to_mlflow_experiment
+from mlflow_faculty.mlflow_converters import (
+    faculty_experiment_to_mlflow_experiment,
+)
 
 
 class FacultyRestStore(AbstractStore):

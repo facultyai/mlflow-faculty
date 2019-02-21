@@ -149,5 +149,5 @@ def test_list_experiments(mocker):
     experiments = store.list_experiments(PROJECT_ID)
 
     assert len(experiments) == 1
-    assert experiments_equal(experiments[0],MLFLOW_EXPERIMENT)
+    assert experiments_equal(experiments[0], MLFLOW_EXPERIMENT)
     mock_client.list.assert_called_once_with(PROJECT_ID)
