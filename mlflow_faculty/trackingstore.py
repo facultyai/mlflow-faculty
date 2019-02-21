@@ -13,21 +13,31 @@
 # limitations under the License.
 
 import os
+from uuid import UUID
 
 import faculty
 from mlflow.store.abstract_store import AbstractStore
 from mlflow.entities import ViewType, Experiment
-
-ATLAS_URL = "{}://atlas.{}".format(
-    os.getenv('SHERLOCKML_PROTOCOL'),
-    os.getenv('SHERLOCKML_DOMAIN')
-)
+from six.moves import urllib
 
 
 class FacultyRestStore(AbstractStore):
     def __init__(self, store_uri, **_):
-        self.faculty_client = faculty.client("experiment")
-        pass
+        parsed_uri = urllib.parse.urlparse(store_uri)
+        if parsed_uri.scheme != "faculty":
+            raise ValueError("Not a faculty URI: {}".format(store_uri))
+
+        cleaned_path = parsed_uri.path.strip("/")
+        try:
+            self._project_id = UUID(cleaned_path)
+        except ValueError:
+            raise ValueError(
+                "{} in given URI {} is not a valid UUID".format(
+                    cleaned_path, store_uri
+                )
+            )
+
+        self._client = faculty.client("experiment")
 
     def list_experiments(self, view_type=ViewType.ACTIVE_ONLY):
         """
