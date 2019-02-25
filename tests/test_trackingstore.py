@@ -107,7 +107,6 @@ def test_create_experiment(mocker):
 
 def test_create_experiment_client_error(mocker):
     mock_client = mocker.Mock()
-    mock_response = mocker.Mock()
     mock_client.create.side_effect = HttpError(mocker.Mock(), mocker.Mock())
     mocker.patch("faculty.client", return_value=mock_client)
 
@@ -127,6 +126,17 @@ def test_get_experiment(mocker):
 
     assert experiments_equal(experiment, MLFLOW_EXPERIMENT)
     mock_client.get.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
+
+
+def test_get_experiment_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get.side_effect = HttpError(mocker.Mock(), mocker.Mock())
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException):
+        store.get_experiment(EXPERIMENT_ID)
 
 
 def test_get_experiment_deleted(mocker):
@@ -151,3 +161,14 @@ def test_list_experiments(mocker):
     assert len(experiments) == 1
     assert experiments_equal(experiments[0], MLFLOW_EXPERIMENT)
     mock_client.list.assert_called_once_with(PROJECT_ID)
+
+
+def test_list_experiments_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.list.side_effect = HttpError(mocker.Mock(), mocker.Mock())
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException):
+        store.list_experiments(PROJECT_ID)

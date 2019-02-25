@@ -50,12 +50,19 @@ class FacultyRestStore(AbstractStore):
         :return: a list of Experiment objects stored in store for requested
             view.
         """
-        faculty_experiments = self._client.list(self._project_id)
-
-        return [
-            faculty_experiment_to_mlflow_experiment(faculty_experiment)
-            for faculty_experiment in faculty_experiments
-        ]
+        try:
+            faculty_experiments = self._client.list(self._project_id)
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return [
+                faculty_experiment_to_mlflow_experiment(faculty_experiment)
+                for faculty_experiment in faculty_experiments
+            ]
 
     def create_experiment(self, name, artifact_location):
         """
@@ -91,10 +98,18 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Experiment` object if it
             exists, otherwise raises an exception.
         """
-
-        faculty_experiment = self._client.get(self._project_id, experiment_id)
-
-        return faculty_experiment_to_mlflow_experiment(faculty_experiment)
+        try:
+            faculty_experiment = self._client.get(
+                self._project_id, experiment_id
+            )
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return faculty_experiment_to_mlflow_experiment(faculty_experiment)
 
     def get_experiment_by_name(self, experiment_name):
         """
