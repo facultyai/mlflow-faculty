@@ -64,6 +64,7 @@ def experiments_equal(one, two):
     "store_uri",
     [
         STORE_URI,
+        "faculty:{}".format(PROJECT_ID),
         "faculty:/{}".format(PROJECT_ID),
         "faculty:///{}".format(PROJECT_ID),
         "faculty:///{}/".format(PROJECT_ID),
@@ -78,16 +79,28 @@ def test_init(mocker, store_uri):
     faculty.client.assert_called_once_with("experiment")
 
 
-@pytest.mark.parametrize(
-    "store_uri",
-    [
-        "invalid-scheme://{}".format(PROJECT_ID),
-        "faculty://{}".format(PROJECT_ID),
-        "faculty:invalid-uuid",
-    ],
-)
-def test_init_invalid_uri(store_uri):
-    with pytest.raises(ValueError):
+def test_init_invalid_uri_scheme():
+    store_uri = "invalid-scheme:/{}".format(PROJECT_ID)
+    expected_error_message = "Not a faculty URI: {}".format(store_uri)
+    with pytest.raises(ValueError, match=expected_error_message):
+        FacultyRestStore(store_uri)
+
+
+def test_init_invalid_uri_in_netloc():
+    store_uri = "faculty://{}".format(PROJECT_ID)
+    expectred_error_message = "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
+        store_uri, PROJECT_ID
+    )
+    with pytest.raises(ValueError, match=expectred_error_message):
+        FacultyRestStore(store_uri)
+
+
+def test_init_invalid_uri_bad_uuid():
+    store_uri = "faculty:/invalid_uuid"
+    expectred_error_message = "invalid_uuid in given URI {} is not a valid UUID".format(
+        store_uri
+    )
+    with pytest.raises(ValueError, match=expectred_error_message):
         FacultyRestStore(store_uri)
 
 

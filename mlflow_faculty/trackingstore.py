@@ -30,6 +30,13 @@ class FacultyRestStore(AbstractStore):
         parsed_uri = urllib.parse.urlparse(store_uri)
         if parsed_uri.scheme != "faculty":
             raise ValueError("Not a faculty URI: {}".format(store_uri))
+        # Test for PROJECT_ID in netloc rather than path.
+        elif parsed_uri.netloc != '':
+            raise ValueError(
+                "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
+                    store_uri, parsed_uri.netloc
+                )
+            )
 
         cleaned_path = parsed_uri.path.strip("/")
         try:
