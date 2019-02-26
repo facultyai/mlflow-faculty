@@ -12,14 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from uuid import UUID
 
+import faculty
+from mlflow.entities import ViewType, Experiment, LifecycleStage
+from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
-from mlflow.entities import ViewType
+from six.moves import urllib
+
+from mlflow_faculty.mlflow_converters import (
+    faculty_experiment_to_mlflow_experiment,
+)
 
 
 class FacultyRestStore(AbstractStore):
     def __init__(self, store_uri, **_):
-        pass
+        parsed_uri = urllib.parse.urlparse(store_uri)
+        if parsed_uri.scheme != "faculty":
+            raise ValueError("Not a faculty URI: {}".format(store_uri))
+        # Test for PROJECT_ID in netloc rather than path.
+        elif parsed_uri.netloc != '':
+            raise ValueError(
+                "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
+                    store_uri, parsed_uri.netloc
+                )
+            )
+
+        cleaned_path = parsed_uri.path.strip("/")
+        try:
+            self._project_id = UUID(cleaned_path)
+        except ValueError:
+            raise ValueError(
+                "{} in given URI {} is not a valid UUID".format(
+                    cleaned_path, store_uri
+                )
+            )
+
+        self._client = faculty.client("experiment")
 
     def list_experiments(self, view_type=ViewType.ACTIVE_ONLY):
         """
@@ -28,7 +57,19 @@ class FacultyRestStore(AbstractStore):
         :return: a list of Experiment objects stored in store for requested
             view.
         """
-        raise NotImplementedError()
+        try:
+            faculty_experiments = self._client.list(self._project_id)
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return [
+                faculty_experiment_to_mlflow_experiment(faculty_experiment)
+                for faculty_experiment in faculty_experiments
+            ]
 
     def create_experiment(self, name, artifact_location):
         """
@@ -42,7 +83,18 @@ class FacultyRestStore(AbstractStore):
         :return: experiment_id (integer) for the newly created experiment if
             successful, else None
         """
-        raise NotImplementedError()
+        try:
+            faculty_experiment = self._client.create(
+                self._project_id, name, artifact_location=artifact_location
+            )
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return faculty_experiment.id
 
     def get_experiment(self, experiment_id):
         """
@@ -53,7 +105,18 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Experiment` object if it
             exists, otherwise raises an exception.
         """
-        raise NotImplementedError()
+        try:
+            faculty_experiment = self._client.get(
+                self._project_id, experiment_id
+            )
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return faculty_experiment_to_mlflow_experiment(faculty_experiment)
 
     def get_experiment_by_name(self, experiment_name):
         """
