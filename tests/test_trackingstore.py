@@ -107,12 +107,14 @@ def test_create_experiment(mocker):
 
 def test_create_experiment_client_error(mocker):
     mock_client = mocker.Mock()
-    mock_client.create.side_effect = HttpError(mocker.Mock(), mocker.Mock())
+    mock_client.create.side_effect = HttpError(
+        mocker.Mock(), "Name already used in project."
+    )
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
 
-    with pytest.raises(MlflowException):
+    with pytest.raises(MlflowException, match="Name already used in project."):
         store.create_experiment(NAME, ARTIFACT_LOCATION)
 
 
@@ -130,12 +132,16 @@ def test_get_experiment(mocker):
 
 def test_get_experiment_client_error(mocker):
     mock_client = mocker.Mock()
-    mock_client.get.side_effect = HttpError(mocker.Mock(), mocker.Mock())
+    mock_client.get.side_effect = HttpError(
+        mocker.Mock(), "Experiment with ID _ not found in project _"
+    )
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
 
-    with pytest.raises(MlflowException):
+    with pytest.raises(
+        MlflowException, match="Experiment with ID _ not found in project _"
+    ):
         store.get_experiment(EXPERIMENT_ID)
 
 
@@ -165,10 +171,10 @@ def test_list_experiments(mocker):
 
 def test_list_experiments_client_error(mocker):
     mock_client = mocker.Mock()
-    mock_client.list.side_effect = HttpError(mocker.Mock(), mocker.Mock())
+    mock_client.list.side_effect = HttpError(mocker.Mock(), "Error")
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
 
-    with pytest.raises(MlflowException):
+    with pytest.raises(MlflowException, match="Error"):
         store.list_experiments(PROJECT_ID)
