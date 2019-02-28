@@ -199,7 +199,18 @@ class FacultyRestStore(AbstractStore):
 
         :return: The created Run object
         """
-        raise NotImplementedError()
+        try:
+            faculty_run = self._client.create_run(
+                self._project_id, experiment_id, start_time
+            )
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return None
 
     def delete_run(self, run_id):
         """

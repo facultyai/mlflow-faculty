@@ -191,3 +191,29 @@ def test_list_experiments_client_error(mocker):
 
     with pytest.raises(MlflowException, match="Error"):
         store.list_experiments(PROJECT_ID)
+
+
+def test_create_run(mocker):
+    mock_client = mocker.Mock()
+    mock_client.create_run.return_value = None
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    start_time = datetime.now()
+
+    store = FacultyRestStore(STORE_URI)
+
+    store.create_run(
+        FACULTY_EXPERIMENT.id,
+        "mlflow-user-id",
+        "run-name",
+        "source-type",
+        "source-name",
+        "entry-point-name",
+        start_time,
+        "source-version",
+        list(),
+        "parent-run-id"
+    )
+    mock_client.create_run.assert_called_once_with(
+        PROJECT_ID, FACULTY_EXPERIMENT.id, start_time
+    )
