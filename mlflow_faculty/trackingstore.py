@@ -80,8 +80,7 @@ class FacultyRestStore(AbstractStore):
         :param artifact_location: Base location for artifacts in runs. May be
             None.
 
-        :return: experiment_id (integer) for the newly created experiment if
-            successful, else None
+        :return: experiment_id (integer) for the newly created experiment.
         """
         try:
             faculty_experiment = self._client.create(
