@@ -59,3 +59,10 @@ def test_convert_run_status(faculty_run_status, run_status):
     expected_run = copy(EXPECTED_RUN_INFO)
     expected_run._status = run_status
     assert faculty_run_to_mlflow_run(faculty_run) == expected_run
+
+
+def test_deleted_runs():
+    faculty_run = FACULTY_RUN._replace(deleted_at=datetime.now())
+    expected_run = copy(EXPECTED_RUN_INFO)
+    expected_run._lifecycle_stage = LifecycleStage.DELETED
+    assert faculty_run_to_mlflow_run(faculty_run) == expected_run

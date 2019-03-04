@@ -22,6 +22,11 @@ def faculty_experiment_to_mlflow_experiment(faculty_experiment):
 
 
 def faculty_run_to_mlflow_run(faculty_run):
+    lifecycle_stage = (
+        LifecycleStage.ACTIVE
+        if faculty_run.deleted_at is None
+        else LifecycleStage.DELETED
+    )
     run_info = RunInfo(
         faculty_run.id,
         faculty_run.experiment_id,
@@ -34,6 +39,6 @@ def faculty_run_to_mlflow_run(faculty_run):
         faculty_run.started_at,
         faculty_run.ended_at,
         "",  # shource version
-        LifecycleStage.ACTIVE
+        lifecycle_stage
     )
     return run_info
