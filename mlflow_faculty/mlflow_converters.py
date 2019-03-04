@@ -1,4 +1,4 @@
-from mlflow.entities import Experiment, LifecycleStage, RunInfo, RunStatus
+from mlflow.entities import Experiment, LifecycleStage, RunInfo, RunStatus, Run, RunData
 
 from faculty.clients.experiment import ExperimentRunStatus as FacultyExperimentRunStatus
 
@@ -41,4 +41,6 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # shource version
         lifecycle_stage
     )
-    return run_info
+    run_data = RunData()
+    run = Run(run_info, run_data)
+    return run

@@ -7,7 +7,7 @@ from pytz import UTC
 import pytest
 
 from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
-from mlflow.entities import RunInfo, RunStatus, LifecycleStage
+from mlflow.entities import Run, RunData, RunInfo, RunStatus, LifecycleStage
 
 from faculty.clients.experiment import ExperimentRun as FacultyExperimentRun, ExperimentRunStatus as FacultyExperimentRunStatus
 
@@ -39,10 +39,27 @@ EXPECTED_RUN_INFO = RunInfo(
     "",  # source_version
     LifecycleStage.ACTIVE
 )
+EXPECTED_RUN = Run(
+    EXPECTED_RUN_INFO,
+    RunData()
+)
+
+
+def check_run_data_equals(first, other):
+    return (
+        first.metrics == other.metrics
+        and first.params == other.params
+        and first.tags == other.tags
+    )
+
+
+def check_run_equals(first, other):
+    # return first.info == other.info
+    return check_run_data_equals(first.data, other.data) and first.info == other.info
 
 
 def test_convert_run():
-    assert faculty_run_to_mlflow_run(FACULTY_RUN) == EXPECTED_RUN_INFO
+    assert check_run_equals(faculty_run_to_mlflow_run(FACULTY_RUN), EXPECTED_RUN)
 
 
 @pytest.mark.parametrize(
@@ -56,21 +73,24 @@ def test_convert_run():
 )
 def test_convert_run_status(faculty_run_status, run_status):
     faculty_run = FACULTY_RUN._replace(status=faculty_run_status)
-    expected_run = copy(EXPECTED_RUN_INFO)
-    expected_run._status = run_status
-    assert faculty_run_to_mlflow_run(faculty_run) == expected_run
+    expected_run_info = copy(EXPECTED_RUN_INFO)
+    expected_run_info._status = run_status
+    expected_run = Run(expected_run_info, RunData())
+    assert check_run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
 
 
 def test_deleted_runs():
     faculty_run = FACULTY_RUN._replace(deleted_at=datetime.now())
-    expected_run = copy(EXPECTED_RUN_INFO)
-    expected_run._lifecycle_stage = LifecycleStage.DELETED
-    assert faculty_run_to_mlflow_run(faculty_run) == expected_run
+    expected_run_info = copy(EXPECTED_RUN_INFO)
+    expected_run_info._lifecycle_stage = LifecycleStage.DELETED
+    expected_run = Run(expected_run_info, RunData())
+    assert check_run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
 
 
 def test_run_end_time():
     ended_at = datetime.now()
     faculty_run = FACULTY_RUN._replace(ended_at=ended_at)
-    expected_run = copy(EXPECTED_RUN_INFO)
-    expected_run._end_time = ended_at
-    assert faculty_run_to_mlflow_run(faculty_run) == expected_run
+    expected_run_info = copy(EXPECTED_RUN_INFO)
+    expected_run_info._end_time = ended_at
+    expected_run = Run(expected_run_info, RunData())
+    assert check_run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
