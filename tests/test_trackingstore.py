@@ -223,3 +223,26 @@ def test_create_run(mocker):
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID, FACULTY_EXPERIMENT.id, start_time
     )
+
+
+def test_create_run_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.create_run.side_effect = HttpError(
+        mocker.Mock(), "Some error"
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="Some error"):
+        store.create_run(
+            FACULTY_EXPERIMENT.id,
+            "mlflow-user-id",
+            "run-name",
+            "source-type",
+            "source-name",
+            "entry-point-name",
+            datetime.now(),
+            "source-version",
+            list(),
+            "parent-run-id"
+        )
