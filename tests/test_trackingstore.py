@@ -200,7 +200,7 @@ def test_create_run(mocker):
     mock_mlflow_run = mocker.Mock()
     mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
-        return_value=mock_mlflow_run
+        return_value=mock_mlflow_run,
     )
 
     start_time = datetime.now()
@@ -217,7 +217,7 @@ def test_create_run(mocker):
         start_time,
         "source-version",
         list(),
-        "parent-run-id"
+        "parent-run-id",
     )
     assert run == mock_mlflow_run
     mock_client.create_run.assert_called_once_with(
@@ -227,9 +227,7 @@ def test_create_run(mocker):
 
 def test_create_run_client_error(mocker):
     mock_client = mocker.Mock()
-    mock_client.create_run.side_effect = HttpError(
-        mocker.Mock(), "Some error"
-    )
+    mock_client.create_run.side_effect = HttpError(mocker.Mock(), "Some error")
     mocker.patch("faculty.client", return_value=mock_client)
     store = FacultyRestStore(STORE_URI)
 
@@ -244,5 +242,5 @@ def test_create_run_client_error(mocker):
             datetime.now(),
             "source-version",
             list(),
-            "parent-run-id"
+            "parent-run-id",
         )

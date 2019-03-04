@@ -22,7 +22,7 @@ from six.moves import urllib
 
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
-    faculty_run_to_mlflow_run
+    faculty_run_to_mlflow_run,
 )
 
 
@@ -32,7 +32,7 @@ class FacultyRestStore(AbstractStore):
         if parsed_uri.scheme != "faculty":
             raise ValueError("Not a faculty URI: {}".format(store_uri))
         # Test for PROJECT_ID in netloc rather than path.
-        elif parsed_uri.netloc != '':
+        elif parsed_uri.netloc != "":
             raise ValueError(
                 "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
                     store_uri, parsed_uri.netloc

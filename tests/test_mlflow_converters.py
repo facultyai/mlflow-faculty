@@ -9,7 +9,10 @@ import pytest
 from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
 from mlflow.entities import Run, RunData, RunInfo, RunStatus, LifecycleStage
 
-from faculty.clients.experiment import ExperimentRun as FacultyExperimentRun, ExperimentRunStatus as FacultyExperimentRunStatus
+from faculty.clients.experiment import (
+    ExperimentRun as FacultyExperimentRun,
+    ExperimentRunStatus as FacultyExperimentRunStatus,
+)
 
 EXPERIMENT_RUN_ID = uuid4()
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
@@ -21,7 +24,7 @@ FACULTY_RUN = FacultyExperimentRun(
     status=FacultyExperimentRunStatus.RUNNING,
     started_at=RUN_STARTED_AT,
     ended_at=None,
-    deleted_at=None
+    deleted_at=None,
 )
 
 
@@ -37,12 +40,9 @@ EXPECTED_RUN_INFO = RunInfo(
     RUN_STARTED_AT,
     None,
     "",  # source_version
-    LifecycleStage.ACTIVE
+    LifecycleStage.ACTIVE,
 )
-EXPECTED_RUN = Run(
-    EXPECTED_RUN_INFO,
-    RunData()
-)
+EXPECTED_RUN = Run(EXPECTED_RUN_INFO, RunData())
 
 
 def check_run_data_equals(first, other):
@@ -55,11 +55,16 @@ def check_run_data_equals(first, other):
 
 def check_run_equals(first, other):
     # return first.info == other.info
-    return check_run_data_equals(first.data, other.data) and first.info == other.info
+    return (
+        check_run_data_equals(first.data, other.data)
+        and first.info == other.info
+    )
 
 
 def test_convert_run():
-    assert check_run_equals(faculty_run_to_mlflow_run(FACULTY_RUN), EXPECTED_RUN)
+    assert check_run_equals(
+        faculty_run_to_mlflow_run(FACULTY_RUN), EXPECTED_RUN
+    )
 
 
 @pytest.mark.parametrize(
@@ -68,7 +73,7 @@ def test_convert_run():
         (FacultyExperimentRunStatus.RUNNING, RunStatus.RUNNING),
         (FacultyExperimentRunStatus.FINISHED, RunStatus.FINISHED),
         (FacultyExperimentRunStatus.FAILED, RunStatus.FAILED),
-        (FacultyExperimentRunStatus.SCHEDULED, RunStatus.SCHEDULED)
+        (FacultyExperimentRunStatus.SCHEDULED, RunStatus.SCHEDULED),
     ],
 )
 def test_convert_run_status(faculty_run_status, run_status):
@@ -76,7 +81,9 @@ def test_convert_run_status(faculty_run_status, run_status):
     expected_run_info = copy(EXPECTED_RUN_INFO)
     expected_run_info._status = run_status
     expected_run = Run(expected_run_info, RunData())
-    assert check_run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+    assert check_run_equals(
+        faculty_run_to_mlflow_run(faculty_run), expected_run
+    )
 
 
 def test_deleted_runs():
@@ -84,7 +91,9 @@ def test_deleted_runs():
     expected_run_info = copy(EXPECTED_RUN_INFO)
     expected_run_info._lifecycle_stage = LifecycleStage.DELETED
     expected_run = Run(expected_run_info, RunData())
-    assert check_run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+    assert check_run_equals(
+        faculty_run_to_mlflow_run(faculty_run), expected_run
+    )
 
 
 def test_run_end_time():
@@ -93,4 +102,6 @@ def test_run_end_time():
     expected_run_info = copy(EXPECTED_RUN_INFO)
     expected_run_info._end_time = ended_at
     expected_run = Run(expected_run_info, RunData())
-    assert check_run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+    assert check_run_equals(
+        faculty_run_to_mlflow_run(faculty_run), expected_run
+    )
