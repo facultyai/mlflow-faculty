@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from uuid import UUID
+from datetime import datetime
 
 import faculty
 from mlflow.entities import ViewType, Experiment, LifecycleStage
@@ -201,7 +202,9 @@ class FacultyRestStore(AbstractStore):
         """
         try:
             faculty_run = self._client.create_run(
-                self._project_id, experiment_id, start_time
+                self._project_id,
+                experiment_id,
+                datetime.fromtimestamp(start_time),
             )
         except faculty.clients.base.HttpError as e:
             raise MlflowException(

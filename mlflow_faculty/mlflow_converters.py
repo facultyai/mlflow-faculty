@@ -36,6 +36,12 @@ def faculty_run_to_mlflow_run(faculty_run):
         if faculty_run.deleted_at is None
         else LifecycleStage.DELETED
     )
+    start_time = faculty_run.started_at.timestamp()
+    end_time = (
+        faculty_run.ended_at.timestamp()
+        if faculty_run.ended_at is not None
+        else None
+    )
     run_info = RunInfo(
         faculty_run.id,
         faculty_run.experiment_id,
@@ -45,8 +51,8 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # entry_point_name
         "",  # user_id
         _run_status_map[faculty_run.status],
-        faculty_run.started_at,
-        faculty_run.ended_at,
+        start_time,
+        end_time,
         "",  # shource version
         lifecycle_stage,
     )

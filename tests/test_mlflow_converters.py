@@ -16,6 +16,7 @@ from faculty.clients.experiment import (
 
 EXPERIMENT_RUN_ID = uuid4()
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
+RUN_STARTED_AT_INT = RUN_STARTED_AT.timestamp()
 
 FACULTY_RUN = FacultyExperimentRun(
     id=EXPERIMENT_RUN_ID,
@@ -37,7 +38,7 @@ EXPECTED_RUN_INFO = RunInfo(
     "",  # entry_point_name
     "",  # user_id
     RunStatus.RUNNING,
-    RUN_STARTED_AT,
+    RUN_STARTED_AT_INT,
     None,
     "",  # source_version
     LifecycleStage.ACTIVE,
@@ -100,7 +101,7 @@ def test_run_end_time():
     ended_at = datetime.now()
     faculty_run = FACULTY_RUN._replace(ended_at=ended_at)
     expected_run_info = copy(EXPECTED_RUN_INFO)
-    expected_run_info._end_time = ended_at
+    expected_run_info._end_time = ended_at.timestamp()
     expected_run = Run(expected_run_info, RunData())
     assert check_run_equals(
         faculty_run_to_mlflow_run(faculty_run), expected_run
