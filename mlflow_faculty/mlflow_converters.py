@@ -20,6 +20,10 @@ _run_status_map = {
 }
 
 
+def _datetime_to_mlflow_timestamp(dt):
+    return dt.timestamp() * 1000
+
+
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
     active = faculty_experiment.deleted_at is None
     return Experiment(
@@ -36,9 +40,9 @@ def faculty_run_to_mlflow_run(faculty_run):
         if faculty_run.deleted_at is None
         else LifecycleStage.DELETED
     )
-    start_time = faculty_run.started_at.timestamp() * 1000
+    start_time = _datetime_to_mlflow_timestamp(faculty_run.started_at)
     end_time = (
-        faculty_run.ended_at.timestamp() * 1000
+        _datetime_to_mlflow_timestamp(faculty_run.ended_at)
         if faculty_run.ended_at is not None
         else None
     )
