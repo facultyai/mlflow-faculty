@@ -197,12 +197,17 @@ def test_create_run(mocker):
     mock_client = mocker.Mock()
     mock_client.create_run.return_value = None
     mocker.patch("faculty.client", return_value=mock_client)
+    mock_mlflow_run = mocker.Mock()
+    mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        return_value=mock_mlflow_run
+    )
 
     start_time = datetime.now()
 
     store = FacultyRestStore(STORE_URI)
 
-    store.create_run(
+    run = store.create_run(
         FACULTY_EXPERIMENT.id,
         "mlflow-user-id",
         "run-name",
@@ -214,6 +219,7 @@ def test_create_run(mocker):
         list(),
         "parent-run-id"
     )
+    assert run == mock_mlflow_run
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID, FACULTY_EXPERIMENT.id, start_time
     )
