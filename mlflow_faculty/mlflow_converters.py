@@ -1,5 +1,15 @@
 from mlflow.entities import Experiment, LifecycleStage, RunInfo, RunStatus
 
+from faculty.clients.experiment import ExperimentRunStatus as FacultyExperimentRunStatus
+
+
+_run_status_map = {
+    FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
+    FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
+    FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
+    FacultyExperimentRunStatus.SCHEDULED: RunStatus.SCHEDULED,
+}
+
 
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
     active = faculty_experiment.deleted_at is None
@@ -20,7 +30,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source_name
         "",  # entry_point_name
         "",  # user_id
-        RunStatus.RUNNING,
+        _run_status_map[faculty_run.status],
         faculty_run.started_at,
         faculty_run.ended_at,
         "",  # shource version
