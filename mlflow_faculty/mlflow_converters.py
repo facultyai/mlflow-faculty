@@ -36,9 +36,9 @@ def faculty_run_to_mlflow_run(faculty_run):
         if faculty_run.deleted_at is None
         else LifecycleStage.DELETED
     )
-    start_time = faculty_run.started_at.timestamp()
+    start_time = faculty_run.started_at.timestamp() * 1000
     end_time = (
-        faculty_run.ended_at.timestamp()
+        faculty_run.ended_at.timestamp() * 1000
         if faculty_run.ended_at is not None
         else None
     )

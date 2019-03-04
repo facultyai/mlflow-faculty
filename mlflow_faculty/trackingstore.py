@@ -14,6 +14,7 @@
 
 from uuid import UUID
 from datetime import datetime
+import pytz
 
 import faculty
 from mlflow.entities import ViewType, Experiment, LifecycleStage
@@ -204,7 +205,7 @@ class FacultyRestStore(AbstractStore):
             faculty_run = self._client.create_run(
                 self._project_id,
                 experiment_id,
-                datetime.fromtimestamp(start_time),
+                datetime.fromtimestamp(start_time / 1000, tz=pytz.UTC),
             )
         except faculty.clients.base.HttpError as e:
             raise MlflowException(

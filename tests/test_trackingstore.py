@@ -13,7 +13,9 @@
 # limitations under the License
 
 from datetime import datetime
+import time
 from uuid import uuid4
+import pytz
 
 import faculty
 from faculty.clients.base import HttpError
@@ -203,7 +205,12 @@ def test_create_run(mocker):
         return_value=mock_mlflow_run,
     )
 
-    start_time = datetime.now()
+    # this is how Mlflow creates the start time
+    start_time = time.time() * 1000
+    expected_start_time = datetime.fromtimestamp(
+        start_time / 1000,
+        tz=pytz.UTC
+    )
 
     store = FacultyRestStore(STORE_URI)
 
@@ -214,14 +221,14 @@ def test_create_run(mocker):
         "source-type",
         "source-name",
         "entry-point-name",
-        start_time.timestamp(),
+        start_time,
         "source-version",
         list(),
         "parent-run-id",
     )
     assert run == mock_mlflow_run
     mock_client.create_run.assert_called_once_with(
-        PROJECT_ID, FACULTY_EXPERIMENT.id, start_time
+        PROJECT_ID, FACULTY_EXPERIMENT.id, expected_start_time
     )
 
 
