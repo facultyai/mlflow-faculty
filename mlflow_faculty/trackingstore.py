@@ -168,7 +168,17 @@ class FacultyRestStore(AbstractStore):
         :return: A single :py:class:`mlflow.entities.Run` object if it exists,
             otherwise raises an exception
         """
-        raise NotImplementedError()
+        try:
+            faculty_run = self._client.get_run(self._project_id, run_uuid)
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "{}. Received response {} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            mlflow_run = faculty_run_to_mlflow_run(faculty_run)
+            return mlflow_run
 
     def update_run_info(self, run_uuid, run_status, end_time):
         """
