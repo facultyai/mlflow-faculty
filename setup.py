@@ -28,7 +28,9 @@ setup(
     setup_requires=["setuptools_scm"],
     install_requires=[
         "faculty @ git+https://github.com/facultyai/faculty.git@allow-run-creation#egg=faculty",
-        "mlflow @ https://github.com/mlflow/mlflow/tarball/master", "six"],
+        "mlflow @ git+https://github.com/mlflow/mlflow.git#egg=mlflow",
+        "six"
+    ],
     entry_points={
         "mlflow.tracking_store": "faculty=mlflow_faculty:FacultyRestStore"
     },
