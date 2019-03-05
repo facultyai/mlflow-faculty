@@ -1,8 +1,8 @@
 import six
-import pytz
+from pytz import UTC
 from datetime import datetime
 
-EPOCH = datetime(1970, 1, 1, tzinfo=pytz.UTC)
+EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 
 def to_timestamp(dt):
     if six.PY2:
