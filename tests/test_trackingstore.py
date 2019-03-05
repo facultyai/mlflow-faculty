@@ -15,7 +15,7 @@
 from datetime import datetime
 import time
 from uuid import uuid4
-import pytz
+from pytz import UTC
 
 import faculty
 from faculty.clients.base import HttpError
@@ -23,10 +23,9 @@ from faculty.clients.experiment import Experiment
 from mlflow.entities import Experiment as MLExperiment, LifecycleStage
 from mlflow.exceptions import MlflowException
 import pytest
-from pytz import UTC
 
 from mlflow_faculty.trackingstore import FacultyRestStore
-
+from mlflow_faculty.py23 import to_timestamp
 
 PROJECT_ID = uuid4()
 STORE_URI = "faculty:{}".format(PROJECT_ID)
@@ -209,7 +208,7 @@ def test_create_run(mocker):
     start_time = time.time() * 1000
     expected_start_time = datetime.fromtimestamp(
         start_time / 1000,
-        tz=pytz.UTC
+        tz=UTC
     )
 
     store = FacultyRestStore(STORE_URI)
@@ -246,7 +245,7 @@ def test_create_run_client_error(mocker):
             "source-type",
             "source-name",
             "entry-point-name",
-            datetime.now().timestamp(),
+            to_timestamp(datetime.now(tz=UTC)),
             "source-version",
             list(),
             "parent-run-id",

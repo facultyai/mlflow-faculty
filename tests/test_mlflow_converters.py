@@ -6,7 +6,6 @@ from pytz import UTC
 
 import pytest
 
-from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
 from mlflow.entities import Run, RunData, RunInfo, RunStatus, LifecycleStage
 
 from faculty.clients.experiment import (
@@ -14,9 +13,12 @@ from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
 )
 
+from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
+from mlflow_faculty.py23 import to_timestamp
+
 EXPERIMENT_RUN_ID = uuid4()
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
-RUN_STARTED_AT_INT = RUN_STARTED_AT.timestamp() * 1000
+RUN_STARTED_AT_INT = to_timestamp(RUN_STARTED_AT) * 1000
 
 FACULTY_RUN = FacultyExperimentRun(
     id=EXPERIMENT_RUN_ID,
@@ -98,10 +100,10 @@ def test_deleted_runs():
 
 
 def test_run_end_time():
-    ended_at = datetime.now()
+    ended_at = datetime.now(tz=UTC)
     faculty_run = FACULTY_RUN._replace(ended_at=ended_at)
     expected_run_info = copy(EXPECTED_RUN_INFO)
-    expected_run_info._end_time = ended_at.timestamp() * 1000
+    expected_run_info._end_time = to_timestamp(ended_at) * 1000
     expected_run = Run(expected_run_info, RunData())
     assert check_run_equals(
         faculty_run_to_mlflow_run(faculty_run), expected_run

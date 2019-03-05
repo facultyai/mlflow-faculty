@@ -29,7 +29,8 @@ setup(
     install_requires=[
         "faculty @ git+https://github.com/facultyai/faculty.git@allow-run-creation#egg=faculty",
         "mlflow @ git+https://github.com/mlflow/mlflow.git#egg=mlflow",
-        "six"
+        "six",
+        "pytz"
     ],
     entry_points={
         "mlflow.tracking_store": "faculty=mlflow_faculty:FacultyRestStore"

@@ -11,6 +11,8 @@ from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
 )
 
+from mlflow_faculty.py23 import to_timestamp
+
 
 _run_status_map = {
     FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
@@ -21,7 +23,7 @@ _run_status_map = {
 
 
 def _datetime_to_mlflow_timestamp(dt):
-    return dt.timestamp() * 1000
+    return to_timestamp(dt) * 1000
 
 
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
