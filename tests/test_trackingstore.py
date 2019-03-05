@@ -196,10 +196,11 @@ def test_list_experiments_client_error(mocker):
 
 def test_create_run(mocker):
     mock_client = mocker.Mock()
-    mock_client.create_run.return_value = None
+    mock_run = mocker.Mock()
+    mock_client.create_run.return_value = mock_run
     mocker.patch("faculty.client", return_value=mock_client)
     mock_mlflow_run = mocker.Mock()
-    mocker.patch(
+    converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
         return_value=mock_mlflow_run,
     )
@@ -229,6 +230,7 @@ def test_create_run(mocker):
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID, FACULTY_EXPERIMENT.id, expected_start_time
     )
+    converter_mock.assert_called_once_with(mock_run)
 
 
 def test_create_run_client_error(mocker):
