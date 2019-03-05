@@ -1,0 +1,14 @@
+language: python
+cache: pip
+dist: xenial
+
+matrix:
+  include:
+    - python: 3.6
+      env: TOXENV=py36
+
+install:
+  - pip install tox
+
+script:
+  - tox
