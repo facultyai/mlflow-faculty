@@ -163,13 +163,16 @@ class FacultyRestStore(AbstractStore):
         """
         Fetches the run from backend store
 
-        :param run_uuid: Unique identifier for the run
+        :param run_uuid: string containing run UUID 
+            (32 hex characters = a uuid4 stripped off of dashes)
 
         :return: A single :py:class:`mlflow.entities.Run` object if it exists,
             otherwise raises an exception
         """
         try:
-            faculty_run = self._client.get_run(self._project_id, run_uuid)
+            faculty_run = self._client.get_run(
+                self._project_id, UUID(run_uuid)
+            )
         except faculty.clients.base.HttpError as e:
             raise MlflowException(
                 "{}. Received response {} with status code {}".format(

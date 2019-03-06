@@ -52,7 +52,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         else None
     )
     run_info = RunInfo(
-        faculty_run.id,
+        faculty_run.id.hex,
         faculty_run.experiment_id,
         "",  # name
         "",  # source_type

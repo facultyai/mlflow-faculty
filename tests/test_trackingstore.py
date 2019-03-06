@@ -56,8 +56,11 @@ FACULTY_EXPERIMENT = Experiment(
     deleted_at=None,
 )
 
+EXPERIMENT_RUN_UUID = uuid4()
+EXPERIMENT_RUN_UUID_HEX_STR = EXPERIMENT_RUN_UUID.hex
+
 FACULTY_EXPERIMENT_RUN = ExperimentRun(
-    id=uuid4(),
+    id=EXPERIMENT_RUN_UUID,
     experiment_id=FACULTY_EXPERIMENT.id,
     artifact_location="faculty:",
     status=ExperimentRunStatus.RUNNING,
@@ -277,12 +280,12 @@ def test_get_run(mocker):
     )
 
     store = FacultyRestStore(STORE_URI)
-    run = store.get_run(FACULTY_EXPERIMENT_RUN.id)
+    run = store.get_run(EXPERIMENT_RUN_UUID_HEX_STR)
 
     assert run == mock_mlflow_run
 
     mock_client.get_run.assert_called_once_with(
-        PROJECT_ID, FACULTY_EXPERIMENT_RUN.id
+        PROJECT_ID, EXPERIMENT_RUN_UUID
     )
     converter_mock.assert_called_once_with(FACULTY_EXPERIMENT_RUN)
 
@@ -300,4 +303,4 @@ def test_get_run_client_error(mocker):
         MlflowException,
         match="Experiment run with ID _ not found in project _",
     ):
-        store.get_run(EXPERIMENT_ID)
+        store.get_run(EXPERIMENT_RUN_UUID_HEX_STR)
