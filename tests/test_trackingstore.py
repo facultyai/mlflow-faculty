@@ -28,7 +28,6 @@ from mlflow.entities import Experiment as MLExperiment, LifecycleStage
 from mlflow.exceptions import MlflowException
 import pytest
 
-from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
 from mlflow_faculty.trackingstore import FacultyRestStore
 from mlflow_faculty.py23 import to_timestamp
 
@@ -107,19 +106,20 @@ def test_init_invalid_uri_scheme():
 
 def test_init_invalid_uri_in_netloc():
     store_uri = "faculty://{}".format(PROJECT_ID)
-    expectred_error_message = "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
-        store_uri, PROJECT_ID
+    expected_error_message = (
+        "Invalid URI {}. Netloc is reserved. "
+        "Did you mean 'faculty:/{}".format(store_uri, PROJECT_ID)
     )
-    with pytest.raises(ValueError, match=expectred_error_message):
+    with pytest.raises(ValueError, match=expected_error_message):
         FacultyRestStore(store_uri)
 
 
 def test_init_invalid_uri_bad_uuid():
     store_uri = "faculty:/invalid_uuid"
-    expectred_error_message = "invalid_uuid in given URI {} is not a valid UUID".format(
+    expected_error = "invalid_uuid in given URI {} is not a valid UUID".format(
         store_uri
     )
-    with pytest.raises(ValueError, match=expectred_error_message):
+    with pytest.raises(ValueError, match=expected_error):
         FacultyRestStore(store_uri)
 
 
