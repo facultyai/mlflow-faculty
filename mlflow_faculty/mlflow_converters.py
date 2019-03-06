@@ -14,7 +14,7 @@ from faculty.clients.experiment import (
 from mlflow_faculty.py23 import to_timestamp
 
 
-_run_status_map = {
+_RUN_STATUS_MAP = {
     FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
     FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
     FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
@@ -56,7 +56,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source_name
         "",  # entry_point_name
         "",  # user_id
-        _run_status_map[faculty_run.status],
+        _RUN_STATUS_MAP[faculty_run.status],
         start_time,
         end_time,
         "",  # shource version
