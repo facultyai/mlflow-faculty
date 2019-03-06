@@ -71,4 +71,4 @@ def faculty_run_to_mlflow_run(faculty_run):
 
 
 def mlflow_timestamp_to_datetime(mlflow_timestamp):
-    return datetime.fromtimestamp(mlflow_timestamp / 1000, tz=UTC)
+    return datetime.fromtimestamp(mlflow_timestamp / 1000.0, tz=UTC)
