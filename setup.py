@@ -26,7 +26,12 @@ setup(
     packages=find_packages(),
     use_scm_version={"version_scheme": "post-release"},
     setup_requires=["setuptools_scm"],
-    install_requires=["faculty", "mlflow @ https://github.com/mlflow/mlflow/tarball/master", "six"],
+    install_requires=[
+        "faculty @ git+https://github.com/facultyai/faculty.git#egg=faculty",
+        "mlflow @ git+https://github.com/mlflow/mlflow.git#egg=mlflow",
+        "six",
+        "pytz"
+    ],
     entry_points={
         "mlflow.tracking_store": "faculty=mlflow_faculty:FacultyRestStore"
     },

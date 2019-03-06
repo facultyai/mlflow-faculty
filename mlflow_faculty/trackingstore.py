@@ -13,15 +13,19 @@
 # limitations under the License.
 
 from uuid import UUID
+from datetime import datetime
 
+from pytz import UTC
 import faculty
-from mlflow.entities import ViewType, Experiment, LifecycleStage
+from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
 from six.moves import urllib
 
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
+    faculty_run_to_mlflow_run,
+    mlflow_timestamp_to_datetime,
 )
 
 
@@ -31,7 +35,7 @@ class FacultyRestStore(AbstractStore):
         if parsed_uri.scheme != "faculty":
             raise ValueError("Not a faculty URI: {}".format(store_uri))
         # Test for PROJECT_ID in netloc rather than path.
-        elif parsed_uri.netloc != '':
+        elif parsed_uri.netloc != "":
             raise ValueError(
                 "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
                     store_uri, parsed_uri.netloc
@@ -80,8 +84,7 @@ class FacultyRestStore(AbstractStore):
         :param artifact_location: Base location for artifacts in runs. May be
             None.
 
-        :return: experiment_id (integer) for the newly created experiment if
-            successful, else None
+        :return: experiment_id (integer) for the newly created experiment.
         """
         try:
             faculty_experiment = self._client.create(
@@ -199,7 +202,22 @@ class FacultyRestStore(AbstractStore):
 
         :return: The created Run object
         """
-        raise NotImplementedError()
+        try:
+            faculty_run = self._client.create_run(
+                self._project_id,
+                experiment_id,
+                mlflow_timestamp_to_datetime(start_time),
+            )
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "Failed to create run: {}. Received response "
+                "{} with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            mlflow_run = faculty_run_to_mlflow_run(faculty_run)
+            return mlflow_run
 
     def delete_run(self, run_id):
         """
