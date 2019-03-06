@@ -58,7 +58,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         _RUN_STATUS_MAP[faculty_run.status],
         start_time,
         end_time,
-        "",  # shource version
+        "",  # source version
         lifecycle_stage,
     )
     run_data = RunData()
