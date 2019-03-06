@@ -14,10 +14,10 @@
 
 from uuid import UUID
 from datetime import datetime
-from pytz import UTC
 
+from pytz import UTC
 import faculty
-from mlflow.entities import ViewType, Experiment, LifecycleStage
+from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
 from six.moves import urllib
