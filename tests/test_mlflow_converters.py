@@ -113,6 +113,12 @@ def test_run_end_time():
     )
 
 
-def test_mlflow_timestamp_to_datetime():
-    expected_datetime = datetime(1970, 1, 1, tzinfo=UTC)
-    assert mlflow_timestamp_to_datetime(0) == expected_datetime
+@pytest.mark.parametrize(
+    "timestamp, expected_datetime",
+    [
+        (0, datetime(1970, 1, 1, tzinfo=UTC)),
+        (1551884271987, datetime(2019, 3, 6, 14, 57, 51, 987000, tzinfo=UTC)),
+    ]
+)
+def test_mlflow_timestamp_to_datetime(timestamp, expected_datetime):
+    assert mlflow_timestamp_to_datetime(timestamp) == expected_datetime
