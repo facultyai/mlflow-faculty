@@ -13,7 +13,10 @@ from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
 )
 
-from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
+from mlflow_faculty.mlflow_converters import (
+    faculty_run_to_mlflow_run,
+    mlflow_timestamp_to_datetime
+)
 from mlflow_faculty.py23 import to_timestamp
 
 EXPERIMENT_RUN_ID = uuid4()
@@ -108,3 +111,8 @@ def test_run_end_time():
     assert check_run_equals(
         faculty_run_to_mlflow_run(faculty_run), expected_run
     )
+
+
+def test_mlflow_timestamp_to_datetime():
+    expected_datetime = datetime(1970, 1, 1, tzinfo=UTC)
+    assert mlflow_timestamp_to_datetime(0) == expected_datetime
