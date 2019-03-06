@@ -19,12 +19,13 @@ from mlflow_faculty.mlflow_converters import (
 )
 from mlflow_faculty.py23 import to_timestamp
 
-EXPERIMENT_RUN_ID = uuid4()
+EXPERIMENT_RUN_UUID = uuid4()
+EXPERIMENT_RUN_UUID_HEX_STR = EXPERIMENT_RUN_UUID.hex
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_INT = to_timestamp(RUN_STARTED_AT) * 1000
 
 FACULTY_RUN = FacultyExperimentRun(
-    id=EXPERIMENT_RUN_ID,
+    id=EXPERIMENT_RUN_UUID,
     experiment_id=661,
     artifact_location="faculty:",
     status=FacultyExperimentRunStatus.RUNNING,
@@ -35,7 +36,7 @@ FACULTY_RUN = FacultyExperimentRun(
 
 
 EXPECTED_RUN_INFO = RunInfo(
-    EXPERIMENT_RUN_ID,
+    EXPERIMENT_RUN_UUID_HEX_STR,
     661,
     "",  # name
     "",  # source_type
