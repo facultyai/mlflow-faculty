@@ -25,6 +25,7 @@ from six.moves import urllib
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
     faculty_run_to_mlflow_run,
+    mlflow_timestamp_to_datetime,
 )
 
 
@@ -205,7 +206,7 @@ class FacultyRestStore(AbstractStore):
             faculty_run = self._client.create_run(
                 self._project_id,
                 experiment_id,
-                datetime.fromtimestamp(start_time / 1000, tz=UTC),
+                mlflow_timestamp_to_datetime(start_time),
             )
         except faculty.clients.base.HttpError as e:
             raise MlflowException(

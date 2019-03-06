@@ -1,3 +1,7 @@
+from datetime import datetime
+
+from pytz import UTC
+
 from mlflow.entities import (
     Experiment,
     LifecycleStage,
@@ -64,3 +68,7 @@ def faculty_run_to_mlflow_run(faculty_run):
     run_data = RunData()
     run = Run(run_info, run_data)
     return run
+
+
+def mlflow_timestamp_to_datetime(mlflow_timestamp):
+    return datetime.fromtimestamp(mlflow_timestamp / 1000, tz=UTC)
