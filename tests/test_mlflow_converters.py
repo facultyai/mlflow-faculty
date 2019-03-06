@@ -15,7 +15,7 @@ from faculty.clients.experiment import (
 
 from mlflow_faculty.mlflow_converters import (
     faculty_run_to_mlflow_run,
-    mlflow_timestamp_to_datetime
+    mlflow_timestamp_to_datetime,
 )
 from mlflow_faculty.py23 import to_timestamp
 
@@ -118,7 +118,7 @@ def test_run_end_time():
     [
         (0, datetime(1970, 1, 1, tzinfo=UTC)),
         (1551884271987, datetime(2019, 3, 6, 14, 57, 51, 987000, tzinfo=UTC)),
-    ]
+    ],
 )
 def test_mlflow_timestamp_to_datetime(timestamp, expected_datetime):
     assert mlflow_timestamp_to_datetime(timestamp) == expected_datetime

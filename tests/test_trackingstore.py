@@ -207,10 +207,7 @@ def test_create_run(mocker):
 
     # this is how Mlflow creates the start time
     start_time = time.time() * 1000
-    expected_start_time = datetime.fromtimestamp(
-        start_time / 1000,
-        tz=UTC
-    )
+    expected_start_time = datetime.fromtimestamp(start_time / 1000, tz=UTC)
 
     store = FacultyRestStore(STORE_URI)
 
