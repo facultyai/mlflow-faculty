@@ -13,9 +13,7 @@
 # limitations under the License.
 
 from uuid import UUID
-from datetime import datetime
 
-from pytz import UTC
 import faculty
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
@@ -37,7 +35,8 @@ class FacultyRestStore(AbstractStore):
         # Test for PROJECT_ID in netloc rather than path.
         elif parsed_uri.netloc != "":
             raise ValueError(
-                "Invalid URI {}. Netloc is reserved. Did you mean 'faculty:/{}".format(
+                "Invalid URI {}. Netloc is reserved. "
+                "Did you mean 'faculty:/{}".format(
                     store_uri, parsed_uri.netloc
                 )
             )
@@ -163,7 +162,7 @@ class FacultyRestStore(AbstractStore):
         """
         Fetches the run from backend store
 
-        :param run_uuid: string containing run UUID 
+        :param run_uuid: string containing run UUID
             (32 hex characters = a uuid4 stripped off of dashes)
 
         :return: A single :py:class:`mlflow.entities.Run` object if it exists,

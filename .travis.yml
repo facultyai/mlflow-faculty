@@ -8,6 +8,15 @@ matrix:
       env: TOXENV=py27
     - python: 3.6
       env: TOXENV=py36
+    - name: Check black formatting
+      python: 3.6
+      env: TOXENV=black
+    - name: Check flake8 on Python 2
+      python: 2.7
+      env: TOXENV=flake8
+    - name: Check flake8 on Python 3
+      python: 3.6
+      env: TOXENV=flake8
 
 install:
   - pip install tox
