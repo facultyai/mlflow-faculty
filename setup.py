@@ -30,7 +30,7 @@ setup(
         "faculty @ git+https://github.com/facultyai/faculty.git@get-single-run#egg=faculty",
         "mlflow @ git+https://github.com/mlflow/mlflow.git#egg=mlflow",
         "six",
-        "pytz"
+        "pytz",
     ],
     entry_points={
         "mlflow.tracking_store": "faculty=mlflow_faculty:FacultyRestStore"

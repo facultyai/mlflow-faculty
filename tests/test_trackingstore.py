@@ -19,11 +19,16 @@ from pytz import UTC
 
 import faculty
 from faculty.clients.base import HttpError
-from faculty.clients.experiment import Experiment, ExperimentRun, ExperimentRunStatus
+from faculty.clients.experiment import (
+    Experiment,
+    ExperimentRun,
+    ExperimentRunStatus,
+)
 from mlflow.entities import Experiment as MLExperiment, LifecycleStage
 from mlflow.exceptions import MlflowException
 import pytest
 
+from mlflow_faculty.mlflow_converters import faculty_run_to_mlflow_run
 from mlflow_faculty.trackingstore import FacultyRestStore
 from mlflow_faculty.py23 import to_timestamp
 
@@ -51,16 +56,14 @@ FACULTY_EXPERIMENT = Experiment(
     deleted_at=None,
 )
 
-EXPERIMENT_RUN_ID = uuid4()
-
 FACULTY_EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID,
+    id=uuid4(),
     experiment_id=FACULTY_EXPERIMENT.id,
     artifact_location="faculty:",
     status=ExperimentRunStatus.RUNNING,
-    started_at=RUN_STARTED_AT,
-    ended_at=RUN_ENDED_AT,
-    deleted_at=DELETED_AT,
+    started_at=datetime.now(tz=UTC),
+    ended_at=datetime.now(tz=UTC),
+    deleted_at=datetime.now(tz=UTC),
 )
 
 
@@ -219,10 +222,7 @@ def test_create_run(mocker):
 
     # this is how Mlflow creates the start time
     start_time = time.time() * 1000
-    expected_start_time = datetime.fromtimestamp(
-        start_time / 1000,
-        tz=UTC
-    )
+    expected_start_time = datetime.fromtimestamp(start_time / 1000, tz=UTC)
 
     store = FacultyRestStore(STORE_URI)
 
@@ -265,18 +265,39 @@ def test_create_run_client_error(mocker):
             "parent-run-id",
         )
 
+
 def test_get_run(mocker):
     mock_client = mocker.Mock()
     mock_client.get_run.return_value = FACULTY_EXPERIMENT_RUN
     mocker.patch("faculty.client", return_value=mock_client)
     mock_mlflow_run = mocker.Mock()
-    mocker.patch(
+    converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
         return_value=mock_mlflow_run,
     )
 
     store = FacultyRestStore(STORE_URI)
-    run = store.get_run(EXPERIMENT_RUN_ID)
+    run = store.get_run(FACULTY_EXPERIMENT_RUN.id)
 
     assert run == mock_mlflow_run
-    mock_client.get_run.assert_called_once_with(PROJECT_ID, EXPERIMENT_RUN_ID)
+
+    mock_client.get_run.assert_called_once_with(
+        PROJECT_ID, FACULTY_EXPERIMENT_RUN.id
+    )
+    converter_mock.assert_called_once_with(FACULTY_EXPERIMENT_RUN)
+
+
+def test_get_run_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get_run.side_effect = HttpError(
+        mocker.Mock(), "Experiment run with ID _ not found in project _"
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(
+        MlflowException,
+        match="Experiment run with ID _ not found in project _",
+    ):
+        store.get_run(EXPERIMENT_ID)
