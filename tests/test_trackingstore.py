@@ -16,7 +16,6 @@ from datetime import datetime
 import time
 from uuid import uuid4
 from pytz import UTC
-from unittest.mock import call
 
 import faculty
 from faculty.clients.base import HttpError
@@ -343,15 +342,15 @@ def test_search_runs(mocker):
     assert runs == mock_mlflow_runs
     mock_client.list_runs.assert_has_calls(
         [
-            call(PROJECT_ID, experiment_ids=None),
-            call(PROJECT_ID, experiment_ids=None),
+            mocker.call(PROJECT_ID, experiment_ids=None),
+            mocker.call(PROJECT_ID, experiment_ids=None),
         ]
     )
     converter_mock.assert_has_calls(
         [
-            call(mock_faculty_runs[0]),
-            call(mock_faculty_runs[1]),
-            call(mock_faculty_runs[2]),
+            mocker.call(mock_faculty_runs[0]),
+            mocker.call(mock_faculty_runs[1]),
+            mocker.call(mock_faculty_runs[2]),
         ]
     )
 
