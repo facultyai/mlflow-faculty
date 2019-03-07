@@ -304,7 +304,7 @@ class FacultyRestStore(AbstractStore):
                 list_runs_response = self._client.list_runs(
                     self._project_id, experiment_ids=experiment_ids
                 )
-                faculty_runs += list_runs_response.runs
+                faculty_runs.extend(list_runs_response.runs)
                 if list_runs_response.pagination.next is None:
                     break
         except faculty.clients.base.HttpError as e:
