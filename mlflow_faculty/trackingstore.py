@@ -174,7 +174,7 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.base.HttpError as e:
             raise MlflowException(
-                "{}. Received response {} with status code {}".format(
+                "Failed to get run: {}. Received response {} with status code {}".format(
                     e.error, e.response.text, e.response.status_code
                 )
             )
