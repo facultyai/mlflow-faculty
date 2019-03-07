@@ -305,7 +305,10 @@ class FacultyRestStore(AbstractStore):
                     self._project_id, experiment_ids=experiment_ids
                 )
                 faculty_runs.extend(list_runs_response.runs)
-                if list_runs_response.pagination.next is None:
+                if (
+                    list_runs_response.pagination.next is None
+                    or len(list_runs_response.runs) == 0
+                ):
                     break
         except faculty.clients.base.HttpError as e:
             raise MlflowException(

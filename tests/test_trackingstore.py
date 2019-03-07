@@ -376,6 +376,29 @@ def test_search_runs_empty_page(mocker):
     )
 
 
+def test_search_runs_next_page_but_no_runs(mocker):
+    list_page = ListExperimentRunsResponse(
+        runs=[],
+        pagination=Pagination(
+            start=0, size=0, previous=None, next=Page(start=999, limit=999)
+        ),
+    )
+
+    mock_client = mocker.Mock()
+    mock_client.list_runs.side_effect = [list_page]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    runs = store.search_runs(
+        experiment_ids=None, search_expressions=None, run_view_type=None
+    )
+
+    assert runs == []
+    mock_client.list_runs.assert_called_once_with(
+        PROJECT_ID, experiment_ids=None
+    )
+
+
 def test_search_runs_filter_by_experiment(mocker):
     list_page = ListExperimentRunsResponse(
         runs=[],
