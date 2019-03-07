@@ -319,3 +319,6 @@ class FacultyRestStore(AbstractStore):
             )
         else:
             return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
+
+    def log_batch(self, run_id, metrics, params, tags):
+        raise NotImplementedError()
