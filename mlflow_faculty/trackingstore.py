@@ -174,7 +174,8 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.base.HttpError as e:
             raise MlflowException(
-                "Failed to get run: {}. Received response {} with status code {}".format(
+                "Failed to get run: {}. Received response {} "
+                "with status code {}".format(
                     e.error, e.response.text, e.response.status_code
                 )
             )
@@ -286,10 +287,32 @@ class FacultyRestStore(AbstractStore):
         the experiments.  Given multiple search expressions, all these
         expressions are ANDed together for search.
 
-        :param experiment_ids: List of experiment ids to scope the search
-        :param search_expression: list of search expressions
+        :param experiment_ids: List[int] of experiment ids to scope the search
+        :param search_expression: List of search expressions
 
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        raise NotImplementedError()
+        if search_expressions is not None:
+            raise NotImplementedError("search_expressions must be set to None")
+        if run_view_type is not None:
+            raise NotImplementedError("run_view_type must be set to None")
+
+        try:
+            faculty_runs = []
+            while True:
+                list_runs_response = self._client.list_runs(
+                    self._project_id, experiment_ids=experiment_ids
+                )
+                faculty_runs += list_runs_response.runs
+                if list_runs_response.pagination.next is None:
+                    break
+        except faculty.clients.base.HttpError as e:
+            raise MlflowException(
+                "Failed to search for runs: {}. Received response {} "
+                "with status code {}".format(
+                    e.error, e.response.text, e.response.status_code
+                )
+            )
+        else:
+            return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
