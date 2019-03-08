@@ -23,6 +23,9 @@ from faculty.clients.experiment import (
     Experiment,
     ExperimentRun,
     ExperimentRunStatus,
+    ListExperimentRunsResponse,
+    Pagination,
+    Page,
 )
 from mlflow.entities import Experiment as MLExperiment, LifecycleStage
 from mlflow.exceptions import MlflowException
@@ -304,3 +307,131 @@ def test_get_run_client_error(mocker):
         match="Experiment run with ID _ not found in project _",
     ):
         store.get_run(EXPERIMENT_RUN_UUID_HEX_STR)
+
+
+def test_search_runs(mocker):
+    mock_faculty_runs = [mocker.Mock(), mocker.Mock(), mocker.Mock()]
+    list_page_1 = ListExperimentRunsResponse(
+        runs=[mock_faculty_runs[0], mock_faculty_runs[1]],
+        pagination=Pagination(
+            start=0, size=2, previous=None, next=Page(start=2, limit=1)
+        ),
+    )
+    list_page_2 = ListExperimentRunsResponse(
+        runs=[mock_faculty_runs[2]],
+        pagination=Pagination(
+            start=0, size=2, previous=Page(start=0, limit=2), next=None
+        ),
+    )
+
+    mock_client = mocker.Mock()
+    mock_client.list_runs.side_effect = [list_page_1, list_page_2]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    mock_mlflow_runs = [mocker.Mock(), mocker.Mock(), mocker.Mock()]
+    converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        side_effect=mock_mlflow_runs,
+    )
+
+    store = FacultyRestStore(STORE_URI)
+    runs = store.search_runs(
+        experiment_ids=None, search_expressions=None, run_view_type=None
+    )
+
+    assert runs == mock_mlflow_runs
+    mock_client.list_runs.assert_has_calls(
+        [
+            mocker.call(PROJECT_ID, experiment_ids=None),
+            mocker.call(PROJECT_ID, experiment_ids=None),
+        ]
+    )
+    converter_mock.assert_has_calls(
+        [
+            mocker.call(mock_faculty_runs[0]),
+            mocker.call(mock_faculty_runs[1]),
+            mocker.call(mock_faculty_runs[2]),
+        ]
+    )
+
+
+def test_search_runs_empty_page(mocker):
+    list_page = ListExperimentRunsResponse(
+        runs=[],
+        pagination=Pagination(start=0, size=0, previous=None, next=None),
+    )
+
+    mock_client = mocker.Mock()
+    mock_client.list_runs.side_effect = [list_page]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    runs = store.search_runs(
+        experiment_ids=None, search_expressions=None, run_view_type=None
+    )
+
+    assert runs == []
+    mock_client.list_runs.assert_called_once_with(
+        PROJECT_ID, experiment_ids=None
+    )
+
+
+def test_search_runs_next_page_but_no_runs(mocker):
+    list_page = ListExperimentRunsResponse(
+        runs=[],
+        pagination=Pagination(
+            start=0, size=0, previous=None, next=Page(start=999, limit=999)
+        ),
+    )
+
+    mock_client = mocker.Mock()
+    mock_client.list_runs.side_effect = [list_page]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    runs = store.search_runs(
+        experiment_ids=None, search_expressions=None, run_view_type=None
+    )
+
+    assert runs == []
+    mock_client.list_runs.assert_called_once_with(
+        PROJECT_ID, experiment_ids=None
+    )
+
+
+def test_search_runs_filter_by_experiment(mocker):
+    list_page = ListExperimentRunsResponse(
+        runs=[],
+        pagination=Pagination(start=0, size=0, previous=None, next=None),
+    )
+
+    mock_client = mocker.Mock()
+    mock_client.list_runs.side_effect = [list_page]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    runs = store.search_runs(
+        experiment_ids=[123, 456], search_expressions=None, run_view_type=None
+    )
+
+    assert runs == []
+    mock_client.list_runs.assert_called_once_with(
+        PROJECT_ID, experiment_ids=[123, 456]
+    )
+
+
+def test_search_runs_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.list_runs.side_effect = HttpError(
+        mocker.Mock(), "Dummy client error."
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="Dummy client error."):
+        store.search_runs(
+            [FACULTY_EXPERIMENT.id],
+            search_expressions=None,
+            run_view_type=None,
+        )
