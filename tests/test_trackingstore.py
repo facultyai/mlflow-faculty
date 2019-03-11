@@ -111,7 +111,7 @@ def test_init_invalid_uri_in_netloc():
     store_uri = "faculty://{}".format(PROJECT_ID)
     expected_error_message = (
         "Invalid URI {}. Netloc is reserved. "
-        "Did you mean 'faculty:/{}".format(store_uri, PROJECT_ID)
+        "Did you mean 'faculty:{}".format(store_uri, PROJECT_ID)
     )
     with pytest.raises(ValueError, match=expected_error_message):
         FacultyRestStore(store_uri)
