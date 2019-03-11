@@ -36,9 +36,7 @@ class FacultyRestStore(AbstractStore):
         elif parsed_uri.netloc != "":
             raise ValueError(
                 "Invalid URI {}. Netloc is reserved. "
-                "Did you mean 'faculty:/{}".format(
-                    store_uri, parsed_uri.netloc
-                )
+                "Did you mean 'faculty:{}".format(store_uri, parsed_uri.netloc)
             )
 
         cleaned_path = parsed_uri.path.strip("/")
