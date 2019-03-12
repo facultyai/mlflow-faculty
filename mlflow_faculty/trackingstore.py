@@ -223,30 +223,6 @@ class FacultyRestStore(AbstractStore):
         """
         raise NotImplementedError()
 
-    def log_metric(self, run_uuid, metric):
-        """
-        Logs a metric for the specified run
-        :param run_uuid: String id for the run
-        :param metric: :py:class:`mlflow.entities.Metric` instance to log
-        """
-        raise NotImplementedError()
-
-    def log_param(self, run_uuid, param):
-        """
-        Logs a param for the specified run
-        :param run_uuid: String id for the run
-        :param param: :py:class:`mlflow.entities.Param` instance to log
-        """
-        raise NotImplementedError()
-
-    def set_tag(self, run_uuid, tag):
-        """
-        Sets a tag for the specified run
-        :param run_uuid: String id for the run
-        :param tag: :py:class:`mlflow.entities.RunTag` instance to set
-        """
-        raise NotImplementedError()
-
     def get_metric_history(self, run_uuid, metric_key):
         """
         Returns all logged value for a given metric.
