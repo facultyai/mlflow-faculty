@@ -15,6 +15,7 @@ from faculty.clients.experiment import (
 )
 
 from mlflow_faculty.py23 import to_timestamp
+from mlflow.exceptions import MlflowException
 
 
 _RUN_STATUS_MAP = {
@@ -36,6 +37,16 @@ def faculty_experiment_to_mlflow_experiment(faculty_experiment):
         faculty_experiment.name,
         faculty_experiment.artifact_location,
         LifecycleStage.ACTIVE if active else LifecycleStage.DELETED,
+    )
+
+
+def faculty_http_error_to_mlflow_exception(faculty_http_error):
+    return MlflowException(
+        "{}. Received response {} with status code {}".format(
+            faculty_http_error.error,
+            faculty_http_error.response.text,
+            faculty_http_error.response.status_code,
+        )
     )
 
 

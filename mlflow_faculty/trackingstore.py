@@ -14,14 +14,15 @@
 
 from uuid import UUID
 
+from six.moves import urllib
+
 import faculty
 from mlflow.entities import ViewType
-from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
-from six.moves import urllib
 
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
+    faculty_http_error_to_mlflow_exception,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime,
 )
@@ -61,11 +62,7 @@ class FacultyRestStore(AbstractStore):
         try:
             faculty_experiments = self._client.list(self._project_id)
         except faculty.clients.base.HttpError as e:
-            raise MlflowException(
-                "{}. Received response {} with status code {}".format(
-                    e.error, e.response.text, e.response.status_code
-                )
-            )
+            raise faculty_http_error_to_mlflow_exception(e)
         else:
             return [
                 faculty_experiment_to_mlflow_experiment(faculty_experiment)
@@ -88,11 +85,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id, name, artifact_location=artifact_location
             )
         except faculty.clients.base.HttpError as e:
-            raise MlflowException(
-                "{}. Received response {} with status code {}".format(
-                    e.error, e.response.text, e.response.status_code
-                )
-            )
+            raise faculty_http_error_to_mlflow_exception(e)
         else:
             return faculty_experiment.id
 
@@ -110,11 +103,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id, experiment_id
             )
         except faculty.clients.base.HttpError as e:
-            raise MlflowException(
-                "{}. Received response {} with status code {}".format(
-                    e.error, e.response.text, e.response.status_code
-                )
-            )
+            raise faculty_http_error_to_mlflow_exception(e)
         else:
             return faculty_experiment_to_mlflow_experiment(faculty_experiment)
 
@@ -171,12 +160,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id, UUID(run_uuid)
             )
         except faculty.clients.base.HttpError as e:
-            raise MlflowException(
-                "Failed to get run: {}. Received response {} "
-                "with status code {}".format(
-                    e.error, e.response.text, e.response.status_code
-                )
-            )
+            raise faculty_http_error_to_mlflow_exception(e)
         else:
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
             return mlflow_run
@@ -220,12 +204,7 @@ class FacultyRestStore(AbstractStore):
                 mlflow_timestamp_to_datetime(start_time),
             )
         except faculty.clients.base.HttpError as e:
-            raise MlflowException(
-                "Failed to create run: {}. Received response "
-                "{} with status code {}".format(
-                    e.error, e.response.text, e.response.status_code
-                )
-            )
+            raise faculty_http_error_to_mlflow_exception(e)
         else:
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
             return mlflow_run
@@ -309,12 +288,7 @@ class FacultyRestStore(AbstractStore):
                 ):
                     break
         except faculty.clients.base.HttpError as e:
-            raise MlflowException(
-                "Failed to search for runs: {}. Received response {} "
-                "with status code {}".format(
-                    e.error, e.response.text, e.response.status_code
-                )
-            )
+            raise faculty_http_error_to_mlflow_exception(e)
         else:
             return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
 
