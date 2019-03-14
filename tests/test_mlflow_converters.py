@@ -53,9 +53,6 @@ def check_run_equals(first, other):
 
 
 def test_convert_run():
-    a = faculty_run_to_mlflow_run(FACULTY_RUN)
-    print(a)
-    print(MLFLOW_RUN)
     assert check_run_equals(faculty_run_to_mlflow_run(FACULTY_RUN), MLFLOW_RUN)
 
 
