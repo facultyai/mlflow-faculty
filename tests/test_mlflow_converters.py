@@ -4,15 +4,19 @@ from uuid import uuid4
 
 import pytest
 from pytz import UTC
+from requests import Response
 
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
     ExperimentRun as FacultyExperimentRun,
 )
-
+from faculty.clients.base import HTTPError
 from mlflow.entities import LifecycleStage, Run, RunData, RunInfo, RunStatus
+from mlflow.exceptions import MlflowException
+
 from mlflow_faculty.mlflow_converters import (
     faculty_run_to_mlflow_run,
+    faculty_http_error_to_mlflow_exception,
     mlflow_run_metric_to_faculty_run_metric,
     mlflow_run_param_to_faculty_run_param,
     mlflow_run_tag_to_faculty_run_tag,
@@ -20,7 +24,6 @@ from mlflow_faculty.mlflow_converters import (
     mlflow_timestamp_to_datetime_seconds,
 )
 from mlflow_faculty.py23 import to_timestamp
-
 from tests.fixtures import (
     FACULTY_METRIC,
     FACULTY_PARAM,
@@ -82,6 +85,18 @@ def check_run_equals(first, other):
 def test_convert_run():
     assert check_run_equals(
         faculty_run_to_mlflow_run(FACULTY_RUN), EXPECTED_RUN
+    )
+
+
+def test_faculty_http_error_to_mlflow_exception():
+    dummy_response = Response()
+    dummy_response.status_code = 418
+    faculty_http_error = HTTPError(
+        dummy_response, "error", "error_code")
+
+    assert isinstance(
+        faculty_http_error_to_mlflow_exception(faculty_http_error),
+        MlflowException,
     )
 
 

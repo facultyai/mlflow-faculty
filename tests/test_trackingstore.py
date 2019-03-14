@@ -514,7 +514,7 @@ def test_log_batch_param_conflict(mocker):
 def test_log_batch_error(mocker):
     mock_client = mocker.Mock()
     exception = HttpError(
-        {}, error="error_message", error_code="some_error_code"
+        mocker.Mock(), error="error_message", error_code="some_error_code"
     )
 
     mock_client.log_run_data.side_effect = exception
