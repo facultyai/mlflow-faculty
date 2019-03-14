@@ -20,6 +20,7 @@ from mlflow_faculty.mlflow_converters import (
     mlflow_tags_to_faculty_tags,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_timestamp_to_datetime_seconds,
+    faculty_tags_to_mlflow_tags,
 )
 from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
@@ -70,7 +71,7 @@ def test_faculty_http_error_to_mlflow_exception():
 
 
 def test_faculty_tags_to_mlflow_tags():
-    pass
+    assert faculty_tags_to_mlflow_tags([FACULTY_TAG]) == MLFLOW_TAG
 
 
 @pytest.mark.parametrize(
