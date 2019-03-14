@@ -77,27 +77,31 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source version
         lifecycle_stage,
     )
-    run_data = RunData()
+    run_data = RunData(tags=mlflow_tags_to_faculty_tags(faculty_run.tags))
     run = Run(run_info, run_data)
     return run
 
 
-def mlflow_run_metric_to_faculty_run_metric(mlflow_run_metric):
-    return FacultyMetric(
-        key=mlflow_run_metric.key,
-        value=mlflow_run_metric.value,
-        timestamp=mlflow_timestamp_to_datetime_seconds(
-            mlflow_run_metric.timestamp
-        ),
-    )
+def mlflow_metrics_to_faculty_metrics(mlflow_metrics):
+    return [
+        FacultyMetric(
+            key=metric.key,
+            value=metric.value,
+            timestamp=mlflow_timestamp_to_datetime_seconds(metric.timestamp),
+        )
+        for metric in mlflow_metrics
+    ]
 
 
-def mlflow_run_param_to_faculty_run_param(mlflow_run_param):
-    return FacultyParam(key=mlflow_run_param.key, value=mlflow_run_param.value)
+def mlflow_params_to_faculty_params(mlflow_params):
+    return [
+        FacultyParam(key=param.key, value=param.value)
+        for param in mlflow_params
+    ]
 
 
-def mlflow_run_tag_to_faculty_run_tag(mlflow_run_tag):
-    return FacultyTag(key=mlflow_run_tag.key, value=mlflow_run_tag.value)
+def mlflow_tags_to_faculty_tags(mlflow_tags):
+    return [FacultyTag(key=tag.key, value=tag.value) for tag in mlflow_tags]
 
 
 def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):
