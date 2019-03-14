@@ -30,7 +30,6 @@ from mlflow_faculty.mlflow_converters import (
     mlflow_run_param_to_faculty_run_param,
     mlflow_run_tag_to_faculty_run_tag,
 )
-from mlflow_faculty.util import set_to_empty_list_none
 
 
 class FacultyRestStore(AbstractStore):
@@ -277,16 +276,15 @@ class FacultyRestStore(AbstractStore):
         """
         Fetches the experiment by ID from the backend store.
 
-        :param experiment_id: Integer id for the experiment
         :param run_uuid: string containing run UUID
-            (32 hex characters = a uuid4 stripped off of dashes
+            (32 hex characters = a uuid4 stripped off of dashes)
         :param metrics: List of Mlflow Metric entities.
         :param params: List of Mlflow Param entities
         :param tags: List of Mlflow Tag entities.
         """
-        metrics = set_to_empty_list_none(metrics)
-        params = set_to_empty_list_none(params)
-        tags = set_to_empty_list_none(tags)
+        metrics = [] if metrics is None else metrics
+        params = [] if params is None else params
+        tags = [] if tags is None else tags
 
         try:
             self._client.log_run_data(
