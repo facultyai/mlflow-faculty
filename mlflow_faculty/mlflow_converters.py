@@ -86,7 +86,7 @@ def mlflow_run_metric_to_faculty_run_metric(mlflow_run_metric):
     return FacultyMetric(
         key=mlflow_run_metric.key,
         value=mlflow_run_metric.value,
-        timestamp=mlflow_timestamp_to_datetime_milliseconds(
+        timestamp=mlflow_timestamp_to_datetime_seconds(
             mlflow_run_metric.timestamp
         ),
     )
@@ -97,13 +97,7 @@ def mlflow_run_param_to_faculty_run_param(mlflow_run_param):
 
 
 def mlflow_run_tag_to_faculty_run_tag(mlflow_run_tag):
-    return FacultyTag(
-        key=mlflow_run_tag.key,
-        value=mlflow_run_tag.value,
-        timestamp=mlflow_timestamp_to_datetime_milliseconds(
-            mlflow_run_tag.timestamp
-        ),
-    )
+    return FacultyTag(key=mlflow_run_tag.key, value=mlflow_run_tag.value)
 
 
 def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):

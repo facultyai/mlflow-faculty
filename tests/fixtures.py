@@ -10,7 +10,7 @@ from faculty.clients.experiment import (
 from pytz import UTC
 
 
-METRIC_TIMESTAMP = datetime(2019, 3, 13, 17, 0, 15, 110000, tzinfo=UTC)
+METRIC_TIMESTAMP = datetime(2019, 3, 13, 17, 0, 15, tzinfo=UTC)
 FACULTY_METRIC = FacultyMetric(
     key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP
 )
