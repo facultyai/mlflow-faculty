@@ -2,21 +2,22 @@ from datetime import datetime
 
 from pytz import UTC
 
+from faculty.clients.experiment import (
+    ExperimentRunStatus as FacultyExperimentRunStatus,
+    Metric as FacultyMetric,
+    Param as FacultyParam,
+    Tag as FacultyTag,
+)
 from mlflow.entities import (
     Experiment,
     LifecycleStage,
-    RunInfo,
-    RunStatus,
     Run,
     RunData,
+    RunInfo,
+    RunStatus,
 )
-from faculty.clients.experiment import (
-    ExperimentRunStatus as FacultyExperimentRunStatus,
-)
-
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
-
 
 _RUN_STATUS_MAP = {
     FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
@@ -81,5 +82,33 @@ def faculty_run_to_mlflow_run(faculty_run):
     return run
 
 
-def mlflow_timestamp_to_datetime(mlflow_timestamp):
+def mlflow_run_metric_to_faculty_run_metric(mlflow_run_metric):
+    return FacultyMetric(
+        key=mlflow_run_metric.key,
+        value=mlflow_run_metric.value,
+        timestamp=mlflow_timestamp_to_datetime_milliseconds(
+            mlflow_run_metric.timestamp
+        ),
+    )
+
+
+def mlflow_run_param_to_faculty_run_param(mlflow_run_param):
+    return FacultyParam(key=mlflow_run_param.key, value=mlflow_run_param.value)
+
+
+def mlflow_run_tag_to_faculty_run_tag(mlflow_run_tag):
+    return FacultyTag(
+        key=mlflow_run_tag.key,
+        value=mlflow_run_tag.value,
+        timestamp=mlflow_timestamp_to_datetime_milliseconds(
+            mlflow_run_tag.timestamp
+        ),
+    )
+
+
+def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):
     return datetime.fromtimestamp(mlflow_timestamp / 1000.0, tz=UTC)
+
+
+def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
+    return datetime.fromtimestamp(mlflow_timestamp, tz=UTC)
