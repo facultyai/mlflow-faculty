@@ -290,13 +290,15 @@ class FacultyRestStore(AbstractStore):
             self._client.log_run_data(
                 self._project_id,
                 UUID(run_uuid),
-                params=list(
-                    map(mlflow_run_param_to_faculty_run_param, params)
-                ),
-                metrics=list(
-                    map(mlflow_run_metric_to_faculty_run_metric, metrics)
-                ),
-                tags=list(map(mlflow_run_tag_to_faculty_run_tag, tags)),
+                params=[
+                    mlflow_run_param_to_faculty_run_param(param)
+                    for param in params
+                ],
+                metrics=[
+                    mlflow_run_metric_to_faculty_run_metric(metric)
+                    for metric in metrics
+                ],
+                tags=[mlflow_run_tag_to_faculty_run_tag(tag) for tag in tags],
             )
         except faculty.clients.experiment.ParamConflict as conflict:
             raise MlflowException(
