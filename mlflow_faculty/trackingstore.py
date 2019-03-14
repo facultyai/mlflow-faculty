@@ -150,7 +150,10 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: Integer id for the experiment
         """
-        raise NotImplementedError()
+        try:
+            self._client.update(self._project_id, experiment_id, name=new_name)
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
 
     def get_run(self, run_uuid):
         """

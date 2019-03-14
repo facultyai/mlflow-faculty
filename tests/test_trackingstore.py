@@ -179,6 +179,29 @@ def test_list_experiments_client_error(mocker):
         store.list_experiments()
 
 
+def test_rename_experiment(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    store.rename_experiment(EXPERIMENT_ID, "new name")
+
+    mock_client.update.assert_called_once_with(
+        PROJECT_ID, EXPERIMENT_ID, name="new name"
+    )
+
+
+def test_rename_experiment_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.update.side_effect = HttpError(mocker.Mock(), "Error")
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="Error"):
+        store.rename_experiment(EXPERIMENT_ID, "new name")
+
+
 def test_create_run(mocker):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
