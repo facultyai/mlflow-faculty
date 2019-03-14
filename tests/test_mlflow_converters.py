@@ -68,7 +68,7 @@ def test_faculty_http_error_to_mlflow_exception():
 
 
 def test_faculty_tags_to_mlflow_tags():
-    assert faculty_tags_to_mlflow_tags([FACULTY_TAG]) == MLFLOW_TAG
+    assert faculty_tags_to_mlflow_tags([FACULTY_TAG]) == [MLFLOW_TAG]
 
 
 @pytest.mark.parametrize(

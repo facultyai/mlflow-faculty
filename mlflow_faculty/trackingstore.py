@@ -294,14 +294,9 @@ class FacultyRestStore(AbstractStore):
             self._client.log_run_data(
                 self._project_id,
                 UUID(run_uuid),
-                params=[
-                    mlflow_params_to_faculty_params(param) for param in params
-                ],
-                metrics=[
-                    mlflow_metrics_to_faculty_metrics(metric)
-                    for metric in metrics
-                ],
-                tags=[mlflow_tags_to_faculty_tags(tag) for tag in tags],
+                params=mlflow_params_to_faculty_params(params),
+                metrics=mlflow_metrics_to_faculty_metrics(metrics),
+                tags=mlflow_tags_to_faculty_tags(tags),
             )
         except faculty.clients.experiment.ParamConflict as conflict:
             raise MlflowException(

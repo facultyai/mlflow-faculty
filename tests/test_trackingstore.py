@@ -481,13 +481,13 @@ def test_log_batch(mocker):
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID,
         EXPERIMENT_RUN_UUID,
-        metrics=[metric_converter_mock.return_value],
-        params=[param_converter_mock.return_value],
-        tags=[tag_converter_mock.return_value],
+        metrics=metric_converter_mock.return_value,
+        params=param_converter_mock.return_value,
+        tags=tag_converter_mock.return_value,
     )
-    metric_converter_mock.assert_called_once_with(MLFLOW_METRIC)
-    param_converter_mock.assert_called_once_with(MLFLOW_PARAM)
-    tag_converter_mock.assert_called_once_with(MLFLOW_TAG)
+    metric_converter_mock.assert_called_once_with([MLFLOW_METRIC])
+    param_converter_mock.assert_called_once_with([MLFLOW_PARAM])
+    tag_converter_mock.assert_called_once_with([MLFLOW_TAG])
 
 
 def test_log_batch_empty(mocker):
