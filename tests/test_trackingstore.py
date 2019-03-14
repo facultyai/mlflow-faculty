@@ -34,6 +34,8 @@ import pytest
 from mlflow_faculty.trackingstore import FacultyRestStore
 from mlflow_faculty.py23 import to_timestamp
 
+from tests.fixtures import MLFLOW_METRIC, MLFLOW_PARAM, MLFLOW_TAG
+
 PROJECT_ID = uuid4()
 STORE_URI = "faculty:{}".format(PROJECT_ID)
 
@@ -435,3 +437,94 @@ def test_search_runs_client_error(mocker):
             search_expressions=None,
             run_view_type=None,
         )
+
+
+def test_log_batch(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+    mock_mlflow_metric = mocker.Mock()
+    metric_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_run_metric_to_faculty_run_metric",
+        return_value=mock_mlflow_metric,
+    )
+    mock_mlflow_param = mocker.Mock()
+    param_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_run_param_to_faculty_run_param",
+        return_value=mock_mlflow_param,
+    )
+    mock_mlflow_tag = mocker.Mock()
+    tag_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_run_tag_to_faculty_run_tag",
+        return_value=mock_mlflow_tag,
+    )
+
+    store = FacultyRestStore(STORE_URI)
+    store.log_batch(
+        EXPERIMENT_RUN_UUID_HEX_STR,
+        metrics=[MLFLOW_METRIC],
+        params=[MLFLOW_PARAM],
+        tags=[MLFLOW_TAG],
+    )
+
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID,
+        EXPERIMENT_RUN_UUID,
+        metrics=[metric_converter_mock.return_value],
+        params=[param_converter_mock.return_value],
+        tags=[tag_converter_mock.return_value],
+    )
+    metric_converter_mock.assert_called_once_with(MLFLOW_METRIC)
+    param_converter_mock.assert_called_once_with(MLFLOW_PARAM)
+    tag_converter_mock.assert_called_once_with(MLFLOW_TAG)
+
+
+def test_log_batch_empty(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    store.log_batch(EXPERIMENT_RUN_UUID_HEX_STR)
+
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID, EXPERIMENT_RUN_UUID, metrics=[], params=[], tags=[]
+    )
+
+
+def test_log_batch_param_conflict(mocker):
+    mock_client = mocker.Mock()
+    exception = faculty.clients.experiment.ParamConflict(
+        message="message", conflicting_params=["param-key"]
+    )
+
+    mock_client.log_run_data.side_effect = exception
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="param-key"):
+        with pytest.raises(
+            faculty.clients.experiment.ParamConflict, match="message"
+        ):
+            store.log_batch(EXPERIMENT_RUN_UUID_HEX_STR)
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID, EXPERIMENT_RUN_UUID, metrics=[], params=[], tags=[]
+    )
+
+
+def test_log_batch_error(mocker):
+    mock_client = mocker.Mock()
+    exception = HttpError(
+        {}, error="error_message", error_code="some_error_code"
+    )
+
+    mock_client.log_run_data.side_effect = exception
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="error_message"):
+        with pytest.raises(HttpError, match="some_error_code"):
+            store.log_batch(EXPERIMENT_RUN_UUID_HEX_STR)
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID, EXPERIMENT_RUN_UUID, metrics=[], params=[], tags=[]
+    )

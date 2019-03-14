@@ -45,7 +45,7 @@ def faculty_http_error_to_mlflow_exception(faculty_http_error):
     return MlflowException(
         "{}. Received response {} with status code {}".format(
             faculty_http_error.error,
-            faculty_http_error.response.text,
+            faculty_http_error.error_code,
             faculty_http_error.response.status_code,
         )
     )

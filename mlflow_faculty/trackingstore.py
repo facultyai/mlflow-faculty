@@ -302,8 +302,8 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.experiment.ParamConflict as conflict:
             raise MlflowException(
-                "{}. Conflicting param keys: {}".format(
-                    conflict.message, conflict.conflicting_params
+                "Conflicting param keys: {}".format(
+                    conflict.conflicting_params
                 )
             )
         except faculty.clients.base.HttpError as e:
