@@ -197,7 +197,7 @@ def test_list_experiments(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    experiments = store.list_experiments(PROJECT_ID)
+    experiments = store.list_experiments()
 
     assert len(experiments) == 1
     assert experiments_equal(experiments[0], MLFLOW_EXPERIMENT)
@@ -212,7 +212,7 @@ def test_list_experiments_client_error(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Error"):
-        store.list_experiments(PROJECT_ID)
+        store.list_experiments()
 
 
 def test_create_run(mocker):
