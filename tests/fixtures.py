@@ -15,7 +15,7 @@ FACULTY_METRIC = FacultyMetric(
     key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP
 )
 MLFLOW_METRIC = Metric(
-    "metric-key", "metric-value", int(METRIC_TIMESTAMP.timestamp())
+    "metric-key", "metric-value", int(METRIC_TIMESTAMP.strftime("%s"))
 )
 
 FACULTY_PARAM = FacultyParam(key="param-key", value="param-value")
