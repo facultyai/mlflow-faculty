@@ -91,8 +91,7 @@ def test_convert_run():
 def test_faculty_http_error_to_mlflow_exception():
     dummy_response = Response()
     dummy_response.status_code = 418
-    faculty_http_error = HTTPError(
-        dummy_response, "error", "error_code")
+    faculty_http_error = HTTPError(dummy_response, "error", "error_code")
 
     assert isinstance(
         faculty_http_error_to_mlflow_exception(faculty_http_error),
