@@ -18,13 +18,17 @@ from six.moves import urllib
 
 import faculty
 from mlflow.entities import ViewType
+from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
 
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
     faculty_http_error_to_mlflow_exception,
     faculty_run_to_mlflow_run,
-    mlflow_timestamp_to_datetime,
+    mlflow_timestamp_to_datetime_milliseconds,
+    mlflow_run_metric_to_faculty_run_metric,
+    mlflow_run_param_to_faculty_run_param,
+    mlflow_run_tag_to_faculty_run_tag,
 )
 
 
@@ -201,7 +205,7 @@ class FacultyRestStore(AbstractStore):
             faculty_run = self._client.create_run(
                 self._project_id,
                 experiment_id,
-                mlflow_timestamp_to_datetime(start_time),
+                mlflow_timestamp_to_datetime_milliseconds(start_time),
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -220,30 +224,6 @@ class FacultyRestStore(AbstractStore):
         """
         Restores a run.
         :param run_id:
-        """
-        raise NotImplementedError()
-
-    def log_metric(self, run_uuid, metric):
-        """
-        Logs a metric for the specified run
-        :param run_uuid: String id for the run
-        :param metric: :py:class:`mlflow.entities.Metric` instance to log
-        """
-        raise NotImplementedError()
-
-    def log_param(self, run_uuid, param):
-        """
-        Logs a param for the specified run
-        :param run_uuid: String id for the run
-        :param param: :py:class:`mlflow.entities.Param` instance to log
-        """
-        raise NotImplementedError()
-
-    def set_tag(self, run_uuid, tag):
-        """
-        Sets a tag for the specified run
-        :param run_uuid: String id for the run
-        :param tag: :py:class:`mlflow.entities.RunTag` instance to set
         """
         raise NotImplementedError()
 
@@ -292,5 +272,39 @@ class FacultyRestStore(AbstractStore):
         else:
             return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
 
-    def log_batch(self, run_id, metrics, params, tags):
-        raise NotImplementedError()
+    def log_batch(self, run_uuid, metrics=None, params=None, tags=None):
+        """
+        Fetches the experiment by ID from the backend store.
+
+        :param run_uuid: string containing run UUID
+            (32 hex characters = a uuid4 stripped off of dashes)
+        :param metrics: List of Mlflow Metric entities.
+        :param params: List of Mlflow Param entities
+        :param tags: List of Mlflow Tag entities.
+        """
+        metrics = [] if metrics is None else metrics
+        params = [] if params is None else params
+        tags = [] if tags is None else tags
+
+        try:
+            self._client.log_run_data(
+                self._project_id,
+                UUID(run_uuid),
+                params=[
+                    mlflow_run_param_to_faculty_run_param(param)
+                    for param in params
+                ],
+                metrics=[
+                    mlflow_run_metric_to_faculty_run_metric(metric)
+                    for metric in metrics
+                ],
+                tags=[mlflow_run_tag_to_faculty_run_tag(tag) for tag in tags],
+            )
+        except faculty.clients.experiment.ParamConflict as conflict:
+            raise MlflowException(
+                "Conflicting param keys: {}".format(
+                    conflict.conflicting_params
+                )
+            )
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)

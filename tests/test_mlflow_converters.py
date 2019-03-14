@@ -2,22 +2,36 @@ from copy import copy
 from datetime import datetime
 from uuid import uuid4
 
-from pytz import UTC
-
 import pytest
-
-from mlflow.entities import Run, RunData, RunInfo, RunStatus, LifecycleStage
+from pytz import UTC
+from requests import Response
 
 from faculty.clients.experiment import (
-    ExperimentRun as FacultyExperimentRun,
     ExperimentRunStatus as FacultyExperimentRunStatus,
+    ExperimentRun as FacultyExperimentRun,
 )
+from faculty.clients.base import HTTPError
+from mlflow.entities import LifecycleStage, Run, RunData, RunInfo, RunStatus
+from mlflow.exceptions import MlflowException
 
 from mlflow_faculty.mlflow_converters import (
     faculty_run_to_mlflow_run,
-    mlflow_timestamp_to_datetime,
+    faculty_http_error_to_mlflow_exception,
+    mlflow_run_metric_to_faculty_run_metric,
+    mlflow_run_param_to_faculty_run_param,
+    mlflow_run_tag_to_faculty_run_tag,
+    mlflow_timestamp_to_datetime_milliseconds,
+    mlflow_timestamp_to_datetime_seconds,
 )
 from mlflow_faculty.py23 import to_timestamp
+from tests.fixtures import (
+    FACULTY_METRIC,
+    FACULTY_PARAM,
+    FACULTY_TAG,
+    MLFLOW_METRIC,
+    MLFLOW_PARAM,
+    MLFLOW_TAG,
+)
 
 EXPERIMENT_RUN_UUID = uuid4()
 EXPERIMENT_RUN_UUID_HEX_STR = EXPERIMENT_RUN_UUID.hex
@@ -74,6 +88,17 @@ def test_convert_run():
     )
 
 
+def test_faculty_http_error_to_mlflow_exception():
+    dummy_response = Response()
+    dummy_response.status_code = 418
+    faculty_http_error = HTTPError(dummy_response, "error", "error_code")
+
+    assert isinstance(
+        faculty_http_error_to_mlflow_exception(faculty_http_error),
+        MlflowException,
+    )
+
+
 @pytest.mark.parametrize(
     "faculty_run_status, run_status",
     [
@@ -121,5 +146,36 @@ def test_run_end_time():
         (1551884271987, datetime(2019, 3, 6, 14, 57, 51, 987000, tzinfo=UTC)),
     ],
 )
-def test_mlflow_timestamp_to_datetime(timestamp, expected_datetime):
-    assert mlflow_timestamp_to_datetime(timestamp) == expected_datetime
+def test_mlflow_timestamp_to_datetime_milliseconds(
+    timestamp, expected_datetime
+):
+    assert (
+        mlflow_timestamp_to_datetime_milliseconds(timestamp)
+        == expected_datetime
+    )
+
+
+@pytest.mark.parametrize(
+    "timestamp, expected_datetime",
+    [
+        (0, datetime(1970, 1, 1, tzinfo=UTC)),
+        (1552484641, datetime(2019, 3, 13, 13, 44, 1, tzinfo=UTC)),
+    ],
+)
+def test_mlflow_timestamp_to_datetime_seconds(timestamp, expected_datetime):
+    assert mlflow_timestamp_to_datetime_seconds(timestamp) == expected_datetime
+
+
+def test_mlflow_run_metric_to_faculty_run_metric():
+    assert (
+        mlflow_run_metric_to_faculty_run_metric(MLFLOW_METRIC)
+        == FACULTY_METRIC
+    )
+
+
+def test_mlflow_run_param_to_faculty_run_param():
+    assert mlflow_run_param_to_faculty_run_param(MLFLOW_PARAM) == FACULTY_PARAM
+
+
+def test_mlflow_run_tag_to_faculty_run_tag():
+    assert mlflow_run_tag_to_faculty_run_tag(MLFLOW_TAG) == FACULTY_TAG
