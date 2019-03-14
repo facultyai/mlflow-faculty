@@ -26,9 +26,9 @@ from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
-    mlflow_run_metric_to_faculty_run_metric,
-    mlflow_run_param_to_faculty_run_param,
-    mlflow_run_tag_to_faculty_run_tag,
+    mlflow_metrics_to_faculty_metrics,
+    mlflow_params_to_faculty_params,
+    mlflow_tags_to_faculty_tags,
 )
 
 
@@ -198,14 +198,18 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: ID of the experiment for this run
         :param user_id: ID of the user launching this run
         :param source_type: Enum (integer) describing the source of the run
+        :param tags: List of Mlflow Tag entities.
+
 
         :return: The created Run object
         """
+        tags = [] if tags is None else tags
         try:
             faculty_run = self._client.create_run(
                 self._project_id,
                 experiment_id,
                 mlflow_timestamp_to_datetime_milliseconds(start_time),
+                tags=mlflow_tags_to_faculty_tags(tags),
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -291,14 +295,13 @@ class FacultyRestStore(AbstractStore):
                 self._project_id,
                 UUID(run_uuid),
                 params=[
-                    mlflow_run_param_to_faculty_run_param(param)
-                    for param in params
+                    mlflow_params_to_faculty_params(param) for param in params
                 ],
                 metrics=[
-                    mlflow_run_metric_to_faculty_run_metric(metric)
+                    mlflow_metrics_to_faculty_metrics(metric)
                     for metric in metrics
                 ],
-                tags=[mlflow_run_tag_to_faculty_run_tag(tag) for tag in tags],
+                tags=[mlflow_tags_to_faculty_tags(tag) for tag in tags],
             )
         except faculty.clients.experiment.ParamConflict as conflict:
             raise MlflowException(

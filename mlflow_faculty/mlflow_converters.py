@@ -15,6 +15,7 @@ from mlflow.entities import (
     RunData,
     RunInfo,
     RunStatus,
+    RunTag,
 )
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
@@ -77,7 +78,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source version
         lifecycle_stage,
     )
-    run_data = RunData(tags=mlflow_tags_to_faculty_tags(faculty_run.tags))
+    run_data = RunData(tags=faculty_tags_to_mlflow_tags(faculty_run.tags))
     run = Run(run_info, run_data)
     return run
 
@@ -102,6 +103,10 @@ def mlflow_params_to_faculty_params(mlflow_params):
 
 def mlflow_tags_to_faculty_tags(mlflow_tags):
     return [FacultyTag(key=tag.key, value=tag.value) for tag in mlflow_tags]
+
+
+def faculty_tags_to_mlflow_tags(faculty_tags):
+    return [RunTag(key=tag.key, value=tag.value) for tag in faculty_tags]
 
 
 def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):

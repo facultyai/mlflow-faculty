@@ -14,66 +14,36 @@
 
 from datetime import datetime
 import time
-from uuid import uuid4
 from pytz import UTC
 
 import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
-    Experiment,
-    ExperimentRun,
-    ExperimentRunStatus,
     ListExperimentRunsResponse,
     Pagination,
     Page,
 )
-from mlflow.entities import Experiment as MLExperiment, LifecycleStage
+from mlflow.entities import LifecycleStage
 from mlflow.exceptions import MlflowException
 import pytest
 
 from mlflow_faculty.trackingstore import FacultyRestStore
 from mlflow_faculty.py23 import to_timestamp
-
-from tests.fixtures import MLFLOW_METRIC, MLFLOW_PARAM, MLFLOW_TAG
-
-PROJECT_ID = uuid4()
-STORE_URI = "faculty:{}".format(PROJECT_ID)
-
-EXPERIMENT_ID = 12
-CREATED_AT = datetime.now(tz=UTC)
-LAST_UPDATED_AT = CREATED_AT
-
-NAME = "experiment name"
-ARTIFACT_LOCATION = "scheme://artifact-location"
-
-MLFLOW_EXPERIMENT = MLExperiment(
-    EXPERIMENT_ID, NAME, ARTIFACT_LOCATION, LifecycleStage.ACTIVE
-)
-
-FACULTY_EXPERIMENT = Experiment(
-    id=EXPERIMENT_ID,
-    name=NAME,
-    description="not used",
-    artifact_location=ARTIFACT_LOCATION,
-    created_at=datetime.now(tz=UTC),
-    last_updated_at=datetime.now(tz=UTC),
-    deleted_at=None,
-)
-
-EXPERIMENT_RUN_UUID = uuid4()
-EXPERIMENT_RUN_UUID_HEX_STR = EXPERIMENT_RUN_UUID.hex
-
-FACULTY_EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_UUID,
-    experiment_id=FACULTY_EXPERIMENT.id,
-    artifact_location="faculty:",
-    status=ExperimentRunStatus.RUNNING,
-    started_at=datetime.now(tz=UTC),
-    ended_at=datetime.now(tz=UTC),
-    deleted_at=datetime.now(tz=UTC),
-    tags=[],
-    params=[],
-    metrics=[],
+from tests.fixtures import (
+    ARTIFACT_LOCATION,
+    EXPERIMENT_ID,
+    EXPERIMENT_RUN_UUID,
+    EXPERIMENT_RUN_UUID_HEX_STR,
+    FACULTY_EXPERIMENT,
+    FACULTY_RUN,
+    FACULTY_TAG,
+    NAME,
+    MLFLOW_EXPERIMENT,
+    MLFLOW_METRIC,
+    MLFLOW_PARAM,
+    MLFLOW_TAG,
+    PROJECT_ID,
+    STORE_URI,
 )
 
 
@@ -246,12 +216,51 @@ def test_create_run(mocker):
         "entry-point-name",
         start_time,
         "source-version",
-        list(),
+        [MLFLOW_TAG],
         "parent-run-id",
     )
     assert run == mock_mlflow_run
     mock_client.create_run.assert_called_once_with(
-        PROJECT_ID, FACULTY_EXPERIMENT.id, expected_start_time
+        PROJECT_ID,
+        FACULTY_EXPERIMENT.id,
+        expected_start_time,
+        tags=[FACULTY_TAG],
+    )
+    converter_mock.assert_called_once_with(mock_run)
+
+
+def test_create_run_no_tags(mocker):
+    mock_client = mocker.Mock()
+    mock_run = mocker.Mock()
+    mock_client.create_run.return_value = mock_run
+    mocker.patch("faculty.client", return_value=mock_client)
+    mock_mlflow_run = mocker.Mock()
+    converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        return_value=mock_mlflow_run,
+    )
+
+    # this is how Mlflow creates the start time
+    start_time = time.time() * 1000
+    expected_start_time = datetime.fromtimestamp(start_time / 1000, tz=UTC)
+
+    store = FacultyRestStore(STORE_URI)
+
+    run = store.create_run(
+        FACULTY_EXPERIMENT.id,
+        "mlflow-user-id",
+        "run-name",
+        "source-type",
+        "source-name",
+        "entry-point-name",
+        start_time,
+        "source-version",
+        [],
+        "parent-run-id",
+    )
+    assert run == mock_mlflow_run
+    mock_client.create_run.assert_called_once_with(
+        PROJECT_ID, FACULTY_EXPERIMENT.id, expected_start_time, tags=[]
     )
     converter_mock.assert_called_once_with(mock_run)
 
@@ -279,7 +288,7 @@ def test_create_run_client_error(mocker):
 
 def test_get_run(mocker):
     mock_client = mocker.Mock()
-    mock_client.get_run.return_value = FACULTY_EXPERIMENT_RUN
+    mock_client.get_run.return_value = FACULTY_RUN
     mocker.patch("faculty.client", return_value=mock_client)
     mock_mlflow_run = mocker.Mock()
     converter_mock = mocker.patch(
@@ -295,7 +304,7 @@ def test_get_run(mocker):
     mock_client.get_run.assert_called_once_with(
         PROJECT_ID, EXPERIMENT_RUN_UUID
     )
-    converter_mock.assert_called_once_with(FACULTY_EXPERIMENT_RUN)
+    converter_mock.assert_called_once_with(FACULTY_RUN)
 
 
 def test_get_run_client_error(mocker):
@@ -447,17 +456,17 @@ def test_log_batch(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
     mock_mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_run_metric_to_faculty_run_metric",
+        "mlflow_faculty.trackingstore.mlflow_metrics_to_faculty_metrics",
         return_value=mock_mlflow_metric,
     )
     mock_mlflow_param = mocker.Mock()
     param_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_run_param_to_faculty_run_param",
+        "mlflow_faculty.trackingstore.mlflow_params_to_faculty_params",
         return_value=mock_mlflow_param,
     )
     mock_mlflow_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_run_tag_to_faculty_run_tag",
+        "mlflow_faculty.trackingstore.mlflow_tags_to_faculty_tags",
         return_value=mock_mlflow_tag,
     )
 
