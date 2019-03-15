@@ -1,9 +1,16 @@
 from datetime import datetime
-from pytz import UTC
 from uuid import uuid4
 
+from faculty.clients.experiment import (
+    Experiment as FacultyExperiment,
+    ExperimentRun,
+    ExperimentRunStatus,
+    Metric as FacultyMetric,
+    Param as FacultyParam,
+    Tag as FacultyTag,
+)
 from mlflow.entities import (
-    Experiment as MLExperiment,
+    Experiment,
     LifecycleStage,
     Metric,
     Param,
@@ -13,14 +20,8 @@ from mlflow.entities import (
     RunInfo,
     RunStatus,
 )
-from faculty.clients.experiment import (
-    Experiment,
-    ExperimentRun,
-    ExperimentRunStatus,
-    Metric as FacultyMetric,
-    Param as FacultyParam,
-    Tag as FacultyTag,
-)
+from pytz import UTC
+
 from mlflow_faculty.py23 import to_timestamp
 
 
@@ -28,8 +29,6 @@ PROJECT_ID = uuid4()
 STORE_URI = "faculty:{}".format(PROJECT_ID)
 
 EXPERIMENT_ID = 12
-CREATED_AT = datetime.now(tz=UTC)
-LAST_UPDATED_AT = CREATED_AT
 
 NAME = "experiment name"
 ARTIFACT_LOCATION = "scheme://artifact-location"
@@ -48,11 +47,11 @@ MLFLOW_PARAM = Param("param-key", "param-value")
 FACULTY_TAG = FacultyTag(key="tag-key", value="tag-value")
 MLFLOW_TAG = RunTag("tag-key", "tag-value")
 
-MLFLOW_EXPERIMENT = MLExperiment(
+MLFLOW_EXPERIMENT = Experiment(
     EXPERIMENT_ID, NAME, ARTIFACT_LOCATION, LifecycleStage.ACTIVE
 )
 
-FACULTY_EXPERIMENT = Experiment(
+FACULTY_EXPERIMENT = FacultyExperiment(
     id=EXPERIMENT_ID,
     name=NAME,
     description="not used",

@@ -200,7 +200,6 @@ class FacultyRestStore(AbstractStore):
         :param source_type: Enum (integer) describing the source of the run
         :param tags: List of Mlflow Tag entities.
 
-
         :return: The created Run object
         """
         tags = [] if tags is None else tags
