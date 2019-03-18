@@ -71,6 +71,9 @@ FACULTY_EXPERIMENT_RUN = ExperimentRun(
     started_at=datetime.now(tz=UTC),
     ended_at=datetime.now(tz=UTC),
     deleted_at=datetime.now(tz=UTC),
+    tags=[],
+    params=[],
+    metrics=[]
 )
 
 

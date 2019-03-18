@@ -46,6 +46,9 @@ FACULTY_RUN = FacultyExperimentRun(
     started_at=RUN_STARTED_AT,
     ended_at=None,
     deleted_at=None,
+    tags=[],
+    metrics=[],
+    params=[]
 )
 
 
