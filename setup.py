@@ -16,6 +16,12 @@
 from setuptools import setup, find_packages
 
 
+TRACKING_STORE_ENTRYPOINT = "faculty=mlflow_faculty:FacultyRestStore"
+ARTIFACT_REPOSITORY_ENTRYPOINT = (
+    "faculty-datasets=mlflow_faculty:FacultyDatasetsArtifactRepository"
+)
+
+
 setup(
     name="mlflow-faculty",
     description="MLflow plugin for the Faculty platform.",
@@ -33,6 +39,7 @@ setup(
         "pytz",
     ],
     entry_points={
-        "mlflow.tracking_store": "faculty=mlflow_faculty:FacultyRestStore"
+        "mlflow.tracking_store": TRACKING_STORE_ENTRYPOINT,
+        "mlflow.artifact_repository": ARTIFACT_REPOSITORY_ENTRYPOINT,
     },
 )
