@@ -50,7 +50,6 @@ from tests.fixtures import (
     mlflow_run,
 )
 
-
 DATETIME = datetime(2018, 3, 10, 11, 45, 32, 110000, tzinfo=UTC)
 DATETIME_MILLISECONDS = to_timestamp(DATETIME) * 1000
 
