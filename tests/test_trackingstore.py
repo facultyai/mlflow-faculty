@@ -73,7 +73,7 @@ FACULTY_EXPERIMENT_RUN = ExperimentRun(
     deleted_at=datetime.now(tz=UTC),
     tags=[],
     params=[],
-    metrics=[]
+    metrics=[],
 )
 
 
