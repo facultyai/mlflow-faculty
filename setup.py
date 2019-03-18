@@ -33,7 +33,7 @@ setup(
     use_scm_version={"version_scheme": "post-release"},
     setup_requires=["setuptools_scm"],
     install_requires=[
-        "faculty @ git+https://github.com/facultyai/faculty.git#egg=faculty",
+        "faculty @ git+https://github.com/facultyai/faculty.git@delete-experiment#egg=faculty",
         "mlflow @ git+https://github.com/mlflow/mlflow.git#egg=mlflow",
         "six",
         "pytz",
