@@ -15,7 +15,8 @@
 import os
 
 import faculty
-from mlflow.tracking.context import RunContextProvider
+
+# from mlflow.tracking.context import RunContextProvider
 
 
 FACULTY_ENV_TAGS = [
@@ -36,7 +37,7 @@ FACULTY_ENV_TAGS = [
 USER_ID_TAG = "mlflow.faculty.user.userId"
 
 
-class FacultyRunContext(RunContextProvider):
+class FacultyRunContext:  # TODO: This should inherit from RunContextProvider
     def __init__(self):
         self._user_id_cache = None
 
