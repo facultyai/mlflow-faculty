@@ -27,21 +27,24 @@ from mlflow.exceptions import MlflowException
 from mlflow.entities import LifecycleStage, Run, RunStatus
 
 from mlflow_faculty.mlflow_converters import (
-    faculty_run_to_mlflow_run,
     faculty_http_error_to_mlflow_exception,
-    mlflow_metric_to_faculty_metric,
-    mlflow_param_to_faculty_param,
-    mlflow_tag_to_faculty_tag,
+    faculty_experiment_to_mlflow_experiment,
+    faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_timestamp_to_datetime_seconds,
     faculty_tag_to_mlflow_tag,
+    mlflow_metric_to_faculty_metric,
+    mlflow_param_to_faculty_param,
+    mlflow_tag_to_faculty_tag,
 )
 from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
+    FACULTY_EXPERIMENT,
     FACULTY_METRIC,
     FACULTY_PARAM,
     FACULTY_RUN,
     FACULTY_TAG,
+    MLFLOW_EXPERIMENT,
     MLFLOW_METRIC,
     MLFLOW_PARAM,
     MLFLOW_RUN,
@@ -51,7 +54,20 @@ from tests.fixtures import (
 )
 
 
-def check_run_data_equals(first, other):
+DATETIME = datetime(2018, 3, 10, 11, 45, 32, 110000, tzinfo=UTC)
+DATETIME_MILLISECONDS = to_timestamp(DATETIME) * 1000
+
+
+def experiment_equals(first, other):
+    return (
+        first.experiment_id == other.experiment_id
+        and first.name == other.name
+        and first.artifact_location == other.artifact_location
+        and first.lifecycle_stage == other.lifecycle_stage
+    )
+
+
+def run_data_equals(first, other):
     return (
         first.metrics == other.metrics
         and first.params == other.params
@@ -59,15 +75,8 @@ def check_run_data_equals(first, other):
     )
 
 
-def check_run_equals(first, other):
-    return (
-        check_run_data_equals(first.data, other.data)
-        and first.info == other.info
-    )
-
-
-def test_faculty_run_to_mlflow_run():
-    assert check_run_equals(faculty_run_to_mlflow_run(FACULTY_RUN), MLFLOW_RUN)
+def run_equals(first, other):
+    return run_data_equals(first.data, other.data) and first.info == other.info
 
 
 def test_faculty_http_error_to_mlflow_exception():
@@ -81,12 +90,15 @@ def test_faculty_http_error_to_mlflow_exception():
     )
 
 
-def test_faculty_tag_to_mlflow_tag():
-    assert faculty_tag_to_mlflow_tag(FACULTY_TAG) == MLFLOW_TAG
+def test_faculty_experiment_to_mlflow_experiment():
+    assert experiment_equals(
+        faculty_experiment_to_mlflow_experiment(FACULTY_EXPERIMENT),
+        MLFLOW_EXPERIMENT,
+    )
 
 
 @pytest.mark.parametrize(
-    "faculty_run_status, run_status",
+    "faculty_run_status, mlflow_run_status",
     [
         (FacultyExperimentRunStatus.RUNNING, RunStatus.RUNNING),
         (FacultyExperimentRunStatus.FINISHED, RunStatus.FINISHED),
@@ -94,35 +106,38 @@ def test_faculty_tag_to_mlflow_tag():
         (FacultyExperimentRunStatus.SCHEDULED, RunStatus.SCHEDULED),
     ],
 )
-def test_convert_run_status(faculty_run_status, run_status):
-    faculty_run = FACULTY_RUN._replace(status=faculty_run_status)
-    expected_run_info = copy(MLFLOW_RUN_INFO)
-    expected_run_info._status = run_status
-    expected_run = Run(expected_run_info, MLFLOW_RUN_DATA)
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(faculty_run), expected_run
+@pytest.mark.parametrize(
+    "deleted_at, lifecycle_stage",
+    [
+        (None, LifecycleStage.ACTIVE),
+        (datetime.now(tz=UTC), LifecycleStage.DELETED),
+    ],
+)
+@pytest.mark.parametrize(
+    "faculty_ended_at, mlflow_end_time",
+    [(None, None), (DATETIME, DATETIME_MILLISECONDS)],
+)
+def test_faculty_run_to_mlflow_run(
+    faculty_run_status,
+    mlflow_run_status,
+    deleted_at,
+    lifecycle_stage,
+    faculty_ended_at,
+    mlflow_end_time,
+):
+    faculty_run = FACULTY_RUN._replace(
+        status=faculty_run_status,
+        deleted_at=deleted_at,
+        ended_at=faculty_ended_at,
     )
 
-
-def test_deleted_runs():
-    faculty_run = FACULTY_RUN._replace(deleted_at=datetime.now())
     expected_run_info = copy(MLFLOW_RUN_INFO)
-    expected_run_info._lifecycle_stage = LifecycleStage.DELETED
+    expected_run_info._status = mlflow_run_status
+    expected_run_info._lifecycle_stage = lifecycle_stage
+    expected_run_info._end_time = mlflow_end_time
     expected_run = Run(expected_run_info, MLFLOW_RUN_DATA)
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(faculty_run), expected_run
-    )
 
-
-def test_run_end_time():
-    ended_at = datetime.now(tz=UTC)
-    faculty_run = FACULTY_RUN._replace(ended_at=ended_at)
-    expected_run_info = copy(MLFLOW_RUN_INFO)
-    expected_run_info._end_time = to_timestamp(ended_at) * 1000
-    expected_run = Run(expected_run_info, MLFLOW_RUN_DATA)
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(faculty_run), expected_run
-    )
+    assert run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
 
 
 @pytest.mark.parametrize(
@@ -150,6 +165,10 @@ def test_mlflow_timestamp_to_datetime_milliseconds(
 )
 def test_mlflow_timestamp_to_datetime_seconds(timestamp, expected_datetime):
     assert mlflow_timestamp_to_datetime_seconds(timestamp) == expected_datetime
+
+
+def test_faculty_tag_to_mlflow_tag():
+    assert faculty_tag_to_mlflow_tag(FACULTY_TAG) == MLFLOW_TAG
 
 
 def test_mlflow_metric_to_faculty_metric():

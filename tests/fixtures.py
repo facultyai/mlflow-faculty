@@ -40,6 +40,7 @@ from mlflow_faculty.py23 import to_timestamp
 
 
 PROJECT_ID = uuid4()
+EXPERIMENT_ID = 12
 
 NAME = "experiment name"
 ARTIFACT_LOCATION = "scheme://artifact-location"
