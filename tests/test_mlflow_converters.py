@@ -66,7 +66,7 @@ def check_run_equals(first, other):
     )
 
 
-def test_convert_run():
+def test_faculty_run_to_mlflow_run():
     assert check_run_equals(faculty_run_to_mlflow_run(FACULTY_RUN), MLFLOW_RUN)
 
 
