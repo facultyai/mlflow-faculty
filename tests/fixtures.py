@@ -46,12 +46,11 @@ NAME = "experiment name"
 ARTIFACT_LOCATION = "scheme://artifact-location"
 
 METRIC_TIMESTAMP = datetime(2019, 3, 13, 17, 0, 15, tzinfo=UTC)
+METRIC_TIMESTAMP_SECONDS = to_timestamp(METRIC_TIMESTAMP)
 FACULTY_METRIC = FacultyMetric(
     key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP
 )
-MLFLOW_METRIC = Metric(
-    "metric-key", "metric-value", int(METRIC_TIMESTAMP.strftime("%s"))
-)
+MLFLOW_METRIC = Metric("metric-key", "metric-value", METRIC_TIMESTAMP_SECONDS)
 
 FACULTY_PARAM = FacultyParam(key="param-key", value="param-value")
 MLFLOW_PARAM = Param("param-key", "param-value")
@@ -73,7 +72,7 @@ RUN_UUID = uuid4()
 RUN_UUID_HEX_STR = RUN_UUID.hex
 
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
-RUN_STARTED_AT_INT = to_timestamp(RUN_STARTED_AT) * 1000
+RUN_STARTED_AT_MILLISECONDS = to_timestamp(RUN_STARTED_AT) * 1000
 
 FACULTY_RUN = ExperimentRun(
     id=RUN_UUID,
@@ -108,7 +107,7 @@ def mlflow_run(
         "",  # entry_point_name
         "",  # user_id
         status,
-        RUN_STARTED_AT_INT,
+        RUN_STARTED_AT_MILLISECONDS,
         end_time,
         "",  # source_version
         lifecycle_stage,
