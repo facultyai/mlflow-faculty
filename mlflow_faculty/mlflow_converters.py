@@ -1,3 +1,17 @@
+# Copyright 2019 Faculty Science Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from datetime import datetime
 
 from pytz import UTC
@@ -15,6 +29,7 @@ from mlflow.entities import (
     RunData,
     RunInfo,
     RunStatus,
+    RunTag,
 )
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
@@ -77,27 +92,33 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source version
         lifecycle_stage,
     )
-    run_data = RunData()
+    run_data = RunData(
+        tags=[faculty_tag_to_mlflow_tag(tag) for tag in faculty_run.tags]
+    )
     run = Run(run_info, run_data)
     return run
 
 
-def mlflow_run_metric_to_faculty_run_metric(mlflow_run_metric):
+def mlflow_metric_to_faculty_metric(mlflow_metric):
     return FacultyMetric(
-        key=mlflow_run_metric.key,
-        value=mlflow_run_metric.value,
+        key=mlflow_metric.key,
+        value=mlflow_metric.value,
         timestamp=mlflow_timestamp_to_datetime_seconds(
-            mlflow_run_metric.timestamp
+            mlflow_metric.timestamp
         ),
     )
 
 
-def mlflow_run_param_to_faculty_run_param(mlflow_run_param):
-    return FacultyParam(key=mlflow_run_param.key, value=mlflow_run_param.value)
+def mlflow_param_to_faculty_param(mlflow_param):
+    return FacultyParam(key=mlflow_param.key, value=mlflow_param.value)
 
 
-def mlflow_run_tag_to_faculty_run_tag(mlflow_run_tag):
-    return FacultyTag(key=mlflow_run_tag.key, value=mlflow_run_tag.value)
+def mlflow_tag_to_faculty_tag(mlflow_tag):
+    return FacultyTag(key=mlflow_tag.key, value=mlflow_tag.value)
+
+
+def faculty_tag_to_mlflow_tag(faculty_tag):
+    return RunTag(key=faculty_tag.key, value=faculty_tag.value)
 
 
 def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):

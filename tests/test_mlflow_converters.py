@@ -1,6 +1,18 @@
-from copy import copy
+# Copyright 2019 Faculty Science Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from datetime import datetime
-from uuid import uuid4
 
 import pytest
 from pytz import UTC
@@ -8,68 +20,51 @@ from requests import Response
 
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
-    ExperimentRun as FacultyExperimentRun,
 )
 from faculty.clients.base import HTTPError
-from mlflow.entities import LifecycleStage, Run, RunData, RunInfo, RunStatus
 from mlflow.exceptions import MlflowException
+from mlflow.entities import LifecycleStage, RunStatus
 
 from mlflow_faculty.mlflow_converters import (
-    faculty_run_to_mlflow_run,
     faculty_http_error_to_mlflow_exception,
-    mlflow_run_metric_to_faculty_run_metric,
-    mlflow_run_param_to_faculty_run_param,
-    mlflow_run_tag_to_faculty_run_tag,
+    faculty_experiment_to_mlflow_experiment,
+    faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_timestamp_to_datetime_seconds,
+    faculty_tag_to_mlflow_tag,
+    mlflow_metric_to_faculty_metric,
+    mlflow_param_to_faculty_param,
+    mlflow_tag_to_faculty_tag,
 )
 from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
+    FACULTY_EXPERIMENT,
     FACULTY_METRIC,
     FACULTY_PARAM,
+    FACULTY_RUN,
     FACULTY_TAG,
     MLFLOW_METRIC,
     MLFLOW_PARAM,
     MLFLOW_TAG,
-)
-
-EXPERIMENT_RUN_UUID = uuid4()
-EXPERIMENT_RUN_UUID_HEX_STR = EXPERIMENT_RUN_UUID.hex
-RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
-RUN_STARTED_AT_INT = to_timestamp(RUN_STARTED_AT) * 1000
-
-FACULTY_RUN = FacultyExperimentRun(
-    id=EXPERIMENT_RUN_UUID,
-    experiment_id=661,
-    artifact_location="faculty:",
-    status=FacultyExperimentRunStatus.RUNNING,
-    started_at=RUN_STARTED_AT,
-    ended_at=None,
-    deleted_at=None,
-    tags=[],
-    metrics=[],
-    params=[],
+    mlflow_experiment,
+    mlflow_run,
 )
 
 
-EXPECTED_RUN_INFO = RunInfo(
-    EXPERIMENT_RUN_UUID_HEX_STR,
-    661,
-    "",  # name
-    "",  # source_type
-    "",  # source_name
-    "",  # entry_point_name
-    "",  # user_id
-    RunStatus.RUNNING,
-    RUN_STARTED_AT_INT,
-    None,
-    "",  # source_version
-    LifecycleStage.ACTIVE,
-)
-EXPECTED_RUN = Run(EXPECTED_RUN_INFO, RunData())
+DATETIME = datetime(2018, 3, 10, 11, 45, 32, 110000, tzinfo=UTC)
+DATETIME_MILLISECONDS = to_timestamp(DATETIME) * 1000
 
 
-def check_run_data_equals(first, other):
+def experiment_equals(first, other):
+    return (
+        first.experiment_id == other.experiment_id
+        and first.name == other.name
+        and first.artifact_location == other.artifact_location
+        and first.lifecycle_stage == other.lifecycle_stage
+    )
+
+
+def run_data_equals(first, other):
     return (
         first.metrics == other.metrics
         and first.params == other.params
@@ -77,18 +72,8 @@ def check_run_data_equals(first, other):
     )
 
 
-def check_run_equals(first, other):
-    # return first.info == other.info
-    return (
-        check_run_data_equals(first.data, other.data)
-        and first.info == other.info
-    )
-
-
-def test_convert_run():
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(FACULTY_RUN), EXPECTED_RUN
-    )
+def run_equals(first, other):
+    return run_data_equals(first.data, other.data) and first.info == other.info
 
 
 def test_faculty_http_error_to_mlflow_exception():
@@ -103,42 +88,67 @@ def test_faculty_http_error_to_mlflow_exception():
 
 
 @pytest.mark.parametrize(
-    "faculty_run_status, run_status",
+    "deleted_at, lifecycle_stage",
+    [
+        (None, LifecycleStage.ACTIVE),
+        (datetime.now(tz=UTC), LifecycleStage.DELETED),
+    ],
+)
+def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
+    faculty_experiment = FACULTY_EXPERIMENT._replace(deleted_at=deleted_at)
+    expected_mlflow_experiment = mlflow_experiment(lifecycle_stage)
+
+    assert experiment_equals(
+        faculty_experiment_to_mlflow_experiment(faculty_experiment),
+        expected_mlflow_experiment,
+    )
+
+
+@pytest.mark.parametrize(
+    "faculty_run_status, mlflow_run_status",
     [
         (FacultyExperimentRunStatus.RUNNING, RunStatus.RUNNING),
         (FacultyExperimentRunStatus.FINISHED, RunStatus.FINISHED),
         (FacultyExperimentRunStatus.FAILED, RunStatus.FAILED),
         (FacultyExperimentRunStatus.SCHEDULED, RunStatus.SCHEDULED),
     ],
+    ids=["running", "finishes", "failed", "scheduled"],
 )
-def test_convert_run_status(faculty_run_status, run_status):
-    faculty_run = FACULTY_RUN._replace(status=faculty_run_status)
-    expected_run_info = copy(EXPECTED_RUN_INFO)
-    expected_run_info._status = run_status
-    expected_run = Run(expected_run_info, RunData())
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(faculty_run), expected_run
+@pytest.mark.parametrize(
+    "deleted_at, lifecycle_stage",
+    [
+        (None, LifecycleStage.ACTIVE),
+        (datetime.now(tz=UTC), LifecycleStage.DELETED),
+    ],
+    ids=["active", "deleted"],
+)
+@pytest.mark.parametrize(
+    "faculty_ended_at, mlflow_end_time",
+    [(None, None), (DATETIME, DATETIME_MILLISECONDS)],
+    ids=["not ended", "ended"],
+)
+def test_faculty_run_to_mlflow_run(
+    faculty_run_status,
+    mlflow_run_status,
+    deleted_at,
+    lifecycle_stage,
+    faculty_ended_at,
+    mlflow_end_time,
+):
+    faculty_run = FACULTY_RUN._replace(
+        status=faculty_run_status,
+        deleted_at=deleted_at,
+        ended_at=faculty_ended_at,
     )
 
-
-def test_deleted_runs():
-    faculty_run = FACULTY_RUN._replace(deleted_at=datetime.now())
-    expected_run_info = copy(EXPECTED_RUN_INFO)
-    expected_run_info._lifecycle_stage = LifecycleStage.DELETED
-    expected_run = Run(expected_run_info, RunData())
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(faculty_run), expected_run
+    expected_mlflow_run = mlflow_run(
+        status=mlflow_run_status,
+        end_time=mlflow_end_time,
+        lifecycle_stage=lifecycle_stage,
     )
 
-
-def test_run_end_time():
-    ended_at = datetime.now(tz=UTC)
-    faculty_run = FACULTY_RUN._replace(ended_at=ended_at)
-    expected_run_info = copy(EXPECTED_RUN_INFO)
-    expected_run_info._end_time = to_timestamp(ended_at) * 1000
-    expected_run = Run(expected_run_info, RunData())
-    assert check_run_equals(
-        faculty_run_to_mlflow_run(faculty_run), expected_run
+    assert run_equals(
+        faculty_run_to_mlflow_run(faculty_run), expected_mlflow_run
     )
 
 
@@ -169,16 +179,17 @@ def test_mlflow_timestamp_to_datetime_seconds(timestamp, expected_datetime):
     assert mlflow_timestamp_to_datetime_seconds(timestamp) == expected_datetime
 
 
-def test_mlflow_run_metric_to_faculty_run_metric():
-    assert (
-        mlflow_run_metric_to_faculty_run_metric(MLFLOW_METRIC)
-        == FACULTY_METRIC
-    )
+def test_faculty_tag_to_mlflow_tag():
+    assert faculty_tag_to_mlflow_tag(FACULTY_TAG) == MLFLOW_TAG
 
 
-def test_mlflow_run_param_to_faculty_run_param():
-    assert mlflow_run_param_to_faculty_run_param(MLFLOW_PARAM) == FACULTY_PARAM
+def test_mlflow_metric_to_faculty_metric():
+    assert mlflow_metric_to_faculty_metric(MLFLOW_METRIC) == FACULTY_METRIC
 
 
-def test_mlflow_run_tag_to_faculty_run_tag():
-    assert mlflow_run_tag_to_faculty_run_tag(MLFLOW_TAG) == FACULTY_TAG
+def test_mlflow_param_to_faculty_param():
+    assert mlflow_param_to_faculty_param(MLFLOW_PARAM) == FACULTY_PARAM
+
+
+def test_mlflow_tag_to_faculty_tag():
+    assert mlflow_tag_to_faculty_tag(MLFLOW_TAG) == FACULTY_TAG
