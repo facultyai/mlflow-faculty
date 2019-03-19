@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-from datetime import datetime
-from pytz import UTC
-
 import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
@@ -22,7 +19,6 @@ from faculty.clients.experiment import (
     Pagination,
     Page,
 )
-from mlflow.entities import LifecycleStage
 from mlflow.exceptions import MlflowException
 import pytest
 
@@ -34,7 +30,6 @@ from tests.fixtures import (
     FACULTY_EXPERIMENT,
     FACULTY_RUN,
     NAME,
-    MLFLOW_EXPERIMENT,
     MLFLOW_METRIC,
     MLFLOW_PARAM,
     MLFLOW_TAG,
@@ -44,15 +39,6 @@ from tests.fixtures import (
 
 STORE_URI = "faculty:{}".format(PROJECT_ID)
 EXPERIMENT_ID = 12
-
-
-def experiments_equal(one, two):
-    return (
-        one.experiment_id == two.experiment_id
-        and one.name == two.name
-        and one.artifact_location == two.artifact_location
-        and one.lifecycle_stage == two.lifecycle_stage
-    )
 
 
 @pytest.mark.parametrize(
