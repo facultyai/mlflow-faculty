@@ -90,10 +90,22 @@ def test_faculty_http_error_to_mlflow_exception():
     )
 
 
-def test_faculty_experiment_to_mlflow_experiment():
+@pytest.mark.parametrize(
+    "deleted_at, lifecycle_stage",
+    [
+        (None, LifecycleStage.ACTIVE),
+        (datetime.now(tz=UTC), LifecycleStage.DELETED),
+    ],
+)
+def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
+    faculty_experiment = FACULTY_EXPERIMENT._replace(deleted_at=deleted_at)
+
+    expected_experiment = copy(MLFLOW_EXPERIMENT)
+    expected_experiment._lifecycle_stage = lifecycle_stage
+
     assert experiment_equals(
-        faculty_experiment_to_mlflow_experiment(FACULTY_EXPERIMENT),
-        MLFLOW_EXPERIMENT,
+        faculty_experiment_to_mlflow_experiment(faculty_experiment),
+        expected_experiment,
     )
 
 

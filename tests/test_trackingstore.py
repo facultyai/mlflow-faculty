@@ -128,15 +128,23 @@ def test_create_experiment_client_error(mocker):
 
 
 def test_get_experiment(mocker):
+    faculty_experiment = mocker.Mock()
     mock_client = mocker.Mock()
-    mock_client.get.return_value = FACULTY_EXPERIMENT
+    mock_client.get.return_value = faculty_experiment
     mocker.patch("faculty.client", return_value=mock_client)
+
+    mlflow_experiment = mocker.Mock()
+    converter = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
+        return_value=mlflow_experiment,
+    )
 
     store = FacultyRestStore(STORE_URI)
     experiment = store.get_experiment(EXPERIMENT_ID)
 
-    assert experiments_equal(experiment, MLFLOW_EXPERIMENT)
     mock_client.get.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
+    converter.assert_called_once_with(faculty_experiment)
+    assert experiment == mlflow_experiment
 
 
 def test_get_experiment_client_error(mocker):
@@ -154,28 +162,24 @@ def test_get_experiment_client_error(mocker):
         store.get_experiment(EXPERIMENT_ID)
 
 
-def test_get_experiment_deleted(mocker):
-    mock_client = mocker.Mock()
-    mock_client.get.return_value.deleted_at = datetime.now(tz=UTC)
-    mocker.patch("faculty.client", return_value=mock_client)
-
-    store = FacultyRestStore(STORE_URI)
-    experiment = store.get_experiment(EXPERIMENT_ID)
-
-    assert experiment.lifecycle_stage == LifecycleStage.DELETED
-
-
 def test_list_experiments(mocker):
+    faculty_experiment = mocker.Mock()
     mock_client = mocker.Mock()
-    mock_client.list.return_value = [FACULTY_EXPERIMENT]
+    mock_client.list.return_value = [faculty_experiment]
     mocker.patch("faculty.client", return_value=mock_client)
+
+    mlflow_experiment = mocker.Mock()
+    converter = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
+        return_value=mlflow_experiment,
+    )
 
     store = FacultyRestStore(STORE_URI)
     experiments = store.list_experiments()
 
-    assert len(experiments) == 1
-    assert experiments_equal(experiments[0], MLFLOW_EXPERIMENT)
     mock_client.list.assert_called_once_with(PROJECT_ID)
+    converter.assert_called_once_with(faculty_experiment)
+    assert experiments == [mlflow_experiment]
 
 
 def test_list_experiments_client_error(mocker):
