@@ -20,7 +20,9 @@ TRACKING_STORE_ENTRYPOINT = "faculty=mlflow_faculty:FacultyRestStore"
 ARTIFACT_REPOSITORY_ENTRYPOINT = (
     "faculty-datasets=mlflow_faculty:FacultyDatasetsArtifactRepository"
 )
-RUN_CONTEXT_ENTRYPOINT = "faculty-run-context=mlflow_faculty:FacultyRunContext"
+RUN_CONTEXT_ENTRYPOINT = (
+    "faculty-run-context=mlflow_faculty.context:FacultyRunContext"
+)
 
 
 setup(
