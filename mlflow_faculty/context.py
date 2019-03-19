@@ -48,15 +48,14 @@ class FacultyRunContext(RunContextProvider):
         return self._user_id_cache
 
     def in_context(self):
-        return "FACULTY_PROJECT_ID" in os.environ
+        return bool(os.environ.get("FACULTY_PROJECT_ID"))
 
     def tags(self):
         tags = {}
         for environment_variable, tag_name in FACULTY_ENV_TAGS:
-            try:
-                tags[tag_name] = os.environ[environment_variable]
-            except KeyError:
-                pass
+            value = os.environ.get(environment_variable)
+            if value:
+                tags[tag_name] = value
         try:
             tags[USER_ID_TAG] = str(self._user_id)
         except Exception:
