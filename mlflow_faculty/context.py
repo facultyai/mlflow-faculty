@@ -44,7 +44,7 @@ class FacultyRunContext(RunContextProvider):
             except KeyError:
                 pass
         try:
-            tags[USER_ID_TAG] = self._user_id
+            tags[USER_ID_TAG] = str(self._user_id)
         except Exception:
             pass
         return tags
