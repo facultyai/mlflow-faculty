@@ -238,42 +238,6 @@ def test_create_run(mocker):
     run_converter_mock.assert_called_once_with(mock_run)
 
 
-def test_create_run_no_tags(mocker):
-    mock_client = mocker.Mock()
-    mock_run = mocker.Mock()
-    mock_client.create_run.return_value = mock_run
-    mocker.patch("faculty.client", return_value=mock_client)
-    mock_mlflow_run = mocker.Mock()
-    converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
-        return_value=mock_mlflow_run,
-    )
-
-    # this is how Mlflow creates the start time
-    start_time = time.time() * 1000
-    expected_start_time = datetime.fromtimestamp(start_time / 1000, tz=UTC)
-
-    store = FacultyRestStore(STORE_URI)
-
-    run = store.create_run(
-        FACULTY_EXPERIMENT.id,
-        "mlflow-user-id",
-        "run-name",
-        "source-type",
-        "source-name",
-        "entry-point-name",
-        start_time,
-        "source-version",
-        [],
-        "parent-run-id",
-    )
-    assert run == mock_mlflow_run
-    mock_client.create_run.assert_called_once_with(
-        PROJECT_ID, FACULTY_EXPERIMENT.id, expected_start_time, tags=[]
-    )
-    converter_mock.assert_called_once_with(mock_run)
-
-
 def test_create_run_client_error(mocker):
     mock_client = mocker.Mock()
     mock_client.create_run.side_effect = HttpError(mocker.Mock(), "Some error")
