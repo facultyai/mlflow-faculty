@@ -191,51 +191,56 @@ def test_list_experiments_client_error(mocker):
 
 
 def test_create_run(mocker):
-    mock_client = mocker.Mock()
-    mock_run = mocker.Mock()
-    mock_client.create_run.return_value = mock_run
-    mocker.patch("faculty.client", return_value=mock_client)
 
-    mock_faculty_tag = mocker.Mock()
+    mlflow_timestamp = mocker.Mock()
+    faculty_datetime = mocker.Mock()
+    timestamp_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore."
+        "mlflow_timestamp_to_datetime_milliseconds",
+        return_value=faculty_datetime,
+    )
+
+    mlflow_tag = mocker.Mock()
+    faculty_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
-        return_value=mock_faculty_tag,
+        return_value=faculty_tag,
     )
 
-    mock_mlflow_run = mocker.Mock()
+    faculty_run = mocker.Mock()
+    mock_client = mocker.Mock()
+    mock_client.create_run.return_value = faculty_run
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    mlflow_run = mocker.Mock()
     run_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
-        return_value=mock_mlflow_run,
+        return_value=mlflow_run,
     )
 
-    # this is how Mlflow creates the start time
-    start_time = time.time() * 1000
-    expected_start_time = datetime.fromtimestamp(start_time / 1000, tz=UTC)
-
+    experiment_id = mocker.Mock()
     store = FacultyRestStore(STORE_URI)
 
-    run = store.create_run(
-        FACULTY_EXPERIMENT.id,
-        "mlflow-user-id",
-        "run-name",
-        "source-type",
-        "source-name",
-        "entry-point-name",
-        start_time,
-        "source-version",
-        [MLFLOW_TAG],
-        "parent-run-id",
+    returned_run = store.create_run(
+        experiment_id,
+        "unused-mlflow-user-id",
+        "unused-run-name",
+        "unused-source-type",
+        "unused-source-name",
+        "unused-entry-point-name",
+        mlflow_timestamp,
+        "unused-source-version",
+        [mlflow_tag],
+        "unused-parent-run-id",
     )
 
-    tag_converter_mock.assert_called_once_with(MLFLOW_TAG)
+    timestamp_converter_mock.assert_called_once_with(mlflow_timestamp)
+    tag_converter_mock.assert_called_once_with(mlflow_tag)
     mock_client.create_run.assert_called_once_with(
-        PROJECT_ID,
-        FACULTY_EXPERIMENT.id,
-        expected_start_time,
-        tags=[mock_faculty_tag],
+        PROJECT_ID, experiment_id, faculty_datetime, tags=[faculty_tag]
     )
-    assert run == mock_mlflow_run
-    run_converter_mock.assert_called_once_with(mock_run)
+    run_converter_mock.assert_called_once_with(faculty_run)
+    assert returned_run == mlflow_run
 
 
 def test_create_run_client_error(mocker):
