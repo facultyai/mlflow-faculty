@@ -112,6 +112,7 @@ def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
         (FacultyExperimentRunStatus.FAILED, RunStatus.FAILED),
         (FacultyExperimentRunStatus.SCHEDULED, RunStatus.SCHEDULED),
     ],
+    ids=["running", "finishes", "failed", "scheduled"],
 )
 @pytest.mark.parametrize(
     "deleted_at, lifecycle_stage",
@@ -119,10 +120,12 @@ def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
         (None, LifecycleStage.ACTIVE),
         (datetime.now(tz=UTC), LifecycleStage.DELETED),
     ],
+    ids=["active", "deleted"],
 )
 @pytest.mark.parametrize(
     "faculty_ended_at, mlflow_end_time",
     [(None, None), (DATETIME, DATETIME_MILLISECONDS)],
+    ids=["not ended", "ended"],
 )
 def test_faculty_run_to_mlflow_run(
     faculty_run_status,
