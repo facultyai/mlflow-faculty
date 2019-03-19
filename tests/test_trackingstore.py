@@ -191,7 +191,6 @@ def test_list_experiments_client_error(mocker):
 
 
 def test_create_run(mocker):
-
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
@@ -244,23 +243,34 @@ def test_create_run(mocker):
 
 
 def test_create_run_client_error(mocker):
+    mocker.patch(
+        "mlflow_faculty.trackingstore."
+        "mlflow_timestamp_to_datetime_milliseconds"
+    )
+    mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
+
     mock_client = mocker.Mock()
     mock_client.create_run.side_effect = HttpError(mocker.Mock(), "Some error")
     mocker.patch("faculty.client", return_value=mock_client)
+
+    experiment_id = mocker.Mock()
+    mlflow_timestamp = mocker.Mock()
+    mlflow_tag = mocker.Mock()
+
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Some error"):
         store.create_run(
-            FACULTY_EXPERIMENT.id,
-            "mlflow-user-id",
-            "run-name",
-            "source-type",
-            "source-name",
-            "entry-point-name",
-            to_timestamp(datetime.now(tz=UTC)),
-            "source-version",
-            list(),
-            "parent-run-id",
+            experiment_id,
+            "unused-mlflow-user-id",
+            "unused-run-name",
+            "unused-source-type",
+            "unused-source-name",
+            "unused-entry-point-name",
+            mlflow_timestamp,
+            "unused-source-version",
+            [mlflow_tag],
+            "unused-parent-run-id",
         )
 
 
