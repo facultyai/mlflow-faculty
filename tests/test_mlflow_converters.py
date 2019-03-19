@@ -29,12 +29,12 @@ from mlflow.entities import LifecycleStage, Run, RunStatus
 from mlflow_faculty.mlflow_converters import (
     faculty_run_to_mlflow_run,
     faculty_http_error_to_mlflow_exception,
-    mlflow_metrics_to_faculty_metrics,
-    mlflow_params_to_faculty_params,
-    mlflow_tags_to_faculty_tags,
+    mlflow_metric_to_faculty_metric,
+    mlflow_param_to_faculty_param,
+    mlflow_tag_to_faculty_tag,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_timestamp_to_datetime_seconds,
-    faculty_tags_to_mlflow_tags,
+    faculty_tag_to_mlflow_tag,
 )
 from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
@@ -82,7 +82,7 @@ def test_faculty_http_error_to_mlflow_exception():
 
 
 def test_faculty_tags_to_mlflow_tags():
-    assert faculty_tags_to_mlflow_tags([FACULTY_TAG]) == [MLFLOW_TAG]
+    assert faculty_tag_to_mlflow_tag(FACULTY_TAG) == MLFLOW_TAG
 
 
 @pytest.mark.parametrize(
@@ -152,15 +152,13 @@ def test_mlflow_timestamp_to_datetime_seconds(timestamp, expected_datetime):
     assert mlflow_timestamp_to_datetime_seconds(timestamp) == expected_datetime
 
 
-def test_mlflow_metrics_to_faculty_metrics():
-    assert mlflow_metrics_to_faculty_metrics([MLFLOW_METRIC]) == [
-        FACULTY_METRIC
-    ]
+def test_mlflow_metric_to_faculty_metric():
+    assert mlflow_metric_to_faculty_metric(MLFLOW_METRIC) == FACULTY_METRIC
 
 
-def test_mlflow_params_to_faculty_params():
-    assert mlflow_params_to_faculty_params([MLFLOW_PARAM]) == [FACULTY_PARAM]
+def test_mlflow_param_to_faculty_param():
+    assert mlflow_param_to_faculty_param(MLFLOW_PARAM) == FACULTY_PARAM
 
 
-def test_mlflow_tags_to_faculty_tags():
-    assert mlflow_tags_to_faculty_tags([MLFLOW_TAG]) == [FACULTY_TAG]
+def test_mlflow_tag_to_faculty_tag():
+    assert mlflow_tag_to_faculty_tag(MLFLOW_TAG) == FACULTY_TAG

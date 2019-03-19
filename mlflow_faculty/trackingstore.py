@@ -26,9 +26,9 @@ from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
-    mlflow_metrics_to_faculty_metrics,
-    mlflow_params_to_faculty_params,
-    mlflow_tags_to_faculty_tags,
+    mlflow_metric_to_faculty_metric,
+    mlflow_param_to_faculty_param,
+    mlflow_tag_to_faculty_tag,
 )
 
 
@@ -208,7 +208,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id,
                 experiment_id,
                 mlflow_timestamp_to_datetime_milliseconds(start_time),
-                tags=mlflow_tags_to_faculty_tags(tags),
+                tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -293,9 +293,14 @@ class FacultyRestStore(AbstractStore):
             self._client.log_run_data(
                 self._project_id,
                 UUID(run_uuid),
-                params=mlflow_params_to_faculty_params(params),
-                metrics=mlflow_metrics_to_faculty_metrics(metrics),
-                tags=mlflow_tags_to_faculty_tags(tags),
+                params=[
+                    mlflow_param_to_faculty_param(param) for param in params
+                ],
+                metrics=[
+                    mlflow_metric_to_faculty_metric(metric)
+                    for metric in metrics
+                ],
+                tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
         except faculty.clients.experiment.ParamConflict as conflict:
             raise MlflowException(

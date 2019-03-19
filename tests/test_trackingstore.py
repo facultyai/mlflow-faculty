@@ -195,8 +195,15 @@ def test_create_run(mocker):
     mock_run = mocker.Mock()
     mock_client.create_run.return_value = mock_run
     mocker.patch("faculty.client", return_value=mock_client)
+
+    mock_faculty_tag = mocker.Mock()
+    tag_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        return_value=mock_faculty_tag,
+    )
+
     mock_mlflow_run = mocker.Mock()
-    converter_mock = mocker.patch(
+    run_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
         return_value=mock_mlflow_run,
     )
@@ -219,14 +226,16 @@ def test_create_run(mocker):
         [MLFLOW_TAG],
         "parent-run-id",
     )
-    assert run == mock_mlflow_run
+
+    tag_converter_mock.assert_called_once_with(MLFLOW_TAG)
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID,
         FACULTY_EXPERIMENT.id,
         expected_start_time,
-        tags=[FACULTY_TAG],
+        tags=[mock_faculty_tag],
     )
-    converter_mock.assert_called_once_with(mock_run)
+    assert run == mock_mlflow_run
+    run_converter_mock.assert_called_once_with(mock_run)
 
 
 def test_create_run_no_tags(mocker):
@@ -454,20 +463,20 @@ def test_search_runs_client_error(mocker):
 def test_log_batch(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
-    mock_mlflow_metric = mocker.Mock()
+    mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_metrics_to_faculty_metrics",
-        return_value=mock_mlflow_metric,
+        "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
+        return_value=mlflow_metric,
     )
-    mock_mlflow_param = mocker.Mock()
+    mlflow_param = mocker.Mock()
     param_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_params_to_faculty_params",
-        return_value=mock_mlflow_param,
+        "mlflow_faculty.trackingstore.mlflow_param_to_faculty_param",
+        return_value=mlflow_param,
     )
-    mock_mlflow_tag = mocker.Mock()
+    mlflow_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_tags_to_faculty_tags",
-        return_value=mock_mlflow_tag,
+        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        return_value=mlflow_tag,
     )
 
     store = FacultyRestStore(STORE_URI)
@@ -481,13 +490,13 @@ def test_log_batch(mocker):
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID,
         EXPERIMENT_RUN_UUID,
-        metrics=metric_converter_mock.return_value,
-        params=param_converter_mock.return_value,
-        tags=tag_converter_mock.return_value,
+        metrics=[mlflow_metric],
+        params=[mlflow_param],
+        tags=[mlflow_tag],
     )
-    metric_converter_mock.assert_called_once_with([MLFLOW_METRIC])
-    param_converter_mock.assert_called_once_with([MLFLOW_PARAM])
-    tag_converter_mock.assert_called_once_with([MLFLOW_TAG])
+    metric_converter_mock.assert_called_once_with(MLFLOW_METRIC)
+    param_converter_mock.assert_called_once_with(MLFLOW_PARAM)
+    tag_converter_mock.assert_called_once_with(MLFLOW_TAG)
 
 
 def test_log_batch_empty(mocker):
