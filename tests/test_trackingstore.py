@@ -13,7 +13,6 @@
 # limitations under the License
 
 from datetime import datetime
-import time
 from pytz import UTC
 
 import faculty
@@ -28,23 +27,23 @@ from mlflow.exceptions import MlflowException
 import pytest
 
 from mlflow_faculty.trackingstore import FacultyRestStore
-from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
     ARTIFACT_LOCATION,
-    EXPERIMENT_ID,
     EXPERIMENT_RUN_UUID,
     EXPERIMENT_RUN_UUID_HEX_STR,
     FACULTY_EXPERIMENT,
     FACULTY_RUN,
-    FACULTY_TAG,
     NAME,
     MLFLOW_EXPERIMENT,
     MLFLOW_METRIC,
     MLFLOW_PARAM,
     MLFLOW_TAG,
     PROJECT_ID,
-    STORE_URI,
 )
+
+
+STORE_URI = "faculty:{}".format(PROJECT_ID)
+EXPERIMENT_ID = 12
 
 
 def experiments_equal(one, two):
