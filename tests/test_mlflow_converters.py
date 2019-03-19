@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from copy import copy
 from datetime import datetime
 
 import pytest
@@ -44,10 +43,10 @@ from tests.fixtures import (
     FACULTY_PARAM,
     FACULTY_RUN,
     FACULTY_TAG,
-    MLFLOW_EXPERIMENT,
     MLFLOW_METRIC,
     MLFLOW_PARAM,
     MLFLOW_TAG,
+    mlflow_experiment,
     mlflow_run,
 )
 
@@ -97,13 +96,11 @@ def test_faculty_http_error_to_mlflow_exception():
 )
 def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
     faculty_experiment = FACULTY_EXPERIMENT._replace(deleted_at=deleted_at)
-
-    expected_experiment = copy(MLFLOW_EXPERIMENT)
-    expected_experiment._lifecycle_stage = lifecycle_stage
+    expected_mlflow_experiment = mlflow_experiment(lifecycle_stage)
 
     assert experiment_equals(
         faculty_experiment_to_mlflow_experiment(faculty_experiment),
-        expected_experiment,
+        expected_mlflow_experiment,
     )
 
 

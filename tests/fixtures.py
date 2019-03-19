@@ -59,10 +59,6 @@ MLFLOW_PARAM = Param("param-key", "param-value")
 FACULTY_TAG = FacultyTag(key="tag-key", value="tag-value")
 MLFLOW_TAG = RunTag("tag-key", "tag-value")
 
-MLFLOW_EXPERIMENT = Experiment(
-    EXPERIMENT_ID, NAME, ARTIFACT_LOCATION, LifecycleStage.ACTIVE
-)
-
 FACULTY_EXPERIMENT = FacultyExperiment(
     id=EXPERIMENT_ID,
     name=NAME,
@@ -91,6 +87,10 @@ FACULTY_RUN = ExperimentRun(
     params=[],
     metrics=[],
 )
+
+
+def mlflow_experiment(lifecycle_stage=LifecycleStage.ACTIVE):
+    return Experiment(EXPERIMENT_ID, NAME, ARTIFACT_LOCATION, lifecycle_stage)
 
 
 def mlflow_run(
