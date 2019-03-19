@@ -435,11 +435,7 @@ def test_search_runs_client_error(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Dummy client error."):
-        store.search_runs(
-            [FACULTY_EXPERIMENT.id],
-            search_expressions=None,
-            run_view_type=None,
-        )
+        store.search_runs([123], search_expressions=None, run_view_type=None)
 
 
 def test_log_batch(mocker):
