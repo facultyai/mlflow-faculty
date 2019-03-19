@@ -91,6 +91,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         end_time,
         "",  # source version
         lifecycle_stage,
+        faculty_run.artifact_location,
     )
     run_data = RunData(
         tags=[faculty_tag_to_mlflow_tag(tag) for tag in faculty_run.tags]

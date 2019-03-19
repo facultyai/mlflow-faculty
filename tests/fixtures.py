@@ -77,7 +77,7 @@ RUN_STARTED_AT_MILLISECONDS = to_timestamp(RUN_STARTED_AT) * 1000
 FACULTY_RUN = ExperimentRun(
     id=RUN_UUID,
     experiment_id=FACULTY_EXPERIMENT.id,
-    artifact_location="faculty:",
+    artifact_location=ARTIFACT_LOCATION,
     status=ExperimentRunStatus.RUNNING,
     started_at=RUN_STARTED_AT,
     ended_at=None,
@@ -111,5 +111,6 @@ def mlflow_run(
         end_time,
         "",  # source_version
         lifecycle_stage,
+        ARTIFACT_LOCATION,
     )
     return Run(info, data)
