@@ -25,6 +25,7 @@ import pytest
 from mlflow_faculty.trackingstore import FacultyRestStore
 from tests.fixtures import (
     ARTIFACT_LOCATION,
+    EXPERIMENT_ID,
     EXPERIMENT_RUN_UUID,
     EXPERIMENT_RUN_UUID_HEX_STR,
     FACULTY_EXPERIMENT,
@@ -38,7 +39,6 @@ from tests.fixtures import (
 
 
 STORE_URI = "faculty:{}".format(PROJECT_ID)
-EXPERIMENT_ID = 12
 
 
 @pytest.mark.parametrize(

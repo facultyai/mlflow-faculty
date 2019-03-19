@@ -24,7 +24,7 @@ from faculty.clients.experiment import (
 )
 from faculty.clients.base import HTTPError
 from mlflow.exceptions import MlflowException
-from mlflow.entities import LifecycleStage, Run, RunStatus
+from mlflow.entities import LifecycleStage, RunStatus
 
 from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
@@ -47,10 +47,8 @@ from tests.fixtures import (
     MLFLOW_EXPERIMENT,
     MLFLOW_METRIC,
     MLFLOW_PARAM,
-    MLFLOW_RUN,
-    MLFLOW_RUN_DATA,
-    MLFLOW_RUN_INFO,
     MLFLOW_TAG,
+    mlflow_run,
 )
 
 
@@ -143,13 +141,15 @@ def test_faculty_run_to_mlflow_run(
         ended_at=faculty_ended_at,
     )
 
-    expected_run_info = copy(MLFLOW_RUN_INFO)
-    expected_run_info._status = mlflow_run_status
-    expected_run_info._lifecycle_stage = lifecycle_stage
-    expected_run_info._end_time = mlflow_end_time
-    expected_run = Run(expected_run_info, MLFLOW_RUN_DATA)
+    expected_mlflow_run = mlflow_run(
+        status=mlflow_run_status,
+        end_time=mlflow_end_time,
+        lifecycle_stage=lifecycle_stage,
+    )
 
-    assert run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+    assert run_equals(
+        faculty_run_to_mlflow_run(faculty_run), expected_mlflow_run
+    )
 
 
 @pytest.mark.parametrize(

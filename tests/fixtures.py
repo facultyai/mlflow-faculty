@@ -93,20 +93,24 @@ FACULTY_RUN = ExperimentRun(
 )
 
 
-MLFLOW_RUN_DATA = RunData(tags=[MLFLOW_TAG])
-
-MLFLOW_RUN_INFO = RunInfo(
-    EXPERIMENT_RUN_UUID_HEX_STR,
-    EXPERIMENT_ID,
-    "",  # name
-    "",  # source_type
-    "",  # source_name
-    "",  # entry_point_name
-    "",  # user_id
-    RunStatus.RUNNING,
-    RUN_STARTED_AT_INT,
-    None,
-    "",  # source_version
-    LifecycleStage.ACTIVE,
-)
-MLFLOW_RUN = Run(MLFLOW_RUN_INFO, MLFLOW_RUN_DATA)
+def mlflow_run(
+    status=RunStatus.RUNNING,
+    end_time=None,
+    lifecycle_stage=LifecycleStage.ACTIVE,
+):
+    data = RunData(tags=[MLFLOW_TAG])
+    info = RunInfo(
+        EXPERIMENT_RUN_UUID_HEX_STR,
+        EXPERIMENT_ID,
+        "",  # name
+        "",  # source_type
+        "",  # source_name
+        "",  # entry_point_name
+        "",  # user_id
+        status,
+        RUN_STARTED_AT_INT,
+        end_time,
+        "",  # source_version
+        lifecycle_stage,
+    )
+    return Run(info, data)
