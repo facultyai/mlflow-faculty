@@ -130,8 +130,6 @@ class FacultyRestStore(AbstractStore):
         be restored until permanently deleted.
 
         :param experiment_id: Integer id for the experiment
-
-        :return None
         """
         try:
             self._client.delete(self._project_id, experiment_id)

@@ -518,9 +518,8 @@ def test_delete_experiment(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    result = store.delete_experiment(EXPERIMENT_ID)
+    store.delete_experiment(EXPERIMENT_ID)
 
-    assert result is None
     mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
