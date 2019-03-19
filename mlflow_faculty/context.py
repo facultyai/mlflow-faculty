@@ -43,5 +43,8 @@ class FacultyRunContext(RunContextProvider):
                 tags[tag_name] = os.environ[environment_variable]
             except KeyError:
                 pass
-        tags[USER_ID_TAG] = self._user_id()
+        try:
+            tags[USER_ID_TAG] = self._user_id
+        except Exception:
+            pass
         return tags
