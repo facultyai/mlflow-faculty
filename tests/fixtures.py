@@ -69,14 +69,14 @@ FACULTY_EXPERIMENT = FacultyExperiment(
     deleted_at=None,
 )
 
-EXPERIMENT_RUN_UUID = uuid4()
-EXPERIMENT_RUN_UUID_HEX_STR = EXPERIMENT_RUN_UUID.hex
+RUN_UUID = uuid4()
+RUN_UUID_HEX_STR = RUN_UUID.hex
 
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_INT = to_timestamp(RUN_STARTED_AT) * 1000
 
 FACULTY_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_UUID,
+    id=RUN_UUID,
     experiment_id=FACULTY_EXPERIMENT.id,
     artifact_location="faculty:",
     status=ExperimentRunStatus.RUNNING,
@@ -100,7 +100,7 @@ def mlflow_run(
 ):
     data = RunData(tags=[MLFLOW_TAG])
     info = RunInfo(
-        EXPERIMENT_RUN_UUID_HEX_STR,
+        RUN_UUID_HEX_STR,
         EXPERIMENT_ID,
         "",  # name
         "",  # source_type

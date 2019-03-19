@@ -26,8 +26,8 @@ from mlflow_faculty.trackingstore import FacultyRestStore
 from tests.fixtures import (
     ARTIFACT_LOCATION,
     EXPERIMENT_ID,
-    EXPERIMENT_RUN_UUID,
-    EXPERIMENT_RUN_UUID_HEX_STR,
+    RUN_UUID,
+    RUN_UUID_HEX_STR,
     FACULTY_EXPERIMENT,
     FACULTY_RUN,
     NAME,
@@ -274,13 +274,11 @@ def test_get_run(mocker):
     )
 
     store = FacultyRestStore(STORE_URI)
-    run = store.get_run(EXPERIMENT_RUN_UUID_HEX_STR)
+    run = store.get_run(RUN_UUID_HEX_STR)
 
     assert run == mock_mlflow_run
 
-    mock_client.get_run.assert_called_once_with(
-        PROJECT_ID, EXPERIMENT_RUN_UUID
-    )
+    mock_client.get_run.assert_called_once_with(PROJECT_ID, RUN_UUID)
     converter_mock.assert_called_once_with(FACULTY_RUN)
 
 
@@ -297,7 +295,7 @@ def test_get_run_client_error(mocker):
         MlflowException,
         match="Experiment run with ID _ not found in project _",
     ):
-        store.get_run(EXPERIMENT_RUN_UUID_HEX_STR)
+        store.get_run(RUN_UUID_HEX_STR)
 
 
 def test_search_runs(mocker):
@@ -445,7 +443,7 @@ def test_log_batch(mocker):
 
     store = FacultyRestStore(STORE_URI)
     store.log_batch(
-        EXPERIMENT_RUN_UUID_HEX_STR,
+        RUN_UUID_HEX_STR,
         metrics=[MLFLOW_METRIC],
         params=[MLFLOW_PARAM],
         tags=[MLFLOW_TAG],
@@ -453,7 +451,7 @@ def test_log_batch(mocker):
 
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID,
-        EXPERIMENT_RUN_UUID,
+        RUN_UUID,
         metrics=[mlflow_metric],
         params=[mlflow_param],
         tags=[mlflow_tag],
@@ -468,10 +466,10 @@ def test_log_batch_empty(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    store.log_batch(EXPERIMENT_RUN_UUID_HEX_STR)
+    store.log_batch(RUN_UUID_HEX_STR)
 
     mock_client.log_run_data.assert_called_once_with(
-        PROJECT_ID, EXPERIMENT_RUN_UUID, metrics=[], params=[], tags=[]
+        PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
 
 
@@ -490,9 +488,9 @@ def test_log_batch_param_conflict(mocker):
         with pytest.raises(
             faculty.clients.experiment.ParamConflict, match="message"
         ):
-            store.log_batch(EXPERIMENT_RUN_UUID_HEX_STR)
+            store.log_batch(RUN_UUID_HEX_STR)
     mock_client.log_run_data.assert_called_once_with(
-        PROJECT_ID, EXPERIMENT_RUN_UUID, metrics=[], params=[], tags=[]
+        PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
 
 
@@ -509,7 +507,7 @@ def test_log_batch_error(mocker):
 
     with pytest.raises(MlflowException, match="error_message"):
         with pytest.raises(HttpError, match="some_error_code"):
-            store.log_batch(EXPERIMENT_RUN_UUID_HEX_STR)
+            store.log_batch(RUN_UUID_HEX_STR)
     mock_client.log_run_data.assert_called_once_with(
-        PROJECT_ID, EXPERIMENT_RUN_UUID, metrics=[], params=[], tags=[]
+        PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
