@@ -511,3 +511,30 @@ def test_log_batch_error(mocker):
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
+
+
+def test_delete_experiment(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    store.delete_experiment(EXPERIMENT_ID)
+
+    mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
+
+
+def test_delete_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.delete.side_effect = HttpError(
+        mocker.Mock(), "Experiment with ID _ not found in project _"
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(
+        MlflowException, match="Experiment with ID _ not found in project _"
+    ):
+        store.delete_experiment(EXPERIMENT_ID)
+
+    mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
