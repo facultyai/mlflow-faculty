@@ -47,6 +47,9 @@ JOB_ENVIRONMENT = {
     "FACULTY_SUBRUN_ID": "subrun-id",
     "FACULTY_SUBRUN_NUMBER": "2",
 }
+APP_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "app"}
+DEPLOYED_API_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "prod-python-api"}
+TEST_API_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "dev-python-api"}
 
 ALL_ENVIRONMENT_EMPTY_STRING = {
     key: "" for key in merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT)
@@ -75,6 +78,15 @@ JOB_TAGS = {
     "mlflow.faculty.job.subrunId": "subrun-id",
     "mlflow.faculty.job.subrunNumber": "2",
 }
+APP_TAGS = {"mlflow.faculty.createdBy": "app"}
+DEPLOYED_API_TAGS = {
+    "mlflow.faculty.createdBy": "api",
+    "mlflow.faculty.api.mode": "deploy",
+}
+TEST_API_TAGS = {
+    "mlflow.faculty.createdBy": "api",
+    "mlflow.faculty.api.mode": "test",
+}
 
 
 @pytest.mark.parametrize(
@@ -98,10 +110,30 @@ def test_in_context(mocker, env, in_context):
             merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
             merge_dicts(STANDARD_TAGS, JOB_TAGS),
         ),
+        (
+            merge_dicts(STANDARD_ENVIRONMENT, APP_ENVIRONMENT),
+            merge_dicts(STANDARD_TAGS, APP_TAGS),
+        ),
+        (
+            merge_dicts(STANDARD_ENVIRONMENT, DEPLOYED_API_ENVIRONMENT),
+            merge_dicts(STANDARD_TAGS, DEPLOYED_API_TAGS),
+        ),
+        (
+            merge_dicts(STANDARD_ENVIRONMENT, TEST_API_ENVIRONMENT),
+            merge_dicts(STANDARD_TAGS, TEST_API_TAGS),
+        ),
         ({}, {}),
         (ALL_ENVIRONMENT_EMPTY_STRING, {}),
     ],
-    ids=["standard", "job", "no-env", "env-empty-string"],
+    ids=[
+        "standard",
+        "job",
+        "app",
+        "deployed-api",
+        "test-api",
+        "no-env",
+        "env-empty-string",
+    ],
 )
 @pytest.mark.parametrize(
     "account_available, user_tags",
