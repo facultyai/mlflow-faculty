@@ -15,17 +15,29 @@
 from uuid import uuid4
 
 import pytest
+import mock
 
 from mlflow_faculty.context import FacultyRunContext
 
 
-ENVIRONMENT = {
+def merge_dicts(*dicts):
+    merged = {}
+    for d in dicts:
+        merged.update(d)
+    return merged
+
+
+MOCK_ACCOUNT = mock.Mock(user_id=uuid4(), username="joe_bloggs")
+
+STANDARD_ENVIRONMENT = {
     "FACULTY_PROJECT_ID": "project-id",
     "FACULTY_SERVER_ID": "server-id",
     "FACULTY_SERVER_NAME": "server-name",
     "NUM_CPUS": "4",
     "AVAILABLE_MEMORY_MB": "4000",
     "NUM_GPUS": "1",
+}
+JOB_ENVIRONMENT = {
     "FACULTY_JOB_ID": "job-id",
     "FACULTY_JOB_NAME": "job-name",
     "FACULTY_RUN_ID": "run-id",
@@ -34,14 +46,30 @@ ENVIRONMENT = {
     "FACULTY_SUBRUN_NUMBER": "2",
 }
 
+ALL_ENVIRONMENT_EMPTY_STRING = {
+    key: "" for key in merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT)
+}
 
-@pytest.fixture
-def mock_account(mocker):
-    account = mocker.Mock(user_id=uuid4(), username="joe_bloggs")
-    mock_client = mocker.Mock()
-    mock_client.authenticated_account.return_value = account
-    mocker.patch("faculty.client", return_value=mock_client)
-    return account
+STANDARD_TAGS = {
+    "mlflow.faculty.project.projectId": "project-id",
+    "mlflow.faculty.server.serverId": "server-id",
+    "mlflow.faculty.server.name": "server-name",
+    "mlflow.faculty.server.cpus": "4",
+    "mlflow.faculty.server.memoryMb": "4000",
+    "mlflow.faculty.server.gpus": "1",
+}
+USER_TAGS = {
+    "mlflow.faculty.user.userId": str(MOCK_ACCOUNT.user_id),
+    "mlflow.faculty.user.username": MOCK_ACCOUNT.username,
+}
+JOB_TAGS = {
+    "mlflow.faculty.job.jobId": "job-id",
+    "mlflow.faculty.job.name": "job-name",
+    "mlflow.faculty.job.runId": "run-id",
+    "mlflow.faculty.job.runNumber": "23",
+    "mlflow.faculty.job.subrunId": "subrun-id",
+    "mlflow.faculty.job.subrunNumber": "2",
+}
 
 
 @pytest.mark.parametrize(
@@ -57,54 +85,47 @@ def test_in_context(mocker, env, in_context):
     assert FacultyRunContext().in_context() is in_context
 
 
-def test_tags(mocker, mock_account):
-    mocker.patch("os.environ", ENVIRONMENT)
+@pytest.mark.parametrize(
+    "environment, expected_tags",
+    [
+        (STANDARD_ENVIRONMENT, merge_dicts(STANDARD_TAGS, USER_TAGS)),
+        (
+            merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
+            merge_dicts(STANDARD_TAGS, USER_TAGS, JOB_TAGS),
+        ),
+        ({}, USER_TAGS),
+        (ALL_ENVIRONMENT_EMPTY_STRING, USER_TAGS),
+    ],
+    ids=["standard", "job", "no-env", "env-empty-string"],
+)
+def test_tags(mocker, environment, expected_tags):
+    mocker.patch("os.environ", environment)
 
-    expected_tags = {
-        "mlflow.faculty.user.userId": str(mock_account.user_id),
-        "mlflow.faculty.user.username": mock_account.username,
-        "mlflow.faculty.project.projectId": "project-id",
-        "mlflow.faculty.server.serverId": "server-id",
-        "mlflow.faculty.server.name": "server-name",
-        "mlflow.faculty.server.cpus": "4",
-        "mlflow.faculty.server.memoryMb": "4000",
-        "mlflow.faculty.server.gpus": "1",
-        "mlflow.faculty.job.jobId": "job-id",
-        "mlflow.faculty.job.name": "job-name",
-        "mlflow.faculty.job.runId": "run-id",
-        "mlflow.faculty.job.runNumber": "23",
-        "mlflow.faculty.job.subrunId": "subrun-id",
-        "mlflow.faculty.job.subrunNumber": "2",
-    }
+    mock_client = mocker.Mock()
+    mock_client.authenticated_account.return_value = MOCK_ACCOUNT
+    mocker.patch("faculty.client", return_value=mock_client)
 
     assert FacultyRunContext().tags() == expected_tags
 
 
-def test_tags_missing_env_vars(mocker, mock_account):
-    mocker.patch("os.environ", {})
-    expected_tags = {
-        "mlflow.faculty.user.userId": str(mock_account.user_id),
-        "mlflow.faculty.user.username": mock_account.username,
-    }
-    assert FacultyRunContext().tags() == expected_tags
-
-
-def test_tags_empty_string_env_vars(mocker, mock_account):
-    mocker.patch("os.environ", {key: "" for key in ENVIRONMENT})
-    expected_tags = {
-        "mlflow.faculty.user.userId": str(mock_account.user_id),
-        "mlflow.faculty.user.username": mock_account.username,
-    }
-    assert FacultyRunContext().tags() == expected_tags
-
-
-def test_tags_error_getting_account(mocker):
-    mocker.patch("os.environ", {"FACULTY_PROJECT_ID": "project-id"})
+@pytest.mark.parametrize(
+    "environment, expected_tags",
+    [
+        (STANDARD_ENVIRONMENT, STANDARD_TAGS),
+        (
+            merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
+            merge_dicts(STANDARD_TAGS, JOB_TAGS),
+        ),
+        ({}, {}),
+        (ALL_ENVIRONMENT_EMPTY_STRING, {}),
+    ],
+    ids=["standard", "job", "no-env", "env-empty-string"],
+)
+def test_tags_error_getting_account(mocker, environment, expected_tags):
+    mocker.patch("os.environ", environment)
 
     mock_client = mocker.Mock()
     mock_client.authenticated_account.side_effect = Exception()
     mocker.patch("faculty.client", return_value=mock_client)
-
-    expected_tags = {"mlflow.faculty.project.projectId": "project-id"}
 
     assert FacultyRunContext().tags() == expected_tags
