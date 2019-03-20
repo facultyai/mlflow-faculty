@@ -35,30 +35,38 @@ FACULTY_ENV_TAGS = [
 ]
 
 USER_ID_TAG = "mlflow.faculty.user.userId"
+USERNAME_TAG = "mlflow.faculty.user.username"
+
+
+def _tags_from_account(account):
+    return {USER_ID_TAG: str(account.user_id), USERNAME_TAG: account.username}
 
 
 class FacultyRunContext:  # TODO: This should inherit from RunContextProvider
     def __init__(self):
-        self._user_id_cache = None
+        self._account_cache = None
 
-    @property
-    def _user_id(self):
-        if self._user_id_cache is None:
+    def _get_account(self):
+        if self._account_cache is None:
             client = faculty.client("account")
-            self._user_id_cache = client.authenticated_user_id()
-        return self._user_id_cache
+            self._account_cache = client.authenticated_account()
+        return self._account_cache
 
     def in_context(self):
         return bool(os.environ.get("FACULTY_PROJECT_ID"))
 
     def tags(self):
         tags = {}
+
         for environment_variable, tag_name in FACULTY_ENV_TAGS:
             value = os.environ.get(environment_variable)
             if value:
                 tags[tag_name] = value
         try:
-            tags[USER_ID_TAG] = str(self._user_id)
+            account = self._get_account()
         except Exception:
             pass
+        else:
+            tags.update(_tags_from_account(account))
+
         return tags

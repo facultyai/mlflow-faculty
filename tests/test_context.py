@@ -36,12 +36,12 @@ ENVIRONMENT = {
 
 
 @pytest.fixture
-def mock_user_id(mocker):
-    user_id = uuid4()
+def mock_account(mocker):
+    account = mocker.Mock(user_id=uuid4(), username="joe_bloggs")
     mock_client = mocker.Mock()
-    mock_client.authenticated_user_id.return_value = user_id
+    mock_client.authenticated_account.return_value = account
     mocker.patch("faculty.client", return_value=mock_client)
-    return user_id
+    return account
 
 
 @pytest.mark.parametrize(
@@ -57,11 +57,12 @@ def test_in_context(mocker, env, in_context):
     assert FacultyRunContext().in_context() is in_context
 
 
-def test_tags(mocker, mock_user_id):
+def test_tags(mocker, mock_account):
     mocker.patch("os.environ", ENVIRONMENT)
 
     expected_tags = {
-        "mlflow.faculty.user.userId": str(mock_user_id),
+        "mlflow.faculty.user.userId": str(mock_account.user_id),
+        "mlflow.faculty.user.username": mock_account.username,
         "mlflow.faculty.project.projectId": "project-id",
         "mlflow.faculty.server.serverId": "server-id",
         "mlflow.faculty.server.name": "server-name",
@@ -79,23 +80,29 @@ def test_tags(mocker, mock_user_id):
     assert FacultyRunContext().tags() == expected_tags
 
 
-def test_tags_missing_env_vars(mocker, mock_user_id):
+def test_tags_missing_env_vars(mocker, mock_account):
     mocker.patch("os.environ", {})
-    expected_tags = {"mlflow.faculty.user.userId": str(mock_user_id)}
+    expected_tags = {
+        "mlflow.faculty.user.userId": str(mock_account.user_id),
+        "mlflow.faculty.user.username": mock_account.username,
+    }
     assert FacultyRunContext().tags() == expected_tags
 
 
-def test_tags_empty_string_env_vars(mocker, mock_user_id):
+def test_tags_empty_string_env_vars(mocker, mock_account):
     mocker.patch("os.environ", {key: "" for key in ENVIRONMENT})
-    expected_tags = {"mlflow.faculty.user.userId": str(mock_user_id)}
+    expected_tags = {
+        "mlflow.faculty.user.userId": str(mock_account.user_id),
+        "mlflow.faculty.user.username": mock_account.username,
+    }
     assert FacultyRunContext().tags() == expected_tags
 
 
-def test_tags_error_getting_user_id(mocker):
+def test_tags_error_getting_account(mocker):
     mocker.patch("os.environ", {"FACULTY_PROJECT_ID": "project-id"})
 
     mock_client = mocker.Mock()
-    mock_client.authenticated_user_id.side_effect = Exception()
+    mock_client.authenticated_account.side_effect = Exception()
     mocker.patch("faculty.client", return_value=mock_client)
 
     expected_tags = {"mlflow.faculty.project.projectId": "project-id"}
