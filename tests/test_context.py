@@ -33,11 +33,13 @@ STANDARD_ENVIRONMENT = {
     "FACULTY_PROJECT_ID": "project-id",
     "FACULTY_SERVER_ID": "server-id",
     "FACULTY_SERVER_NAME": "server-name",
+    "FACULTY_SERVER_TYPE": "jupyter",
     "NUM_CPUS": "4",
     "AVAILABLE_MEMORY_MB": "4000",
     "NUM_GPUS": "1",
 }
 JOB_ENVIRONMENT = {
+    "FACULTY_SERVER_TYPE": "python-job",
     "FACULTY_JOB_ID": "job-id",
     "FACULTY_JOB_NAME": "job-name",
     "FACULTY_RUN_ID": "run-id",
@@ -50,7 +52,9 @@ ALL_ENVIRONMENT_EMPTY_STRING = {
     key: "" for key in merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT)
 }
 
+DEFAULT_TAGS = {"mlflow.faculty.createdBy": "user"}
 STANDARD_TAGS = {
+    "mlflow.faculty.createdBy": "user",
     "mlflow.faculty.project.projectId": "project-id",
     "mlflow.faculty.server.serverId": "server-id",
     "mlflow.faculty.server.name": "server-name",
@@ -63,6 +67,7 @@ USER_TAGS = {
     "mlflow.faculty.user.username": MOCK_ACCOUNT.username,
 }
 JOB_TAGS = {
+    "mlflow.faculty.createdBy": "job",
     "mlflow.faculty.job.jobId": "job-id",
     "mlflow.faculty.job.name": "job-name",
     "mlflow.faculty.job.runId": "run-id",
@@ -93,8 +98,8 @@ def test_in_context(mocker, env, in_context):
             merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
             merge_dicts(STANDARD_TAGS, USER_TAGS, JOB_TAGS),
         ),
-        ({}, USER_TAGS),
-        (ALL_ENVIRONMENT_EMPTY_STRING, USER_TAGS),
+        ({}, merge_dicts(DEFAULT_TAGS, USER_TAGS)),
+        (ALL_ENVIRONMENT_EMPTY_STRING, merge_dicts(DEFAULT_TAGS, USER_TAGS)),
     ],
     ids=["standard", "job", "no-env", "env-empty-string"],
 )
@@ -116,8 +121,8 @@ def test_tags(mocker, environment, expected_tags):
             merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
             merge_dicts(STANDARD_TAGS, JOB_TAGS),
         ),
-        ({}, {}),
-        (ALL_ENVIRONMENT_EMPTY_STRING, {}),
+        ({}, DEFAULT_TAGS),
+        (ALL_ENVIRONMENT_EMPTY_STRING, DEFAULT_TAGS),
     ],
     ids=["standard", "job", "no-env", "env-empty-string"],
 )

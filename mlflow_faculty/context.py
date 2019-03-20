@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import re
 
 import faculty
 
@@ -36,10 +37,27 @@ FACULTY_ENV_TAGS = [
 
 USER_ID_TAG = "mlflow.faculty.user.userId"
 USERNAME_TAG = "mlflow.faculty.user.username"
+CREATED_BY_TAG = "mlflow.faculty.createdBy"
+API_MODE_TAG = "mlflow.faculty.api.mode"
 
 
 def _tags_from_account(account):
     return {USER_ID_TAG: str(account.user_id), USERNAME_TAG: account.username}
+
+
+def _tags_from_server_type(server_type):
+    if server_type is None:
+        return {CREATED_BY_TAG: "user"}
+    elif re.search("job", server_type):
+        return {CREATED_BY_TAG: "job"}
+    elif re.search("app", server_type):
+        return {CREATED_BY_TAG: "app"}
+    elif re.search("prod.*api", server_type):
+        return {CREATED_BY_TAG: "api", API_MODE_TAG: "deploy"}
+    elif re.search("dev.*api", server_type):
+        return {CREATED_BY_TAG: "api", API_MODE_TAG: "test"}
+    else:
+        return {CREATED_BY_TAG: "user"}
 
 
 class FacultyRunContext:  # TODO: This should inherit from RunContextProvider
@@ -62,6 +80,10 @@ class FacultyRunContext:  # TODO: This should inherit from RunContextProvider
             value = os.environ.get(environment_variable)
             if value:
                 tags[tag_name] = value
+
+        server_type = os.environ.get("FACULTY_SERVER_TYPE")
+        tags.update(_tags_from_server_type(server_type))
+
         try:
             account = self._get_account()
         except Exception:
