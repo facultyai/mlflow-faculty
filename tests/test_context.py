@@ -91,46 +91,35 @@ def test_in_context(mocker, env, in_context):
 
 
 @pytest.mark.parametrize(
-    "environment, expected_tags",
-    [
-        (STANDARD_ENVIRONMENT, merge_dicts(STANDARD_TAGS, USER_TAGS)),
-        (
-            merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
-            merge_dicts(STANDARD_TAGS, USER_TAGS, JOB_TAGS),
-        ),
-        ({}, merge_dicts(DEFAULT_TAGS, USER_TAGS)),
-        (ALL_ENVIRONMENT_EMPTY_STRING, merge_dicts(DEFAULT_TAGS, USER_TAGS)),
-    ],
-    ids=["standard", "job", "no-env", "env-empty-string"],
-)
-def test_tags(mocker, environment, expected_tags):
-    mocker.patch("os.environ", environment)
-
-    mock_client = mocker.Mock()
-    mock_client.authenticated_account.return_value = MOCK_ACCOUNT
-    mocker.patch("faculty.client", return_value=mock_client)
-
-    assert FacultyRunContext().tags() == expected_tags
-
-
-@pytest.mark.parametrize(
-    "environment, expected_tags",
+    "environment, environment_tags",
     [
         (STANDARD_ENVIRONMENT, STANDARD_TAGS),
         (
             merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT),
             merge_dicts(STANDARD_TAGS, JOB_TAGS),
         ),
-        ({}, DEFAULT_TAGS),
-        (ALL_ENVIRONMENT_EMPTY_STRING, DEFAULT_TAGS),
+        ({}, {}),
+        (ALL_ENVIRONMENT_EMPTY_STRING, {}),
     ],
     ids=["standard", "job", "no-env", "env-empty-string"],
 )
-def test_tags_error_getting_account(mocker, environment, expected_tags):
+@pytest.mark.parametrize(
+    "account_available, user_tags",
+    [(True, USER_TAGS), (False, {})],
+    ids=["account", "no-account"],
+)
+def test_tags(
+    mocker, environment, environment_tags, account_available, user_tags
+):
     mocker.patch("os.environ", environment)
 
     mock_client = mocker.Mock()
-    mock_client.authenticated_account.side_effect = Exception()
+    if account_available:
+        mock_client.authenticated_account.return_value = MOCK_ACCOUNT
+    else:
+        mock_client.authenticated_account.side_effect = Exception()
     mocker.patch("faculty.client", return_value=mock_client)
+
+    expected_tags = merge_dicts(DEFAULT_TAGS, environment_tags, user_tags)
 
     assert FacultyRunContext().tags() == expected_tags
