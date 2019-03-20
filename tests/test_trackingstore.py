@@ -15,6 +15,7 @@
 import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
+    ExperimentNameConflict,
     ListExperimentRunsResponse,
     Pagination,
     Page,
@@ -100,16 +101,26 @@ def test_create_experiment(mocker):
     )
 
 
-def test_create_experiment_client_error(mocker):
+def test_create_experiment_name_conflict(mocker):
+    exception = ExperimentNameConflict("bad name")
     mock_client = mocker.Mock()
-    mock_client.create.side_effect = HttpError(
-        mocker.Mock(), "Name already used in project."
-    )
+    mock_client.create.side_effect = exception
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
 
-    with pytest.raises(MlflowException, match="Name already used in project."):
+    with pytest.raises(MlflowException, match=str(exception)):
+        store.create_experiment(NAME, ARTIFACT_LOCATION)
+
+
+def test_create_experiment_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.create.side_effect = HttpError(mocker.Mock(), "Error")
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="Error"):
         store.create_experiment(NAME, ARTIFACT_LOCATION)
 
 
@@ -177,6 +188,41 @@ def test_list_experiments_client_error(mocker):
 
     with pytest.raises(MlflowException, match="Error"):
         store.list_experiments()
+
+
+def test_rename_experiment(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    store.rename_experiment(EXPERIMENT_ID, "new name")
+
+    mock_client.update.assert_called_once_with(
+        PROJECT_ID, EXPERIMENT_ID, name="new name"
+    )
+
+
+def test_rename_experiment_name_conflict(mocker):
+    exception = ExperimentNameConflict("bad name")
+    mock_client = mocker.Mock()
+    mock_client.update.side_effect = exception
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match=str(exception)):
+        store.rename_experiment(EXPERIMENT_ID, "bad name")
+
+
+def test_rename_experiment_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.update.side_effect = HttpError(mocker.Mock(), "Error")
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="Error"):
+        store.rename_experiment(EXPERIMENT_ID, "new name")
 
 
 def test_create_run(mocker):

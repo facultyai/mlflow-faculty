@@ -17,6 +17,8 @@ from uuid import UUID
 from six.moves import urllib
 
 import faculty
+import faculty.clients.base
+import faculty.clients.experiment
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
@@ -88,6 +90,8 @@ class FacultyRestStore(AbstractStore):
             faculty_experiment = self._client.create(
                 self._project_id, name, artifact_location=artifact_location
             )
+        except faculty.clients.experiment.ExperimentNameConflict as e:
+            raise MlflowException(str(e))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
@@ -150,7 +154,12 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: Integer id for the experiment
         """
-        raise NotImplementedError()
+        try:
+            self._client.update(self._project_id, experiment_id, name=new_name)
+        except faculty.clients.experiment.ExperimentNameConflict as e:
+            raise MlflowException(str(e))
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
 
     def get_run(self, run_uuid):
         """
