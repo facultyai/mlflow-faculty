@@ -15,7 +15,6 @@
 from uuid import uuid4
 
 import pytest
-import mock
 
 from mlflow_faculty.context import FacultyRunContext
 
@@ -27,7 +26,8 @@ def merge_dicts(*dicts):
     return merged
 
 
-MOCK_ACCOUNT = mock.Mock(user_id=uuid4(), username="joe_bloggs")
+USER_ID = uuid4()
+USERNAME = "joe_bloggs"
 
 STANDARD_ENVIRONMENT = {
     "FACULTY_PROJECT_ID": "project-id",
@@ -66,8 +66,8 @@ STANDARD_TAGS = {
     "mlflow.faculty.server.gpus": "1",
 }
 USER_TAGS = {
-    "mlflow.faculty.user.userId": str(MOCK_ACCOUNT.user_id),
-    "mlflow.faculty.user.username": MOCK_ACCOUNT.username,
+    "mlflow.faculty.user.userId": str(USER_ID),
+    "mlflow.faculty.user.username": USERNAME,
 }
 JOB_TAGS = {
     "mlflow.faculty.createdBy": "job",
@@ -147,7 +147,8 @@ def test_tags(
 
     mock_client = mocker.Mock()
     if account_available:
-        mock_client.authenticated_account.return_value = MOCK_ACCOUNT
+        account = mocker.Mock(user_id=USER_ID, username=USERNAME)
+        mock_client.authenticated_account.return_value = account
     else:
         mock_client.authenticated_account.side_effect = Exception()
     mocker.patch("faculty.client", return_value=mock_client)
