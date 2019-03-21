@@ -133,10 +133,9 @@ def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
 
 
 def mlflow_viewtype_to_faculty_lifecycle_stage(mlflow_view_type):
-    if mlflow_view_type == ViewType.ACTIVE_ONLY:
-        return FacultyLifecycleStage.ACTIVE
-    elif mlflow_view_type == ViewType.DELETED_ONLY:
-        return FacultyLifecycleStage.DELETED
-    elif mlflow_view_type == ViewType.ALL:
-        return None
-    raise ValueError("Unexpected view_type: {}".format(mlflow_view_type))
+    conversions = {
+        ViewType.ACTIVE_ONLY: FacultyLifecycleStage.ACTIVE,
+        ViewType.DELETED_ONLY: FacultyLifecycleStage.DELETED,
+        ViewType.ALL: None,
+    }
+    return conversions[mlflow_view_type]
