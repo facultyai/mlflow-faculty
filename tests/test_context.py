@@ -47,9 +47,15 @@ JOB_ENVIRONMENT = {
     "FACULTY_SUBRUN_ID": "subrun-id",
     "FACULTY_SUBRUN_NUMBER": "2",
 }
-APP_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "app"}
-DEPLOYED_API_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "prod-python-api"}
-TEST_API_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "dev-python-api"}
+APP_ENVIRONMENT = {"FACULTY_SERVER_TYPE": "app", "FACULTY_APP_ID": "app-id"}
+DEPLOYED_API_ENVIRONMENT = {
+    "FACULTY_SERVER_TYPE": "prod-python-api",
+    "FACULTY_API_ID": "api-id",
+}
+TEST_API_ENVIRONMENT = {
+    "FACULTY_SERVER_TYPE": "dev-python-api",
+    "FACULTY_API_ID": "api-id",
+}
 
 ALL_ENVIRONMENT_EMPTY_STRING = {
     key: "" for key in merge_dicts(STANDARD_ENVIRONMENT, JOB_ENVIRONMENT)
@@ -78,13 +84,18 @@ JOB_TAGS = {
     "mlflow.faculty.job.subrunId": "subrun-id",
     "mlflow.faculty.job.subrunNumber": "2",
 }
-APP_TAGS = {"mlflow.faculty.createdBy": "app"}
+APP_TAGS = {
+    "mlflow.faculty.createdBy": "app",
+    "mlflow.faculty.app.appId": "app-id",
+}
 DEPLOYED_API_TAGS = {
     "mlflow.faculty.createdBy": "api",
+    "mlflow.faculty.api.apiId": "api-id",
     "mlflow.faculty.api.mode": "deploy",
 }
 TEST_API_TAGS = {
     "mlflow.faculty.createdBy": "api",
+    "mlflow.faculty.api.apiId": "api-id",
     "mlflow.faculty.api.mode": "test",
 }
 

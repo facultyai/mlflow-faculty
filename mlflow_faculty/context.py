@@ -33,6 +33,8 @@ FACULTY_ENV_TAGS = [
     ("FACULTY_RUN_NUMBER", "mlflow.faculty.job.runNumber"),
     ("FACULTY_SUBRUN_ID", "mlflow.faculty.job.subrunId"),
     ("FACULTY_SUBRUN_NUMBER", "mlflow.faculty.job.subrunNumber"),
+    ("FACULTY_APP_ID", "mlflow.faculty.app.appId"),
+    ("FACULTY_API_ID", "mlflow.faculty.api.apiId"),
 ]
 
 USER_ID_TAG = "mlflow.faculty.user.userId"
