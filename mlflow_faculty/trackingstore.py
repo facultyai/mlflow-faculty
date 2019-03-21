@@ -329,3 +329,6 @@ class FacultyRestStore(AbstractStore):
 
     def log_metric(self, run_id, metric):
         return self.log_batch(run_id, metrics=[metric])
+
+    def log_param(self, run_id, param):
+        return self.log_batch(run_id, params=[param])

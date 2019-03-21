@@ -617,6 +617,29 @@ def test_log_metric(mocker):
     metric_converter_mock.assert_called_once_with(MLFLOW_METRIC)
 
 
+def test_log_param(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+    mlflow_param = mocker.Mock()
+    param_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_param_to_faculty_param",
+        return_value=mlflow_param,
+    )
+    store = FacultyRestStore(STORE_URI)
+    store.log_param(
+        RUN_UUID_HEX_STR,
+        MLFLOW_PARAM
+    )
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID,
+        RUN_UUID,
+        metrics=[],
+        params=[mlflow_param],
+        tags=[]
+    )
+    param_converter_mock.assert_called_once_with(MLFLOW_PARAM)
+
+
 def test_delete_experiment(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
