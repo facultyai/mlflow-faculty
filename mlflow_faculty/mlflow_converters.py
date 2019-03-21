@@ -44,6 +44,13 @@ _RUN_STATUS_MAP = {
 }
 
 
+_LIFECYCLE_STAGE_CONVERSION_MAP = {
+    ViewType.ACTIVE_ONLY: FacultyLifecycleStage.ACTIVE,
+    ViewType.DELETED_ONLY: FacultyLifecycleStage.DELETED,
+    ViewType.ALL: None,
+}
+
+
 def _datetime_to_mlflow_timestamp(dt):
     return to_timestamp(dt) * 1000
 
@@ -133,9 +140,4 @@ def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
 
 
 def mlflow_viewtype_to_faculty_lifecycle_stage(mlflow_view_type):
-    conversions = {
-        ViewType.ACTIVE_ONLY: FacultyLifecycleStage.ACTIVE,
-        ViewType.DELETED_ONLY: FacultyLifecycleStage.DELETED,
-        ViewType.ALL: None,
-    }
-    return conversions[mlflow_view_type]
+    return _LIFECYCLE_STAGE_CONVERSION_MAP[mlflow_view_type]
