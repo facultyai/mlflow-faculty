@@ -594,6 +594,29 @@ def test_log_batch_error(mocker):
     )
 
 
+def test_log_metric(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+    mlflow_metric = mocker.Mock()
+    metric_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
+        return_value=mlflow_metric,
+    )
+    store = FacultyRestStore(STORE_URI)
+    store.log_metric(
+        RUN_UUID_HEX_STR,
+        MLFLOW_METRIC
+    )
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID,
+        RUN_UUID,
+        metrics=[mlflow_metric],
+        params=[],
+        tags=[]
+    )
+    metric_converter_mock.assert_called_once_with(MLFLOW_METRIC)
+
+
 def test_delete_experiment(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)

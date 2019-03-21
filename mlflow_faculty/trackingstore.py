@@ -326,3 +326,6 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
+
+    def log_metric(self, run_id, metric):
+        return self.log_batch(run_id, metrics=[metric])
