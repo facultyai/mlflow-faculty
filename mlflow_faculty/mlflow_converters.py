@@ -18,6 +18,7 @@ from pytz import UTC
 
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
+    LifecycleStage as FacultyLifecycleStage,
     Metric as FacultyMetric,
     Param as FacultyParam,
     Tag as FacultyTag,
@@ -30,6 +31,7 @@ from mlflow.entities import (
     RunInfo,
     RunStatus,
     RunTag,
+    ViewType,
 )
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
@@ -39,6 +41,13 @@ _RUN_STATUS_MAP = {
     FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
     FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
     FacultyExperimentRunStatus.SCHEDULED: RunStatus.SCHEDULED,
+}
+
+
+_LIFECYCLE_STAGE_CONVERSION_MAP = {
+    ViewType.ACTIVE_ONLY: FacultyLifecycleStage.ACTIVE,
+    ViewType.DELETED_ONLY: FacultyLifecycleStage.DELETED,
+    ViewType.ALL: None,
 }
 
 
@@ -128,3 +137,7 @@ def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):
 
 def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
     return datetime.fromtimestamp(mlflow_timestamp, tz=UTC)
+
+
+def mlflow_viewtype_to_faculty_lifecycle_stage(mlflow_view_type):
+    return _LIFECYCLE_STAGE_CONVERSION_MAP[mlflow_view_type]

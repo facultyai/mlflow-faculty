@@ -20,10 +20,11 @@ from requests import Response
 
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
+    LifecycleStage as FacultyLifecycleStage,
 )
 from faculty.clients.base import HTTPError
 from mlflow.exceptions import MlflowException
-from mlflow.entities import LifecycleStage, RunStatus
+from mlflow.entities import LifecycleStage, RunStatus, ViewType
 
 from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
@@ -35,6 +36,7 @@ from mlflow_faculty.mlflow_converters import (
     mlflow_metric_to_faculty_metric,
     mlflow_param_to_faculty_param,
     mlflow_tag_to_faculty_tag,
+    mlflow_viewtype_to_faculty_lifecycle_stage,
 )
 from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
@@ -192,3 +194,15 @@ def test_mlflow_param_to_faculty_param():
 
 def test_mlflow_tag_to_faculty_tag():
     assert mlflow_tag_to_faculty_tag(MLFLOW_TAG) == FACULTY_TAG
+
+
+def test_mlflow_viewtype_to_faculty_lifecycle_stage():
+    assert mlflow_viewtype_to_faculty_lifecycle_stage(ViewType.ALL) is None
+    assert (
+        mlflow_viewtype_to_faculty_lifecycle_stage(ViewType.ACTIVE_ONLY)
+        == FacultyLifecycleStage.ACTIVE
+    )
+    assert (
+        mlflow_viewtype_to_faculty_lifecycle_stage(ViewType.DELETED_ONLY)
+        == FacultyLifecycleStage.DELETED
+    )
