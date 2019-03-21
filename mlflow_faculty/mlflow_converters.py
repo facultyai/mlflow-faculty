@@ -90,7 +90,7 @@ def faculty_run_to_mlflow_run(faculty_run):
     run_info = RunInfo(
         faculty_run.id.hex,
         faculty_run.experiment_id,
-        "",  # name
+        faculty_run.name,  # name
         "",  # source_type
         "",  # source_name
         "",  # entry_point_name
