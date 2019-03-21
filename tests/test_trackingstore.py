@@ -524,7 +524,7 @@ def test_log_batch(mocker):
 
     store = FacultyRestStore(STORE_URI)
     store.log_batch(
-        RUN_UUID_HEX_STR,
+        run_id=RUN_UUID_HEX_STR,
         metrics=[MLFLOW_METRIC],
         params=[MLFLOW_PARAM],
         tags=[MLFLOW_TAG],

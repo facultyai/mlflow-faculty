@@ -291,7 +291,7 @@ class FacultyRestStore(AbstractStore):
         else:
             return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
 
-    def log_batch(self, run_uuid, metrics=None, params=None, tags=None):
+    def log_batch(self, run_id, metrics=None, params=None, tags=None):
         """
         Fetches the experiment by ID from the backend store.
 
@@ -308,7 +308,7 @@ class FacultyRestStore(AbstractStore):
         try:
             self._client.log_run_data(
                 self._project_id,
-                UUID(run_uuid),
+                UUID(run_id),
                 params=[
                     mlflow_param_to_faculty_param(param) for param in params
                 ],
