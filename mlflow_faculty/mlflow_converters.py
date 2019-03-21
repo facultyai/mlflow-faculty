@@ -18,6 +18,7 @@ from pytz import UTC
 
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
+    LifecycleStage as FacultyLifecycleStage,
     Metric as FacultyMetric,
     Param as FacultyParam,
     Tag as FacultyTag,
@@ -30,6 +31,7 @@ from mlflow.entities import (
     RunInfo,
     RunStatus,
     RunTag,
+    ViewType,
 )
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
@@ -128,3 +130,13 @@ def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):
 
 def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
     return datetime.fromtimestamp(mlflow_timestamp, tz=UTC)
+
+
+def mlflow_viewtype_to_faculty_lifecycle_stage(mlflow_view_type):
+    if mlflow_view_type == ViewType.ACTIVE_ONLY:
+        return FacultyLifecycleStage.ACTIVE
+    elif mlflow_view_type == ViewType.DELETED_ONLY:
+        return FacultyLifecycleStage.DELETED
+    elif mlflow_view_type == ViewType.ALL:
+        return None
+    raise ValueError("Unexpected view_type: {}".format(mlflow_view_type))

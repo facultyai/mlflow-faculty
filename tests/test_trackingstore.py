@@ -20,6 +20,7 @@ from faculty.clients.experiment import (
     Pagination,
     Page,
 )
+from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 import pytest
 
@@ -166,16 +167,50 @@ def test_list_experiments(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     mlflow_experiment = mocker.Mock()
-    converter = mocker.patch(
+    experiment_converter = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
         return_value=mlflow_experiment,
+    )
+    lifecycle_stage = mocker.Mock()
+    lifecycle_converter = mocker.patch(
+        "mlflow_faculty.trackingstore"
+        ".mlflow_viewtype_to_faculty_lifecycle_stage",
+        return_value=lifecycle_stage,
     )
 
     store = FacultyRestStore(STORE_URI)
     experiments = store.list_experiments()
 
-    mock_client.list.assert_called_once_with(PROJECT_ID)
-    converter.assert_called_once_with(faculty_experiment)
+    mock_client.list.assert_called_once_with(PROJECT_ID, lifecycle_stage)
+    experiment_converter.assert_called_once_with(faculty_experiment)
+    lifecycle_converter.assert_called_once_with(ViewType.ACTIVE_ONLY)
+    assert experiments == [mlflow_experiment]
+
+
+def test_list_experiments_filtered_by_lifecycle_stage(mocker):
+    faculty_experiment = mocker.Mock()
+    mock_client = mocker.Mock()
+    mock_client.list.return_value = [faculty_experiment]
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    mlflow_experiment = mocker.Mock()
+    experiment_converter = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
+        return_value=mlflow_experiment,
+    )
+    lifecycle_stage = mocker.Mock()
+    lifecycle_converter = mocker.patch(
+        "mlflow_faculty.trackingstore"
+        ".mlflow_viewtype_to_faculty_lifecycle_stage",
+        return_value=lifecycle_stage,
+    )
+
+    store = FacultyRestStore(STORE_URI)
+    experiments = store.list_experiments(ViewType.DELETED_ONLY)
+
+    mock_client.list.assert_called_once_with(PROJECT_ID, lifecycle_stage)
+    experiment_converter.assert_called_once_with(faculty_experiment)
+    lifecycle_converter.assert_called_once_with(ViewType.DELETED_ONLY)
     assert experiments == [mlflow_experiment]
 
 

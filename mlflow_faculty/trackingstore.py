@@ -31,6 +31,7 @@ from mlflow_faculty.mlflow_converters import (
     mlflow_metric_to_faculty_metric,
     mlflow_param_to_faculty_param,
     mlflow_tag_to_faculty_tag,
+    mlflow_viewtype_to_faculty_lifecycle_stage,
 )
 
 
@@ -65,8 +66,11 @@ class FacultyRestStore(AbstractStore):
         :return: a list of Experiment objects stored in store for requested
             view.
         """
+        lifecycle_stage = mlflow_viewtype_to_faculty_lifecycle_stage(view_type)
         try:
-            faculty_experiments = self._client.list(self._project_id)
+            faculty_experiments = self._client.list(
+                self._project_id, lifecycle_stage
+            )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
