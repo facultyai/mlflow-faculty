@@ -332,3 +332,6 @@ class FacultyRestStore(AbstractStore):
 
     def log_param(self, run_id, param):
         return self.log_batch(run_id, params=[param])
+
+    def set_tag(self, run_id, tag):
+        return self.log_batch(run_id, tags=[tag])
