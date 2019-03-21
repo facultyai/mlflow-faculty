@@ -72,6 +72,9 @@ RUN_UUID = uuid4()
 RUN_UUID_HEX_STR = RUN_UUID.hex
 RUN_NUMBER = 42
 
+PARENT_RUN_UUID = uuid4()
+PARENT_RUN_UUID_HEX_STR = PARENT_RUN_UUID.hex
+
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_MILLISECONDS = to_timestamp(RUN_STARTED_AT) * 1000
 
@@ -79,6 +82,8 @@ FACULTY_RUN = ExperimentRun(
     id=RUN_UUID,
     run_number=RUN_NUMBER,
     experiment_id=FACULTY_EXPERIMENT.id,
+    name="run name",
+    parent_run_id=uuid4(),
     artifact_location=ARTIFACT_LOCATION,
     status=ExperimentRunStatus.RUNNING,
     started_at=RUN_STARTED_AT,

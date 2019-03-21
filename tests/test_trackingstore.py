@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+from uuid import uuid4
+
 import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
@@ -20,8 +22,9 @@ from faculty.clients.experiment import (
     Pagination,
     Page,
 )
-from mlflow.entities import ViewType
+from mlflow.entities import ViewType, RunTag
 from mlflow.exceptions import MlflowException
+from mlflow.utils import mlflow_tags
 import pytest
 
 from mlflow_faculty.trackingstore import FacultyRestStore
@@ -30,6 +33,8 @@ from tests.fixtures import (
     EXPERIMENT_ID,
     RUN_UUID,
     RUN_UUID_HEX_STR,
+    PARENT_RUN_UUID,
+    PARENT_RUN_UUID_HEX_STR,
     FACULTY_EXPERIMENT,
     FACULTY_RUN,
     NAME,
@@ -260,7 +265,11 @@ def test_rename_experiment_client_error(mocker):
         store.rename_experiment(EXPERIMENT_ID, "new name")
 
 
-def test_create_run(mocker):
+@pytest.mark.parametrize(
+    "mlflow_parent_run_id, faculty_parent_run_id",
+    [(None, None), (PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID)],
+)
+def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
@@ -288,28 +297,109 @@ def test_create_run(mocker):
     )
 
     experiment_id = mocker.Mock()
+    run_name = mocker.Mock()
     store = FacultyRestStore(STORE_URI)
 
     returned_run = store.create_run(
         experiment_id,
         "unused-mlflow-user-id",
-        "unused-run-name",
+        run_name,
         "unused-source-type",
         "unused-source-name",
         "unused-entry-point-name",
         mlflow_timestamp,
         "unused-source-version",
         [mlflow_tag],
-        "unused-parent-run-id",
+        mlflow_parent_run_id,
     )
 
     timestamp_converter_mock.assert_called_once_with(mlflow_timestamp)
     tag_converter_mock.assert_called_once_with(mlflow_tag)
     mock_client.create_run.assert_called_once_with(
-        PROJECT_ID, experiment_id, faculty_datetime, tags=[faculty_tag]
+        PROJECT_ID,
+        experiment_id,
+        run_name,
+        faculty_datetime,
+        faculty_parent_run_id,
+        tags=[faculty_tag],
     )
     run_converter_mock.assert_called_once_with(faculty_run)
     assert returned_run == mlflow_run
+
+
+@pytest.mark.parametrize(
+    "run_name_arg, run_name_tag, expected_run_name",
+    [
+        ("arg name", "tag name", "arg name"),
+        ("arg name", None, "arg name"),
+        ("", "tag name", "tag name"),
+        (None, "tag name", "tag name"),
+        (None, None, ""),
+    ],
+)
+@pytest.mark.parametrize(
+    "parent_run_id_arg, parent_run_id_tag, expected_parent_run_id",
+    [
+        (PARENT_RUN_UUID_HEX_STR, "other", PARENT_RUN_UUID),
+        (PARENT_RUN_UUID_HEX_STR, None, PARENT_RUN_UUID),
+        ("", PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID),
+        (None, PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID),
+        ("", "", None),
+        ("", None, None),
+        (None, "", None),
+        (None, None, None),
+    ],
+)
+def test_create_run_backwards_compatability(
+    mocker,
+    run_name_arg,
+    run_name_tag,
+    expected_run_name,
+    parent_run_id_arg,
+    parent_run_id_tag,
+    expected_parent_run_id,
+):
+    mocker.patch(
+        "mlflow_faculty.trackingstore."
+        "mlflow_timestamp_to_datetime_milliseconds"
+    )
+    mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
+
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    mocker.patch("mlflow_faculty.trackingstore.faculty_run_to_mlflow_run")
+
+    tags = []
+    if run_name_tag is not None:
+        tags.append(
+            RunTag(key=mlflow_tags.MLFLOW_RUN_NAME, value=run_name_tag)
+        )
+    if parent_run_id_tag is not None:
+        tags.append(
+            RunTag(
+                key=mlflow_tags.MLFLOW_PARENT_RUN_ID, value=parent_run_id_tag
+            )
+        )
+
+    store = FacultyRestStore(STORE_URI)
+
+    store.create_run(
+        mocker.Mock(),
+        "unused-mlflow-user-id",
+        run_name_arg,
+        "unused-source-type",
+        "unused-source-name",
+        "unused-entry-point-name",
+        mocker.Mock(),
+        "unused-source-version",
+        tags,
+        parent_run_id_arg,
+    )
+
+    args, _ = mock_client.create_run.call_args
+    assert args[2] == expected_run_name
+    assert args[4] == expected_parent_run_id
 
 
 def test_create_run_client_error(mocker):
@@ -324,6 +414,7 @@ def test_create_run_client_error(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     experiment_id = mocker.Mock()
+    run_name = mocker.Mock()
     mlflow_timestamp = mocker.Mock()
     mlflow_tag = mocker.Mock()
 
@@ -333,14 +424,14 @@ def test_create_run_client_error(mocker):
         store.create_run(
             experiment_id,
             "unused-mlflow-user-id",
-            "unused-run-name",
+            run_name,
             "unused-source-type",
             "unused-source-name",
             "unused-entry-point-name",
             mlflow_timestamp,
             "unused-source-version",
             [mlflow_tag],
-            "unused-parent-run-id",
+            PARENT_RUN_UUID_HEX_STR,
         )
 
 
