@@ -37,11 +37,19 @@ from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
 from mlflow.utils import mlflow_tags
 
-_RUN_STATUS_MAP = {
+_FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
     FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
     FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
     FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
     FacultyExperimentRunStatus.SCHEDULED: RunStatus.SCHEDULED,
+}
+
+
+_MLFLOW_TO_FACULTY_RUN_STATUS_MAP = {
+    RunStatus.RUNNING: FacultyExperimentRunStatus.RUNNING,
+    RunStatus.FINISHED: FacultyExperimentRunStatus.FINISHED,
+    RunStatus.FAILED: FacultyExperimentRunStatus.FAILED,
+    RunStatus.SCHEDULED: FacultyExperimentRunStatus.SCHEDULED,
 }
 
 
@@ -126,7 +134,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source_name
         "",  # entry_point_name
         "",  # user_id
-        _RUN_STATUS_MAP[faculty_run.status],
+        _FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
         start_time,
         end_time,
         "",  # source version
@@ -173,3 +181,7 @@ def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
 
 def mlflow_viewtype_to_faculty_lifecycle_stage(mlflow_view_type):
     return _LIFECYCLE_STAGE_CONVERSION_MAP[mlflow_view_type]
+
+
+def mlflow_to_faculty_run_status(mlflow_run_status):
+    return _MLFLOW_TO_FACULTY_RUN_STATUS_MAP[mlflow_run_status]

@@ -33,6 +33,7 @@ from mlflow_faculty.mlflow_converters import (
     mlflow_param_to_faculty_param,
     mlflow_tag_to_faculty_tag,
     mlflow_viewtype_to_faculty_lifecycle_stage,
+    mlflow_to_faculty_run_status,
 )
 
 
@@ -190,10 +191,25 @@ class FacultyRestStore(AbstractStore):
         """
         Updates the metadata of the specified run.
 
+        :param run_uuid: string containing run UUID
+        :param run_status: RunStatus to update the run to, optional
+        :param end_time: timestamp to update the run ended_at to, optional
+
         :return: :py:class:`mlflow.entities.RunInfo` describing the updated
             run.
         """
-        raise NotImplementedError()
+        try:
+            faculty_run = self._client.update_run_info(
+                self._project_id,
+                UUID(run_uuid),
+                mlflow_to_faculty_run_status(run_status),
+                mlflow_timestamp_to_datetime_milliseconds(end_time),
+            )
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
+        else:
+            mlflow_run = faculty_run_to_mlflow_run(faculty_run)
+            return mlflow_run.info
 
     def create_run(
         self,
