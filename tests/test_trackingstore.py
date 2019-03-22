@@ -406,6 +406,24 @@ def test_update_run_info(mocker):
     assert returned_run == mlflow_run
 
 
+def test_update_run_info_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.update_run_info.side_effect = HttpError(
+        mocker.Mock(), "Experiment run with ID _ not found in project _"
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(
+        MlflowException,
+        match="Experiment run with ID _ not found in project _",
+    ):
+        store.update_run_info(
+            RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT
+        )
+
+
 def test_search_runs(mocker):
     mock_faculty_runs = [mocker.Mock(), mocker.Mock(), mocker.Mock()]
     list_page_1 = ListExperimentRunsResponse(
