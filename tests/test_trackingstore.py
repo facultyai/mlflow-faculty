@@ -16,11 +16,12 @@ import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
     ExperimentNameConflict,
+    ExperimentRunStatus,
     ListExperimentRunsResponse,
     Pagination,
     Page,
 )
-from mlflow.entities import ViewType
+from mlflow.entities import RunStatus, ViewType
 from mlflow.exceptions import MlflowException
 import pytest
 
@@ -28,6 +29,7 @@ from mlflow_faculty.trackingstore import FacultyRestStore
 from tests.fixtures import (
     ARTIFACT_LOCATION,
     EXPERIMENT_ID,
+    RUN_ENDED_AT,
     RUN_UUID,
     RUN_UUID_HEX_STR,
     FACULTY_EXPERIMENT,
@@ -377,6 +379,31 @@ def test_get_run_client_error(mocker):
         match="Experiment run with ID _ not found in project _",
     ):
         store.get_run(RUN_UUID_HEX_STR)
+
+
+def test_update_run_info(mocker):
+    faculty_run = mocker.Mock()
+    mock_client = mocker.Mock()
+    mock_client.update_run_info.return_value = faculty_run
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    mlflow_run = mocker.Mock()
+    run_converter_mock = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        return_value=mlflow_run,
+    )
+
+    store = FacultyRestStore(STORE_URI)
+
+    returned_run = store.update_run_info(
+        RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT
+    )
+
+    mock_client.update_run_info.assert_called_once_with(
+        PROJECT_ID, RUN_UUID, ExperimentRunStatus.RUNNING, RUN_ENDED_AT
+    )
+    run_converter_mock.assert_called_once_with(faculty_run)
+    assert returned_run == mlflow_run
 
 
 def test_search_runs(mocker):
