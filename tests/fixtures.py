@@ -74,6 +74,8 @@ RUN_NUMBER = 42
 
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_MILLISECONDS = to_timestamp(RUN_STARTED_AT) * 1000
+RUN_ENDED_AT = datetime(2018, 3, 11, 11, 39, 12, 110000, tzinfo=UTC)
+RUN_ENDED_AT_MILLISECONDS = to_timestamp(RUN_ENDED_AT) * 1000
 
 FACULTY_RUN = ExperimentRun(
     id=RUN_UUID,
