@@ -34,6 +34,7 @@ from mlflow.entities import (
     RunInfo,
     RunStatus,
 )
+from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 from pytz import UTC
 
 from mlflow_faculty.py23 import to_timestamp
@@ -85,7 +86,7 @@ FACULTY_RUN = ExperimentRun(
     run_number=RUN_NUMBER,
     experiment_id=FACULTY_EXPERIMENT.id,
     name=RUN_NAME,
-    parent_run_id=uuid4(),
+    parent_run_id=PARENT_RUN_UUID,
     artifact_location=ARTIFACT_LOCATION,
     status=ExperimentRunStatus.RUNNING,
     started_at=RUN_STARTED_AT,
@@ -102,15 +103,23 @@ def mlflow_experiment(lifecycle_stage=LifecycleStage.ACTIVE):
 
 
 def mlflow_run(
+    name=RUN_NAME,
     status=RunStatus.RUNNING,
     end_time=None,
     lifecycle_stage=LifecycleStage.ACTIVE,
+    name_tag=RunTag(MLFLOW_RUN_NAME, RUN_NAME),
+    parent_run_id_tag=RunTag(MLFLOW_PARENT_RUN_ID, PARENT_RUN_UUID_HEX_STR),
 ):
-    data = RunData(tags=[MLFLOW_TAG])
+    tags = [MLFLOW_TAG]
+    if name_tag is not None:
+        tags.append(name_tag)
+    if parent_run_id_tag is not None:
+        tags.append(parent_run_id_tag)
+    data = RunData(tags=tags)
     info = RunInfo(
         RUN_UUID_HEX_STR,
         EXPERIMENT_ID,
-        RUN_NAME,  # name
+        name,
         "",  # source_type
         "",  # source_name
         "",  # entry_point_name

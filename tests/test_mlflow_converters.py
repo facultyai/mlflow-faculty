@@ -21,10 +21,12 @@ from requests import Response
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
     LifecycleStage as FacultyLifecycleStage,
+    Tag as FacultyTag,
 )
 from faculty.clients.base import HTTPError
 from mlflow.exceptions import MlflowException
-from mlflow.entities import LifecycleStage, RunStatus, ViewType
+from mlflow.entities import LifecycleStage, RunStatus, RunTag, ViewType
+from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
@@ -48,6 +50,8 @@ from tests.fixtures import (
     MLFLOW_METRIC,
     MLFLOW_PARAM,
     MLFLOW_TAG,
+    PARENT_RUN_UUID,
+    PARENT_RUN_UUID_HEX_STR,
     mlflow_experiment,
     mlflow_run,
 )
@@ -65,11 +69,23 @@ def experiment_equals(first, other):
     )
 
 
+def contain_same_elements(first, other, hasher):
+    return set(map(hasher, first)) == set(map(hasher, other))
+
+
 def run_data_equals(first, other):
     return (
-        first.metrics == other.metrics
-        and first.params == other.params
-        and first.tags == other.tags
+        contain_same_elements(
+            first.metrics,
+            other.metrics,
+            lambda m: (m.key, m.value, m.timestamp),
+        )
+        and contain_same_elements(
+            first.params, other.params, lambda p: (p.key, p.value)
+        )
+        and contain_same_elements(
+            first.tags, other.tags, lambda t: (t.key, t.value)
+        )
     )
 
 
@@ -151,6 +167,72 @@ def test_faculty_run_to_mlflow_run(
     assert run_equals(
         faculty_run_to_mlflow_run(faculty_run), expected_mlflow_run
     )
+
+
+@pytest.mark.parametrize(
+    "faculty_attribute, faculty_tag_value, mlflow_attribute, mlflow_tag_value",
+    [
+        ("attr", "tag", "attr", "tag"),
+        ("attr", "", "attr", ""),
+        ("attr", None, "attr", "attr"),
+        ("", "tag", "tag", "tag"),
+        ("", "", "", ""),
+        ("", None, "", None),
+    ],
+)
+def test_faculty_run_to_mlflow_run_name_backwards_compatability(
+    faculty_attribute, faculty_tag_value, mlflow_attribute, mlflow_tag_value
+):
+    """Test logic setting run name tag when not available."""
+
+    if faculty_tag_value is None:
+        extra_tags = []
+    else:
+        extra_tags = [FacultyTag(MLFLOW_RUN_NAME, faculty_tag_value)]
+    faculty_run = FACULTY_RUN._replace(
+        name=faculty_attribute, tags=FACULTY_RUN.tags + extra_tags
+    )
+
+    if mlflow_tag_value is None:
+        name_tag = None
+    else:
+        name_tag = RunTag(MLFLOW_RUN_NAME, mlflow_tag_value)
+    expected_run = mlflow_run(name=mlflow_attribute, name_tag=name_tag)
+
+    assert run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+
+
+@pytest.mark.parametrize(
+    "faculty_attribute, faculty_tag_value, mlflow_tag_value",
+    [
+        (PARENT_RUN_UUID, "other", "other"),
+        (PARENT_RUN_UUID, "", ""),
+        (PARENT_RUN_UUID, None, PARENT_RUN_UUID_HEX_STR),
+        (None, PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID_HEX_STR),
+        (None, "", ""),
+        (None, None, None),
+    ],
+)
+def test_faculty_run_to_mlflow_run_parent_run_id_backwards_compatability(
+    faculty_attribute, faculty_tag_value, mlflow_tag_value
+):
+    """Test logic setting parent run ID tag when not available."""
+
+    if faculty_tag_value is None:
+        extra_tags = []
+    else:
+        extra_tags = [FacultyTag(MLFLOW_PARENT_RUN_ID, faculty_tag_value)]
+    faculty_run = FACULTY_RUN._replace(
+        parent_run_id=faculty_attribute, tags=FACULTY_RUN.tags + extra_tags
+    )
+
+    if mlflow_tag_value is None:
+        parent_run_id_tag = None
+    else:
+        parent_run_id_tag = RunTag(MLFLOW_PARENT_RUN_ID, mlflow_tag_value)
+    expected_run = mlflow_run(parent_run_id_tag=parent_run_id_tag)
+
+    assert run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
 
 
 @pytest.mark.parametrize(
