@@ -30,6 +30,7 @@ from tests.fixtures import (
     ARTIFACT_LOCATION,
     EXPERIMENT_ID,
     RUN_ENDED_AT,
+    RUN_ENDED_AT_MILLISECONDS,
     RUN_UUID,
     RUN_UUID_HEX_STR,
     FACULTY_EXPERIMENT,
@@ -396,7 +397,7 @@ def test_update_run_info(mocker):
     store = FacultyRestStore(STORE_URI)
 
     returned_run = store.update_run_info(
-        RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT
+        RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
     )
 
     mock_client.update_run_info.assert_called_once_with(
@@ -420,7 +421,7 @@ def test_update_run_info_client_error(mocker):
         match="Experiment run with ID _ not found in project _",
     ):
         store.update_run_info(
-            RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT
+            RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
         )
 
 
@@ -455,6 +456,7 @@ def test_search_runs(mocker):
     )
 
     assert runs == mock_mlflow_runs
+
     mock_client.list_runs.assert_has_calls(
         [
             mocker.call(PROJECT_ID, experiment_ids=None),

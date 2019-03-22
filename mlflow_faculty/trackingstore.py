@@ -203,7 +203,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id,
                 UUID(run_uuid),
                 mlflow_to_faculty_run_status(run_status),
-                end_time,
+                mlflow_timestamp_to_datetime_milliseconds(end_time),
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
