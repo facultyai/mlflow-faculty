@@ -36,7 +36,7 @@ from mlflow.entities import (
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
 
-FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
+_FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
     FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
     FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
     FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
@@ -103,7 +103,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         "",  # source_name
         "",  # entry_point_name
         "",  # user_id
-        FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
+        _FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
         start_time,
         end_time,
         "",  # source version

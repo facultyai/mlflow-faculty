@@ -190,10 +190,9 @@ class FacultyRestStore(AbstractStore):
         """
         Updates the metadata of the specified run.
 
-        :param experiment_id: ID of the experiment for this run
-        :param user_id: ID of the user launching this run
-        :param source_type: Enum (integer) describing the source of the run
-        :param tags: List of Mlflow Tag entities.
+        :param run_uuid: string containing run UUID
+        :param run_status: RunStatus to update the run to, optional
+        :param end_time: timestamp to update the run ended_at to, optional
 
         :return: :py:class:`mlflow.entities.RunInfo` describing the updated
             run.
@@ -209,7 +208,7 @@ class FacultyRestStore(AbstractStore):
             raise faculty_http_error_to_mlflow_exception(e)
         else:
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
-            return mlflow_run
+            return mlflow_run.info
 
     def create_run(
         self,

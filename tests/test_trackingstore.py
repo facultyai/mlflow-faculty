@@ -388,7 +388,9 @@ def test_update_run_info(mocker):
     mock_client.update_run_info.return_value = faculty_run
     mocker.patch("faculty.client", return_value=mock_client)
 
+    mlflow_run_info = mocker.Mock()
     mlflow_run = mocker.Mock()
+    mlflow_run.info = mlflow_run_info
     run_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
         return_value=mlflow_run,
@@ -396,7 +398,7 @@ def test_update_run_info(mocker):
 
     store = FacultyRestStore(STORE_URI)
 
-    returned_run = store.update_run_info(
+    returned_run_info = store.update_run_info(
         RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
     )
 
@@ -404,7 +406,7 @@ def test_update_run_info(mocker):
         PROJECT_ID, RUN_UUID, ExperimentRunStatus.RUNNING, RUN_ENDED_AT
     )
     run_converter_mock.assert_called_once_with(faculty_run)
-    assert returned_run == mlflow_run
+    assert returned_run_info == mlflow_run_info
 
 
 def test_update_run_info_client_error(mocker):
