@@ -22,6 +22,7 @@ import faculty.clients.experiment
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
+from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
@@ -235,11 +236,22 @@ class FacultyRestStore(AbstractStore):
         :return: The created Run object
         """
         tags = [] if tags is None else tags
+
+        # For backward compatability, fall back to run name or parent run ID
+        # set in tags
+        tag_dict = {tag.key: tag.value for tag in tags}
+        run_name = run_name or tag_dict.get(MLFLOW_RUN_NAME) or ""
+        parent_run_id = (
+            parent_run_id or tag_dict.get(MLFLOW_PARENT_RUN_ID) or None
+        )
+
         try:
             faculty_run = self._client.create_run(
                 self._project_id,
                 experiment_id,
+                run_name,
                 mlflow_timestamp_to_datetime_milliseconds(start_time),
+                None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
         except faculty.clients.base.HttpError as e:
