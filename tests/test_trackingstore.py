@@ -23,7 +23,7 @@ from faculty.clients.experiment import (
 )
 from mlflow.entities import RunStatus, RunTag, ViewType
 from mlflow.exceptions import MlflowException
-from mlflow.utils import mlflow_tags
+from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 import pytest
 
 from mlflow_faculty.trackingstore import FacultyRestStore
@@ -373,15 +373,9 @@ def test_create_run_backwards_compatability(
 
     tags = []
     if run_name_tag is not None:
-        tags.append(
-            RunTag(key=mlflow_tags.MLFLOW_RUN_NAME, value=run_name_tag)
-        )
+        tags.append(RunTag(key=MLFLOW_RUN_NAME, value=run_name_tag))
     if parent_run_id_tag is not None:
-        tags.append(
-            RunTag(
-                key=mlflow_tags.MLFLOW_PARENT_RUN_ID, value=parent_run_id_tag
-            )
-        )
+        tags.append(RunTag(key=MLFLOW_PARENT_RUN_ID, value=parent_run_id_tag))
 
     store = FacultyRestStore(STORE_URI)
 

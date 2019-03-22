@@ -35,7 +35,7 @@ from mlflow.entities import (
 )
 from mlflow_faculty.py23 import to_timestamp
 from mlflow.exceptions import MlflowException
-from mlflow.utils import mlflow_tags
+from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 _FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
     FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
@@ -102,28 +102,24 @@ def faculty_run_to_mlflow_run(faculty_run):
     # Read run name from tag if not set, falling back to ""
     if faculty_run.name:
         name_attribute = faculty_run.name
-    elif mlflow_tags.MLFLOW_RUN_NAME in tag_dict:
-        name_attribute = tag_dict[mlflow_tags.MLFLOW_RUN_NAME]
+    elif MLFLOW_RUN_NAME in tag_dict:
+        name_attribute = tag_dict[MLFLOW_RUN_NAME]
     else:
         name_attribute = ""
 
     extra_mlflow_tags = []
 
     # Set run name tag if set as attribute but not already a tag
-    if mlflow_tags.MLFLOW_RUN_NAME not in tag_dict and faculty_run.name:
-        extra_mlflow_tags.append(
-            RunTag(mlflow_tags.MLFLOW_RUN_NAME, faculty_run.name)
-        )
+    if MLFLOW_RUN_NAME not in tag_dict and faculty_run.name:
+        extra_mlflow_tags.append(RunTag(MLFLOW_RUN_NAME, faculty_run.name))
 
     # Set parent run ID tag if set as attribute but not already a tag
     if (
-        mlflow_tags.MLFLOW_PARENT_RUN_ID not in tag_dict
+        MLFLOW_PARENT_RUN_ID not in tag_dict
         and faculty_run.parent_run_id is not None
     ):
         extra_mlflow_tags.append(
-            RunTag(
-                mlflow_tags.MLFLOW_PARENT_RUN_ID, faculty_run.parent_run_id.hex
-            )
+            RunTag(MLFLOW_PARENT_RUN_ID, faculty_run.parent_run_id.hex)
         )
 
     run_info = RunInfo(
