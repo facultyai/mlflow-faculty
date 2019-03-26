@@ -31,6 +31,7 @@ from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_experiment_to_mlflow_experiment,
+    faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_timestamp_to_datetime_seconds,
@@ -233,6 +234,10 @@ def test_faculty_run_to_mlflow_run_parent_run_id_backwards_compatability(
     expected_run = mlflow_run(parent_run_id_tag=parent_run_id_tag)
 
     assert run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+
+
+def test_faculty_metric_to_mlflow_metric():
+    assert faculty_metric_to_mlflow_metric(FACULTY_METRIC) == MLFLOW_METRIC
 
 
 @pytest.mark.parametrize(
