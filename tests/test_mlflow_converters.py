@@ -74,6 +74,13 @@ def contain_same_elements(first, other, hasher):
     return set(map(hasher, first)) == set(map(hasher, other))
 
 
+def mlflow_metrics_equals(first, other):
+    def get_values(m):
+        return (m.key, m.value, m.timestamp)
+
+    return get_values(first) == get_values(other)
+
+
 def run_data_equals(first, other):
     return (
         contain_same_elements(
@@ -237,7 +244,9 @@ def test_faculty_run_to_mlflow_run_parent_run_id_backwards_compatability(
 
 
 def test_faculty_metric_to_mlflow_metric():
-    assert faculty_metric_to_mlflow_metric(FACULTY_METRIC) == MLFLOW_METRIC
+    assert mlflow_metrics_equals(
+        faculty_metric_to_mlflow_metric(FACULTY_METRIC), MLFLOW_METRIC
+    )
 
 
 @pytest.mark.parametrize(

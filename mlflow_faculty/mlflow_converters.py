@@ -65,6 +65,10 @@ def _datetime_to_mlflow_timestamp(dt):
     return to_timestamp(dt) * 1000
 
 
+def _datetime_to_mlflow_metric_timestamp(dt):
+    return to_timestamp(dt)
+
+
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
     active = faculty_experiment.deleted_at is None
     return Experiment(
@@ -150,7 +154,9 @@ def faculty_metric_to_mlflow_metric(faculty_metric):
     return Metric(
         key=faculty_metric.key,
         value=faculty_metric.value,
-        timestamp=_datetime_to_mlflow_timestamp(faculty_metric.timestamp),
+        timestamp=_datetime_to_mlflow_metric_timestamp(
+            faculty_metric.timestamp
+        ),
     )
 
 
