@@ -26,6 +26,7 @@ from faculty.clients.experiment import (
 from mlflow.entities import (
     Experiment,
     LifecycleStage,
+    Metric,
     Run,
     RunData,
     RunInfo,
@@ -62,6 +63,10 @@ _LIFECYCLE_STAGE_CONVERSION_MAP = {
 
 def _datetime_to_mlflow_timestamp(dt):
     return to_timestamp(dt) * 1000
+
+
+def _datetime_to_mlflow_metric_timestamp(dt):
+    return to_timestamp(dt)
 
 
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
@@ -143,6 +148,16 @@ def faculty_run_to_mlflow_run(faculty_run):
     )
     run = Run(run_info, run_data)
     return run
+
+
+def faculty_metric_to_mlflow_metric(faculty_metric):
+    return Metric(
+        key=faculty_metric.key,
+        value=faculty_metric.value,
+        timestamp=_datetime_to_mlflow_metric_timestamp(
+            faculty_metric.timestamp
+        ),
+    )
 
 
 def mlflow_metric_to_faculty_metric(mlflow_metric):

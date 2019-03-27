@@ -510,6 +510,58 @@ def test_update_run_info_client_error(mocker):
         )
 
 
+def test_get_metric_history(mocker):
+    metric_key = "metric_key"
+    first_faculty_metric = mocker.Mock()
+    second_faculty_metric = mocker.Mock()
+
+    mock_client = mocker.Mock(
+        get_metric_history=mocker.Mock(
+            return_value=[first_faculty_metric, second_faculty_metric]
+        )
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    first_mlflow_metric = mocker.Mock()
+    second_mlflow_metric = mocker.Mock()
+    metric_converter = mocker.patch(
+        "mlflow_faculty.trackingstore.faculty_metric_to_mlflow_metric",
+        side_effect=[first_mlflow_metric, second_mlflow_metric],
+    )
+
+    store = FacultyRestStore(STORE_URI)
+
+    returned_metric_history = store.get_metric_history(
+        RUN_UUID_HEX_STR, metric_key
+    )
+
+    mock_client.get_metric_history.assert_called_once_with(
+        PROJECT_ID, RUN_UUID, metric_key
+    )
+    metric_converter.assert_has_calls(
+        [mocker.call(first_faculty_metric), mocker.call(second_faculty_metric)]
+    )
+    assert returned_metric_history == [
+        first_mlflow_metric,
+        second_mlflow_metric,
+    ]
+
+
+def test_get_metric_history_error(mocker):
+    mock_client = mocker.Mock(
+        get_metric_history=mocker.Mock(
+            side_effect=HttpError(mocker.Mock(), "Dummy client error.")
+        )
+    )
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="Dummy client error."):
+        store.get_metric_history(RUN_UUID_HEX_STR, "metric-key")
+
+
 def test_search_runs(mocker):
     mock_faculty_runs = [mocker.Mock(), mocker.Mock(), mocker.Mock()]
     list_page_1 = ListExperimentRunsResponse(

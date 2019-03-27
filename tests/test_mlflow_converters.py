@@ -31,6 +31,7 @@ from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_experiment_to_mlflow_experiment,
+    faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_timestamp_to_datetime_seconds,
@@ -71,6 +72,11 @@ def experiment_equals(first, other):
 
 def contain_same_elements(first, other, hasher):
     return set(map(hasher, first)) == set(map(hasher, other))
+
+
+def mlflow_object_equals(first, other):
+    # mlflow objects return their properties as (key, value) when iterated over
+    return all(x == y for x, y in zip(first, other))
 
 
 def run_data_equals(first, other):
@@ -233,6 +239,12 @@ def test_faculty_run_to_mlflow_run_parent_run_id_backwards_compatability(
     expected_run = mlflow_run(parent_run_id_tag=parent_run_id_tag)
 
     assert run_equals(faculty_run_to_mlflow_run(faculty_run), expected_run)
+
+
+def test_faculty_metric_to_mlflow_metric():
+    assert mlflow_object_equals(
+        faculty_metric_to_mlflow_metric(FACULTY_METRIC), MLFLOW_METRIC
+    )
 
 
 @pytest.mark.parametrize(

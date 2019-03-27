@@ -27,6 +27,7 @@ from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
     faculty_http_error_to_mlflow_exception,
+    faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
     mlflow_metric_to_faculty_metric,
@@ -287,7 +288,17 @@ class FacultyRestStore(AbstractStore):
         :return: A list of float values logged for the give metric if logged,
             else empty list
         """
-        raise NotImplementedError()
+        try:
+            metric_history = self._client.get_metric_history(
+                self._project_id, UUID(run_uuid), metric_key
+            )
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
+        else:
+            return [
+                faculty_metric_to_mlflow_metric(faculty_metric)
+                for faculty_metric in metric_history
+            ]
 
     def search_runs(self, experiment_ids, search_expressions, run_view_type):
         """ Returns runs that match the given list of search expressions within
