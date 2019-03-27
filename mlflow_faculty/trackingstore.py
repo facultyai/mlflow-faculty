@@ -269,14 +269,36 @@ class FacultyRestStore(AbstractStore):
         Deletes a run.
         :param run_id:
         """
-        raise NotImplementedError()
+        try:
+            self._client.delete_runs(self._project_id, [UUID(run_id)])
+        except faculty.clients.base.NotFound:
+            raise MlflowException(
+                "Could not delete non-existent run {}".format(run_id)
+            )
+        except faculty.clients.base.Conflict:
+            raise MlflowException(
+                "Could not delete already-deleted run {}".format(run_id)
+            )
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
 
     def restore_run(self, run_id):
         """
         Restores a run.
         :param run_id:
         """
-        raise NotImplementedError()
+        try:
+            self._client.restore_runs(self._project_id, [UUID(run_id)])
+        except faculty.clients.base.NotFound:
+            raise MlflowException(
+                "Could not restore non-existent run {}".format(run_id)
+            )
+        except faculty.clients.base.Conflict:
+            raise MlflowException(
+                "Could not restore already-active run {}".format(run_id)
+            )
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
 
     def get_metric_history(self, run_uuid, metric_key):
         """

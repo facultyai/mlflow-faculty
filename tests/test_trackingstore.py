@@ -13,7 +13,7 @@
 # limitations under the License
 
 import faculty
-from faculty.clients.base import HttpError
+from faculty.clients.base import HttpError, Conflict, NotFound
 from faculty.clients.experiment import (
     ExperimentNameConflict,
     ExperimentRunStatus,
@@ -508,6 +508,66 @@ def test_update_run_info_client_error(mocker):
         store.update_run_info(
             RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
         )
+
+
+def test_delete_run(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    store.delete_run(RUN_UUID_HEX_STR)
+
+    mock_client.delete_runs.assert_called_once_with(PROJECT_ID, [RUN_UUID])
+
+
+@pytest.mark.parametrize(
+    "faculty_exception_cls, message",
+    [
+        (NotFound, "Could not delete non-existent run"),
+        (Conflict, "Could not delete already-deleted run"),
+        (HttpError, "An error"),
+    ],
+)
+def test_delete_run_failures(mocker, faculty_exception_cls, message):
+    mock_client = mocker.Mock()
+    mock_client.delete_runs.side_effect = faculty_exception_cls(
+        mocker.Mock(), "An error"
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    with pytest.raises(MlflowException, match=message):
+        store.delete_run(RUN_UUID_HEX_STR)
+
+
+def test_restore_run(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    store.restore_run(RUN_UUID_HEX_STR)
+
+    mock_client.restore_runs.assert_called_once_with(PROJECT_ID, [RUN_UUID])
+
+
+@pytest.mark.parametrize(
+    "faculty_exception_cls, message",
+    [
+        (NotFound, "Could not restore non-existent run"),
+        (Conflict, "Could not restore already-active run"),
+        (HttpError, "An error"),
+    ],
+)
+def test_restore_run_failures(mocker, faculty_exception_cls, message):
+    mock_client = mocker.Mock()
+    mock_client.restore_runs.side_effect = faculty_exception_cls(
+        mocker.Mock(), "An error"
+    )
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    with pytest.raises(MlflowException, match=message):
+        store.restore_run(RUN_UUID_HEX_STR)
 
 
 def test_get_metric_history(mocker):
