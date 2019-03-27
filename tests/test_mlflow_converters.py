@@ -74,11 +74,9 @@ def contain_same_elements(first, other, hasher):
     return set(map(hasher, first)) == set(map(hasher, other))
 
 
-def mlflow_metrics_equals(first, other):
-    def get_values(m):
-        return (m.key, m.value, m.timestamp)
-
-    return get_values(first) == get_values(other)
+def mlflow_object_equals(first, other):
+    # mlflow objects return their properties as (key, value) when iterated over
+    return all(x == y for x, y in zip(first, other))
 
 
 def run_data_equals(first, other):
@@ -244,7 +242,7 @@ def test_faculty_run_to_mlflow_run_parent_run_id_backwards_compatability(
 
 
 def test_faculty_metric_to_mlflow_metric():
-    assert mlflow_metrics_equals(
+    assert mlflow_object_equals(
         faculty_metric_to_mlflow_metric(FACULTY_METRIC), MLFLOW_METRIC
     )
 
