@@ -550,9 +550,7 @@ def test_get_metric_history(mocker):
 def test_get_metric_history_error(mocker):
     mock_client = mocker.Mock(
         get_metric_history=mocker.Mock(
-            side_effect=HttpError(
-                mocker.Mock(), "Dummy client error."
-            )
+            side_effect=HttpError(mocker.Mock(), "Dummy client error.")
         )
     )
 
@@ -561,9 +559,7 @@ def test_get_metric_history_error(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Dummy client error."):
-        store.get_metric_history(
-            RUN_UUID_HEX_STR, "metric-key"
-        )
+        store.get_metric_history(RUN_UUID_HEX_STR, "metric-key")
 
 
 def test_search_runs(mocker):
