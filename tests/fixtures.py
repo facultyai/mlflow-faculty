@@ -95,8 +95,8 @@ FACULTY_RUN = ExperimentRun(
     ended_at=None,
     deleted_at=None,
     tags=[FACULTY_TAG],
-    params=[],
-    metrics=[],
+    params=[FACULTY_PARAM],
+    metrics=[FACULTY_METRIC],
 )
 
 
@@ -117,7 +117,10 @@ def mlflow_run(
         tags.append(name_tag)
     if parent_run_id_tag is not None:
         tags.append(parent_run_id_tag)
-    data = RunData(tags=tags)
+    data = RunData(
+        params=[MLFLOW_PARAM],
+        metrics=[MLFLOW_METRIC],
+        tags=tags)
     info = RunInfo(
         RUN_UUID_HEX_STR,
         EXPERIMENT_ID,
