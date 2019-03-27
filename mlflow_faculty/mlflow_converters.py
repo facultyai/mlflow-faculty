@@ -27,6 +27,7 @@ from mlflow.entities import (
     Experiment,
     LifecycleStage,
     Metric,
+    Param,
     Run,
     RunData,
     RunInfo,
@@ -143,8 +144,16 @@ def faculty_run_to_mlflow_run(faculty_run):
         faculty_run.artifact_location,
     )
     run_data = RunData(
+        params=[
+            faculty_param_to_mlflow_param(param)
+            for param in faculty_run.params
+        ],
+        metrics=[
+            faculty_metric_to_mlflow_metric(metric)
+            for metric in faculty_run.metrics
+        ],
         tags=[faculty_tag_to_mlflow_tag(tag) for tag in faculty_run.tags]
-        + extra_mlflow_tags
+        + extra_mlflow_tags,
     )
     run = Run(run_info, run_data)
     return run
@@ -168,6 +177,10 @@ def mlflow_metric_to_faculty_metric(mlflow_metric):
             mlflow_metric.timestamp
         ),
     )
+
+
+def faculty_param_to_mlflow_param(faculty_param):
+    return Param(key=faculty_param.key, value=faculty_param.value)
 
 
 def mlflow_param_to_faculty_param(mlflow_param):
