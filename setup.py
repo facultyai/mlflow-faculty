@@ -37,7 +37,7 @@ setup(
     setup_requires=["setuptools_scm"],
     install_requires=[
         "mlflow @ git+https://github.com/mlflow/mlflow.git#egg=mlflow",
-        "faculty==0.23.0.dev1",
+        "faculty==0.23.0.dev2",
         "six",
         "pytz",
     ],

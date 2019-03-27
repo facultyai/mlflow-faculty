@@ -152,7 +152,10 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: Integer id for the experiment
         """
-        raise NotImplementedError()
+        try:
+            self._client.restore(self._project_id, experiment_id)
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
 
     def rename_experiment(self, experiment_id, new_name):
         """
