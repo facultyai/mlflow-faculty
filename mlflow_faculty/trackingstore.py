@@ -278,7 +278,7 @@ class FacultyRestStore(AbstractStore):
             raise faculty_http_error_to_mlflow_exception(e)
 
         if run_id in response.deleted_run_ids:
-            pass
+            return
         elif run_id in response.conflicted_run_ids:
             raise MlflowException(
                 "Could not delete already-deleted run {}".format(run_id.hex)
@@ -302,7 +302,7 @@ class FacultyRestStore(AbstractStore):
             raise faculty_http_error_to_mlflow_exception(e)
 
         if run_id in response.restored_run_ids:
-            pass
+            return
         elif run_id in response.conflicted_run_ids:
             raise MlflowException(
                 "Could not restore already-active run {}".format(run_id.hex)
