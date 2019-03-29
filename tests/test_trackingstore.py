@@ -13,7 +13,7 @@
 # limitations under the License
 
 import faculty
-from faculty.clients.base import HttpError, Conflict, NotFound
+from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
     ExperimentNameConflict,
     ExperimentRunStatus,
