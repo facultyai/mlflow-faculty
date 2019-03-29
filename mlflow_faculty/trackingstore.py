@@ -281,11 +281,11 @@ class FacultyRestStore(AbstractStore):
             pass
         elif run_id in response.conflicted_run_ids:
             raise MlflowException(
-                "Could not delete already-deleted run {}".format(run_id)
+                "Could not delete already-deleted run {}".format(run_id.hex)
             )
         else:
             raise MlflowException(
-                "Could not delete non-existent run {}".format(run_id)
+                "Could not delete non-existent run {}".format(run_id.hex)
             )
 
     def restore_run(self, run_id):
@@ -305,11 +305,11 @@ class FacultyRestStore(AbstractStore):
             pass
         elif run_id in response.conflicted_run_ids:
             raise MlflowException(
-                "Could not restore already-active run {}".format(run_id)
+                "Could not restore already-active run {}".format(run_id.hex)
             )
         else:
             raise MlflowException(
-                "Could not restore non-existent run {}".format(run_id)
+                "Could not restore non-existent run {}".format(run_id.hex)
             )
 
     def get_metric_history(self, run_uuid, metric_key):
