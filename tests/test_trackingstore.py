@@ -18,6 +18,8 @@ from faculty.clients.experiment import (
     ExperimentNameConflict,
     ExperimentRunStatus,
     ListExperimentRunsResponse,
+    DeleteExperimentRunsResponse,
+    RestoreExperimentRunsResponse,
     Pagination,
     Page,
 )
@@ -512,6 +514,9 @@ def test_update_run_info_client_error(mocker):
 
 def test_delete_run(mocker):
     mock_client = mocker.Mock()
+    mock_client.delete_runs.return_value = DeleteExperimentRunsResponse(
+        deleted_run_ids=[RUN_UUID], conflicted_run_ids=[]
+    )
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -521,18 +526,25 @@ def test_delete_run(mocker):
 
 
 @pytest.mark.parametrize(
-    "faculty_exception_cls, message",
+    "response, message",
     [
-        (NotFound, "Could not delete non-existent run"),
-        (Conflict, "Could not delete already-deleted run"),
-        (HttpError, "An error"),
+        (
+            DeleteExperimentRunsResponse(
+                deleted_run_ids=[], conflicted_run_ids=[]
+            ),
+            "Could not delete non-existent run",
+        ),
+        (
+            DeleteExperimentRunsResponse(
+                deleted_run_ids=[], conflicted_run_ids=[RUN_UUID]
+            ),
+            "Could not delete already-deleted run",
+        ),
     ],
 )
-def test_delete_run_failures(mocker, faculty_exception_cls, message):
+def test_delete_run_failures(mocker, response, message):
     mock_client = mocker.Mock()
-    mock_client.delete_runs.side_effect = faculty_exception_cls(
-        mocker.Mock(), "An error"
-    )
+    mock_client.delete_runs.return_value = response
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -540,8 +552,21 @@ def test_delete_run_failures(mocker, faculty_exception_cls, message):
         store.delete_run(RUN_UUID_HEX_STR)
 
 
+def test_delete_run_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.delete_runs.side_effect = HttpError(mocker.Mock(), "An error")
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    with pytest.raises(MlflowException, match="An error"):
+        store.delete_run(RUN_UUID_HEX_STR)
+
+
 def test_restore_run(mocker):
     mock_client = mocker.Mock()
+    mock_client.restore_runs.return_value = RestoreExperimentRunsResponse(
+        restored_run_ids=[RUN_UUID], conflicted_run_ids=[]
+    )
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -551,22 +576,39 @@ def test_restore_run(mocker):
 
 
 @pytest.mark.parametrize(
-    "faculty_exception_cls, message",
+    "response, message",
     [
-        (NotFound, "Could not restore non-existent run"),
-        (Conflict, "Could not restore already-active run"),
-        (HttpError, "An error"),
+        (
+            RestoreExperimentRunsResponse(
+                restored_run_ids=[], conflicted_run_ids=[]
+            ),
+            "Could not restore non-existent run",
+        ),
+        (
+            RestoreExperimentRunsResponse(
+                restored_run_ids=[], conflicted_run_ids=[RUN_UUID]
+            ),
+            "Could not restore already-active run",
+        ),
     ],
 )
-def test_restore_run_failures(mocker, faculty_exception_cls, message):
+def test_restore_run_failures(mocker, response, message):
     mock_client = mocker.Mock()
-    mock_client.restore_runs.side_effect = faculty_exception_cls(
-        mocker.Mock(), "An error"
-    )
+    mock_client.restore_runs.return_value = response
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
     with pytest.raises(MlflowException, match=message):
+        store.restore_run(RUN_UUID_HEX_STR)
+
+
+def test_restore_run_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.restore_runs.side_effect = HttpError(mocker.Mock(), "An error")
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+    with pytest.raises(MlflowException, match="An error"):
         store.restore_run(RUN_UUID_HEX_STR)
 
 

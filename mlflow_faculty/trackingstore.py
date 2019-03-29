@@ -269,36 +269,48 @@ class FacultyRestStore(AbstractStore):
         Deletes a run.
         :param run_id:
         """
+
+        run_id = UUID(run_id)
+
         try:
-            self._client.delete_runs(self._project_id, [UUID(run_id)])
-        except faculty.clients.base.NotFound:
-            raise MlflowException(
-                "Could not delete non-existent run {}".format(run_id)
-            )
-        except faculty.clients.base.Conflict:
+            response = self._client.delete_runs(self._project_id, [run_id])
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
+
+        if run_id in response.deleted_run_ids:
+            pass
+        elif run_id in response.conflicted_run_ids:
             raise MlflowException(
                 "Could not delete already-deleted run {}".format(run_id)
             )
-        except faculty.clients.base.HttpError as e:
-            raise faculty_http_error_to_mlflow_exception(e)
+        else:
+            raise MlflowException(
+                "Could not delete non-existent run {}".format(run_id)
+            )
 
     def restore_run(self, run_id):
         """
         Restores a run.
         :param run_id:
         """
+
+        run_id = UUID(run_id)
+
         try:
-            self._client.restore_runs(self._project_id, [UUID(run_id)])
-        except faculty.clients.base.NotFound:
-            raise MlflowException(
-                "Could not restore non-existent run {}".format(run_id)
-            )
-        except faculty.clients.base.Conflict:
+            response = self._client.restore_runs(self._project_id, [run_id])
+        except faculty.clients.base.HttpError as e:
+            raise faculty_http_error_to_mlflow_exception(e)
+
+        if run_id in response.restored_run_ids:
+            pass
+        elif run_id in response.conflicted_run_ids:
             raise MlflowException(
                 "Could not restore already-active run {}".format(run_id)
             )
-        except faculty.clients.base.HttpError as e:
-            raise faculty_http_error_to_mlflow_exception(e)
+        else:
+            raise MlflowException(
+                "Could not restore non-existent run {}".format(run_id)
+            )
 
     def get_metric_history(self, run_uuid, metric_key):
         """
