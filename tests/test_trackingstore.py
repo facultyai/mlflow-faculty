@@ -861,6 +861,28 @@ def test_log_batch_param_conflict(mocker):
     )
 
 
+def test_log_batch_experiment_not_active_conflict(mocker):
+    mock_client = mocker.Mock()
+    exception = faculty.clients.experiment.ExperimentNotActiveConflict(
+        message="message", experiment_id="test-id"
+    )
+
+    mock_client.log_run_data.side_effect = exception
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="experiment"):
+        with pytest.raises(
+            faculty.clients.experiment.ExperimentNotActiveConflict,
+            match="message",
+        ):
+            store.log_batch(RUN_UUID_HEX_STR)
+    mock_client.log_run_data.assert_called_once_with(
+        PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
+    )
+
+
 def test_log_batch_error(mocker):
     mock_client = mocker.Mock()
     exception = HttpError(
