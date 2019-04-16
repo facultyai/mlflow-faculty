@@ -19,6 +19,10 @@ from six.moves import urllib
 import faculty
 import faculty.clients.base
 import faculty.clients.experiment
+from faculty.clients.experiment import (
+    ParamConflict as FacultyParamConflict,
+    ExperimentNotActiveConflict as FacultyExperimentNotActiveConflict,
+)
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
@@ -394,13 +398,13 @@ class FacultyRestStore(AbstractStore):
                 ],
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
-        except faculty.clients.experiment.ParamConflict as conflict:
+        except FacultyParamConflict as conflict:
             raise MlflowException(
                 "Conflicting param keys: {}".format(
                     conflict.conflicting_params
                 )
             )
-        except faculty.clients.experiment.ExperimentNotActiveConflict as conflict:
+        except FacultyExperimentNotActiveConflict as conflict:
             raise MlflowException(
                 "Non active experiment with id: {}".format(
                     conflict.experiment_id
