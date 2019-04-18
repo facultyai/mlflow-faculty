@@ -262,6 +262,12 @@ class FacultyRestStore(AbstractStore):
                 None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
+        except FacultyExperimentNotActiveConflict as conflict:
+            raise MlflowException(
+                "Non active experiment with id: {}".format(
+                    conflict.experiment_id
+                )
+            )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
@@ -402,12 +408,6 @@ class FacultyRestStore(AbstractStore):
             raise MlflowException(
                 "Conflicting param keys: {}".format(
                     conflict.conflicting_params
-                )
-            )
-        except FacultyExperimentNotActiveConflict as conflict:
-            raise MlflowException(
-                "Non active experiment with id: {}".format(
-                    conflict.experiment_id
                 )
             )
         except faculty.clients.base.HttpError as e:
