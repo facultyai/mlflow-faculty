@@ -330,7 +330,7 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
     assert returned_run == mlflow_run
 
 
-def test_create_run_experiment_not_active_conflict(mocker):
+def test_create_run_experiment_deleted(mocker):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
@@ -347,7 +347,7 @@ def test_create_run_experiment_not_active_conflict(mocker):
     )
 
     mock_client = mocker.Mock()
-    exception = faculty.clients.experiment.ExperimentNotActiveConflict(
+    exception = faculty.clients.experiment.ExperimentDeleted(
         message="message", experiment_id="test-id"
     )
 
@@ -359,22 +359,18 @@ def test_create_run_experiment_not_active_conflict(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="experiment"):
-        with pytest.raises(
-            faculty.clients.experiment.ExperimentNotActiveConflict,
-            match="message",
-        ):
-            store.create_run(
-                experiment_id,
-                "unused-mlflow-user-id",
-                run_name,
-                "unused-source-type",
-                "unused-source-name",
-                "unused-entry-point-name",
-                mlflow_timestamp,
-                "unused-source-version",
-                [mlflow_tag],
-                PARENT_RUN_UUID_HEX_STR,
-            )
+        store.create_run(
+            experiment_id,
+            "unused-mlflow-user-id",
+            run_name,
+            "unused-source-type",
+            "unused-source-name",
+            "unused-entry-point-name",
+            mlflow_timestamp,
+            "unused-source-version",
+            [mlflow_tag],
+            PARENT_RUN_UUID_HEX_STR,
+        )
 
     timestamp_converter_mock.assert_called_once_with(mlflow_timestamp)
     tag_converter_mock.assert_called_once_with(mlflow_tag)

@@ -21,7 +21,7 @@ import faculty.clients.base
 import faculty.clients.experiment
 from faculty.clients.experiment import (
     ParamConflict as FacultyParamConflict,
-    ExperimentNotActiveConflict as FacultyExperimentNotActiveConflict,
+    ExperimentDeleted as FacultyExperimentDeleted,
 )
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
@@ -262,10 +262,16 @@ class FacultyRestStore(AbstractStore):
                 None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
-        except FacultyExperimentNotActiveConflict as conflict:
+        except FacultyExperimentDeleted as conflict:
             raise MlflowException(
-                "Non active experiment with id: {}".format(
-                    conflict.experiment_id
+                # "Non active experiment with id: {}".format(
+                #     conflict.experiment_id
+                # )
+                "Experiment {} is deleted."
+                " To create runs for this experiment,"
+                " first restore it with the shell command "
+                "'mlflow experiments restore {}'".format(
+                    conflict.experiment_id, conflict.experiment_id
                 )
             )
         except faculty.clients.base.HttpError as e:
