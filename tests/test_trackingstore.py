@@ -332,26 +332,24 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
 
 def test_create_run_experiment_deleted(mocker):
     mlflow_timestamp = mocker.Mock()
-    faculty_datetime = mocker.Mock()
-    timestamp_converter_mock = mocker.patch(
+    mocker.patch(
         "mlflow_faculty.trackingstore."
         "mlflow_timestamp_to_datetime_milliseconds",
-        return_value=faculty_datetime,
+        return_value=mocker.Mock(),
     )
 
     mlflow_tag = mocker.Mock()
-    faculty_tag = mocker.Mock()
-    tag_converter_mock = mocker.patch(
+    mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
-        return_value=faculty_tag,
+        return_value=mocker.Mock(),
     )
 
     mock_client = mocker.Mock()
     exception = faculty.clients.experiment.ExperimentDeleted(
         message="message", experiment_id="test-id"
     )
-
     mock_client.create_run.side_effect = exception
+
     mocker.patch("faculty.client", return_value=mock_client)
     experiment_id = mocker.Mock()
     run_name = mocker.Mock()
@@ -371,17 +369,6 @@ def test_create_run_experiment_deleted(mocker):
             [mlflow_tag],
             PARENT_RUN_UUID_HEX_STR,
         )
-
-    timestamp_converter_mock.assert_called_once_with(mlflow_timestamp)
-    tag_converter_mock.assert_called_once_with(mlflow_tag)
-    mock_client.create_run.assert_called_once_with(
-        PROJECT_ID,
-        experiment_id,
-        run_name,
-        faculty_datetime,
-        PARENT_RUN_UUID,
-        tags=[faculty_tag],
-    )
 
 
 @pytest.mark.parametrize(

@@ -264,14 +264,11 @@ class FacultyRestStore(AbstractStore):
             )
         except FacultyExperimentDeleted as conflict:
             raise MlflowException(
-                # "Non active experiment with id: {}".format(
-                #     conflict.experiment_id
-                # )
-                "Experiment {} is deleted."
+                "Experiment {0} is deleted."
                 " To create runs for this experiment,"
                 " first restore it with the shell command "
-                "'mlflow experiments restore {}'".format(
-                    conflict.experiment_id, conflict.experiment_id
+                "'mlflow experiments restore {0}'".format(
+                    conflict.experiment_id
                 )
             )
         except faculty.clients.base.HttpError as e:
