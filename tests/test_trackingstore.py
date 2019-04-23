@@ -906,10 +906,7 @@ def test_log_batch_param_conflict(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="param-key"):
-        with pytest.raises(
-            faculty.clients.experiment.ParamConflict, match="message"
-        ):
-            store.log_batch(RUN_UUID_HEX_STR)
+        store.log_batch(RUN_UUID_HEX_STR)
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
@@ -927,8 +924,7 @@ def test_log_batch_error(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="error_message"):
-        with pytest.raises(HttpError, match="some_error_code"):
-            store.log_batch(RUN_UUID_HEX_STR)
+        store.log_batch(RUN_UUID_HEX_STR)
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
