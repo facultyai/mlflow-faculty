@@ -330,6 +330,47 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
     assert returned_run == mlflow_run
 
 
+def test_create_run_experiment_deleted(mocker):
+    mlflow_timestamp = mocker.Mock()
+    mocker.patch(
+        "mlflow_faculty.trackingstore."
+        "mlflow_timestamp_to_datetime_milliseconds",
+        return_value=mocker.Mock(),
+    )
+
+    mlflow_tag = mocker.Mock()
+    mocker.patch(
+        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        return_value=mocker.Mock(),
+    )
+
+    mock_client = mocker.Mock()
+    exception = faculty.clients.experiment.ExperimentDeleted(
+        message="message", experiment_id="test-id"
+    )
+    mock_client.create_run.side_effect = exception
+
+    mocker.patch("faculty.client", return_value=mock_client)
+    experiment_id = mocker.Mock()
+    run_name = mocker.Mock()
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(MlflowException, match="experiment"):
+        store.create_run(
+            experiment_id,
+            "unused-mlflow-user-id",
+            run_name,
+            "unused-source-type",
+            "unused-source-name",
+            "unused-entry-point-name",
+            mlflow_timestamp,
+            "unused-source-version",
+            [mlflow_tag],
+            PARENT_RUN_UUID_HEX_STR,
+        )
+
+
 @pytest.mark.parametrize(
     "run_name_arg, run_name_tag, expected_run_name",
     [
@@ -852,10 +893,7 @@ def test_log_batch_param_conflict(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="param-key"):
-        with pytest.raises(
-            faculty.clients.experiment.ParamConflict, match="message"
-        ):
-            store.log_batch(RUN_UUID_HEX_STR)
+        store.log_batch(RUN_UUID_HEX_STR)
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )
@@ -873,8 +911,7 @@ def test_log_batch_error(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="error_message"):
-        with pytest.raises(HttpError, match="some_error_code"):
-            store.log_batch(RUN_UUID_HEX_STR)
+        store.log_batch(RUN_UUID_HEX_STR)
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[]
     )

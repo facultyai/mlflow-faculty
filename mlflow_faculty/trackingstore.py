@@ -19,6 +19,10 @@ from six.moves import urllib
 import faculty
 import faculty.clients.base
 import faculty.clients.experiment
+from faculty.clients.experiment import (
+    ParamConflict as FacultyParamConflict,
+    ExperimentDeleted as FacultyExperimentDeleted,
+)
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
@@ -258,6 +262,15 @@ class FacultyRestStore(AbstractStore):
                 None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
+        except FacultyExperimentDeleted as conflict:
+            raise MlflowException(
+                "Experiment {0} is deleted."
+                " To create runs for this experiment,"
+                " first restore it with the shell command "
+                "'mlflow experiments restore {0}'".format(
+                    conflict.experiment_id
+                )
+            )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
@@ -394,7 +407,7 @@ class FacultyRestStore(AbstractStore):
                 ],
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
-        except faculty.clients.experiment.ParamConflict as conflict:
+        except FacultyParamConflict as conflict:
             raise MlflowException(
                 "Conflicting param keys: {}".format(
                     conflict.conflicting_params
