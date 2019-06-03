@@ -170,6 +170,17 @@ def test_get_experiment_client_error(mocker):
         store.get_experiment(EXPERIMENT_ID)
 
 
+def test_get_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.get_experiment("invalid-experiment-id",)
+
+
 def test_list_experiments(mocker):
     faculty_experiment = mocker.Mock()
     mock_client = mocker.Mock()
@@ -268,6 +279,17 @@ def test_rename_experiment_client_error(mocker):
 
     with pytest.raises(MlflowException, match="Error"):
         store.rename_experiment(EXPERIMENT_ID, "new name")
+
+
+def test_rename_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.rename_experiment("invalid-experiment-id", "new name")
 
 
 @pytest.mark.parametrize(
@@ -452,6 +474,28 @@ def test_create_run_client_error(mocker):
     with pytest.raises(MlflowException, match="Some error"):
         store.create_run(
             EXPERIMENT_ID,
+            "unused-mlflow-user-id",
+            RUN_NAME,
+            "unused-source-type",
+            "unused-source-name",
+            "unused-entry-point-name",
+            RUN_STARTED_AT,
+            "unused-source-version",
+            [MLFLOW_TAG],
+            PARENT_RUN_UUID_HEX_STR,
+        )
+
+
+def test_create_run_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.create_run(
+            "invalid-experiment-id",
             "unused-mlflow-user-id",
             RUN_NAME,
             "unused-source-type",
@@ -821,6 +865,19 @@ def test_search_runs_client_error(mocker):
         store.search_runs([123], search_expressions=None, run_view_type=None)
 
 
+def test_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.search_runs(
+            ["invalid-experiment-id", "invalid-experiment-id"], None, None
+        )
+
+
 def test_log_batch(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
@@ -983,6 +1040,17 @@ def test_delete_client_error(mocker):
     mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
+def test_delete_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.delete_experiment("invalid-experiment-id")
+
+
 def test_restore_experiment(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
@@ -1010,7 +1078,7 @@ def test_restore_client_error(mocker):
     mock_client.restore.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
-def test_invalid_experiment_id(mocker):
+def test_restore_invalid_experiment_id(mocker):
     mock_client = mocker.Mock()
 
     mocker.patch("faculty.client", return_value=mock_client)
@@ -1018,23 +1086,7 @@ def test_invalid_experiment_id(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(ValueError):
-        store.create_run(
-            "invalid-experiment-id",
-            "unused-mlflow-user-id",
-            RUN_NAME,
-            "unused-source-type",
-            "unused-source-name",
-            "unused-entry-point-name",
-            RUN_STARTED_AT,
-            "unused-source-version",
-            [MLFLOW_TAG],
-            PARENT_RUN_UUID_HEX_STR,
-        )
-
-    with pytest.raises(ValueError):
-        store.search_runs(
-            ["invalid-experiment-id", "invalid-experiment-id"], None, None
-        )
+        store.restore_experiment("invalid-experiment-id")
 
 
 def test_invalid_run_id(mocker):
