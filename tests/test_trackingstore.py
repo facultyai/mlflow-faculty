@@ -178,7 +178,7 @@ def test_get_experiment_invalid_experiment_id(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(ValueError):
-        store.get_experiment("invalid-experiment-id",)
+        store.get_experiment("invalid-experiment-id")
 
 
 def test_list_experiments(mocker):
@@ -508,6 +508,29 @@ def test_create_run_invalid_experiment_id(mocker):
         )
 
 
+def test_create_run_invalid_parent_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.log_batch("invalid-run-id")
+        store.create_run(
+            EXPERIMENT_ID,
+            "unused-mlflow-user-id",
+            RUN_NAME,
+            "unused-source-type",
+            "unused-source-name",
+            "unused-entry-point-name",
+            RUN_STARTED_AT,
+            "unused-source-version",
+            [MLFLOW_TAG],
+            "invalid-parent-run-id",
+        )
+
+
 def test_get_run(mocker):
     mock_client = mocker.Mock()
     mock_client.get_run.return_value = FACULTY_RUN
@@ -541,6 +564,17 @@ def test_get_run_client_error(mocker):
         match="Experiment run with ID _ not found in project _",
     ):
         store.get_run(RUN_UUID_HEX_STR)
+
+
+def test_get_run_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.get_run("invalid-run-id")
 
 
 def test_update_run_info(mocker):
@@ -585,6 +619,19 @@ def test_update_run_info_client_error(mocker):
     ):
         store.update_run_info(
             RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
+        )
+
+
+def test_update_run_info_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.update_run_info(
+            "invalid-run-id", RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
         )
 
 
@@ -638,6 +685,17 @@ def test_delete_run_client_error(mocker):
         store.delete_run(RUN_UUID_HEX_STR)
 
 
+def test_delete_run_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.delete_run("invalid-run-id")
+
+
 def test_restore_run(mocker):
     mock_client = mocker.Mock()
     mock_client.restore_runs.return_value = RestoreExperimentRunsResponse(
@@ -686,6 +744,17 @@ def test_restore_run_client_error(mocker):
     store = FacultyRestStore(STORE_URI)
     with pytest.raises(MlflowException, match="An error"):
         store.restore_run(RUN_UUID_HEX_STR)
+
+
+def test_restore_run_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.restore_run("invalid-run-id")
 
 
 def test_get_metric_history(mocker):
@@ -738,6 +807,17 @@ def test_get_metric_history_error(mocker):
 
     with pytest.raises(MlflowException, match="Dummy client error."):
         store.get_metric_history(RUN_UUID_HEX_STR, "metric-key")
+
+
+def test_get_metric_history_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.get_metric_history("invalid-run-id", "metric-key")
 
 
 def test_search_runs(mocker):
@@ -965,6 +1045,17 @@ def test_log_batch_error(mocker):
     )
 
 
+def test_log_batch_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.log_batch("invalid-run-id")
+
+
 def test_log_metric(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
@@ -1087,14 +1178,3 @@ def test_restore_invalid_experiment_id(mocker):
 
     with pytest.raises(ValueError):
         store.restore_experiment("invalid-experiment-id")
-
-
-def test_invalid_run_id(mocker):
-    mock_client = mocker.Mock()
-
-    mocker.patch("faculty.client", return_value=mock_client)
-
-    store = FacultyRestStore(STORE_URI)
-
-    with pytest.raises(ValueError):
-        store.log_batch("invalid-run-id")
