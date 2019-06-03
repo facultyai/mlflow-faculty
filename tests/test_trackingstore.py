@@ -781,16 +781,14 @@ def test_search_runs(mocker):
     )
 
     store = FacultyRestStore(STORE_URI)
-    runs = store.search_runs(
-        experiment_ids=None, search_expressions=None, run_view_type=None
-    )
+    runs = store.search_runs(experiment_ids=None)
 
     assert runs == mock_mlflow_runs
 
     mock_client.list_runs.assert_has_calls(
         [
-            mocker.call(PROJECT_ID, experiment_ids=None),
-            mocker.call(PROJECT_ID, experiment_ids=None),
+            mocker.call(PROJECT_ID, experiment_ids=None, lifecycle_stage=None),
+            mocker.call(PROJECT_ID, experiment_ids=None, lifecycle_stage=None),
         ]
     )
     converter_mock.assert_has_calls(
@@ -813,13 +811,11 @@ def test_search_runs_empty_page(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    runs = store.search_runs(
-        experiment_ids=None, search_expressions=None, run_view_type=None
-    )
+    runs = store.search_runs(experiment_ids=None)
 
     assert runs == []
     mock_client.list_runs.assert_called_once_with(
-        PROJECT_ID, experiment_ids=None
+        PROJECT_ID, experiment_ids=None, lifecycle_stage=None
     )
 
 
@@ -836,13 +832,11 @@ def test_search_runs_next_page_but_no_runs(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    runs = store.search_runs(
-        experiment_ids=None, search_expressions=None, run_view_type=None
-    )
+    runs = store.search_runs(experiment_ids=None)
 
     assert runs == []
     mock_client.list_runs.assert_called_once_with(
-        PROJECT_ID, experiment_ids=None
+        PROJECT_ID, experiment_ids=None, lifecycle_stage=None
     )
 
 
@@ -857,13 +851,11 @@ def test_search_runs_filter_by_experiment(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
-    runs = store.search_runs(
-        experiment_ids=[123, 456], search_expressions=None, run_view_type=None
-    )
+    runs = store.search_runs(experiment_ids=[123, 456])
 
     assert runs == []
     mock_client.list_runs.assert_called_once_with(
-        PROJECT_ID, experiment_ids=[123, 456]
+        PROJECT_ID, experiment_ids=[123, 456], lifecycle_stage=None
     )
 
 
@@ -877,7 +869,7 @@ def test_search_runs_client_error(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Dummy client error."):
-        store.search_runs([123], search_expressions=None, run_view_type=None)
+        store.search_runs([123])
 
 
 def test_search_runs_invalid_experiment_id(mocker):

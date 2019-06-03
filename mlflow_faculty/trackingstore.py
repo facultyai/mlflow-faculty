@@ -333,7 +333,9 @@ class FacultyRestStore(AbstractStore):
                 for faculty_metric in metric_history
             ]
 
-    def search_runs(self, experiment_ids, search_expressions, run_view_type):
+    def search_runs(
+        self, experiment_ids, search_expressions=None, run_view_type=None
+    ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
         expressions are ANDed together for search.
@@ -346,8 +348,8 @@ class FacultyRestStore(AbstractStore):
         """
         if search_expressions is not None:
             raise NotImplementedError("search_expressions must be set to None")
-        if run_view_type is not None:
-            raise NotImplementedError("run_view_type must be set to None")
+        # if run_view_type is not None:
+        #     raise NotImplementedError("run_view_type must be set to None")
 
         try:
             faculty_runs = []
@@ -358,7 +360,9 @@ class FacultyRestStore(AbstractStore):
             )
             while True:
                 list_runs_response = self._client.list_runs(
-                    self._project_id, experiment_ids=experiment_ids
+                    self._project_id,
+                    experiment_ids=experiment_ids,
+                    lifecycle_stage=run_view_type,
                 )
                 faculty_runs.extend(list_runs_response.runs)
                 if (
