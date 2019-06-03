@@ -1035,3 +1035,14 @@ def test_invalid_experiment_id(mocker):
         store.search_runs(
             ["invalid-experiment-id", "invalid-experiment-id"], None, None
         )
+
+
+def test_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.log_batch("invalid-run-id")
