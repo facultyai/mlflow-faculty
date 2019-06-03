@@ -348,8 +348,6 @@ class FacultyRestStore(AbstractStore):
         """
         if search_expressions is not None:
             raise NotImplementedError("search_expressions must be set to None")
-        # if run_view_type is not None:
-        #     raise NotImplementedError("run_view_type must be set to None")
 
         try:
             faculty_runs = []
