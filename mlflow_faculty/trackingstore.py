@@ -169,7 +169,9 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.update(self._project_id, int(experiment_id), name=new_name)
+            self._client.update(
+                self._project_id, int(experiment_id), name=new_name
+            )
         except faculty.clients.experiment.ExperimentNameConflict as e:
             raise MlflowException(str(e))
         except faculty.clients.base.HttpError as e:
