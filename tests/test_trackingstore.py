@@ -34,6 +34,8 @@ from tests.fixtures import (
     EXPERIMENT_ID,
     RUN_ENDED_AT,
     RUN_ENDED_AT_MILLISECONDS,
+    RUN_STARTED_AT,
+    RUN_NAME,
     RUN_UUID,
     RUN_UUID_HEX_STR,
     PARENT_RUN_UUID,
@@ -299,14 +301,12 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
         return_value=mlflow_run,
     )
 
-    experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
     store = FacultyRestStore(STORE_URI)
 
     returned_run = store.create_run(
-        experiment_id,
+        EXPERIMENT_ID,
         "unused-mlflow-user-id",
-        run_name,
+        RUN_NAME,
         "unused-source-type",
         "unused-source-name",
         "unused-entry-point-name",
@@ -320,8 +320,8 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
     tag_converter_mock.assert_called_once_with(mlflow_tag)
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID,
-        experiment_id,
-        run_name,
+        EXPERIMENT_ID,
+        RUN_NAME,
         faculty_datetime,
         faculty_parent_run_id,
         tags=[faculty_tag],
@@ -331,14 +331,12 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
 
 
 def test_create_run_experiment_deleted(mocker):
-    mlflow_timestamp = mocker.Mock()
     mocker.patch(
         "mlflow_faculty.trackingstore."
         "mlflow_timestamp_to_datetime_milliseconds",
         return_value=mocker.Mock(),
     )
 
-    mlflow_tag = mocker.Mock()
     mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
         return_value=mocker.Mock(),
@@ -351,22 +349,20 @@ def test_create_run_experiment_deleted(mocker):
     mock_client.create_run.side_effect = exception
 
     mocker.patch("faculty.client", return_value=mock_client)
-    experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
 
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="experiment"):
         store.create_run(
-            experiment_id,
+            EXPERIMENT_ID,
             "unused-mlflow-user-id",
-            run_name,
+            RUN_NAME,
             "unused-source-type",
             "unused-source-name",
             "unused-entry-point-name",
-            mlflow_timestamp,
+            RUN_STARTED_AT,
             "unused-source-version",
-            [mlflow_tag],
+            [MLFLOW_TAG],
             PARENT_RUN_UUID_HEX_STR,
         )
 
@@ -423,13 +419,13 @@ def test_create_run_backwards_compatability(
     store = FacultyRestStore(STORE_URI)
 
     store.create_run(
-        mocker.Mock(),
+        EXPERIMENT_ID,
         "unused-mlflow-user-id",
         run_name_arg,
         "unused-source-type",
         "unused-source-name",
         "unused-entry-point-name",
-        mocker.Mock(),
+        RUN_STARTED_AT,
         "unused-source-version",
         tags,
         parent_run_id_arg,
@@ -451,24 +447,19 @@ def test_create_run_client_error(mocker):
     mock_client.create_run.side_effect = HttpError(mocker.Mock(), "Some error")
     mocker.patch("faculty.client", return_value=mock_client)
 
-    experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
-    mlflow_timestamp = mocker.Mock()
-    mlflow_tag = mocker.Mock()
-
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Some error"):
         store.create_run(
-            experiment_id,
+            EXPERIMENT_ID,
             "unused-mlflow-user-id",
-            run_name,
+            RUN_NAME,
             "unused-source-type",
             "unused-source-name",
             "unused-entry-point-name",
-            mlflow_timestamp,
+            RUN_STARTED_AT,
             "unused-source-version",
-            [mlflow_tag],
+            [MLFLOW_TAG],
             PARENT_RUN_UUID_HEX_STR,
         )
 
