@@ -49,9 +49,9 @@ ARTIFACT_LOCATION = "scheme://artifact-location"
 METRIC_TIMESTAMP = datetime(2019, 3, 13, 17, 0, 15, tzinfo=UTC)
 METRIC_TIMESTAMP_SECONDS = to_timestamp(METRIC_TIMESTAMP)
 FACULTY_METRIC = FacultyMetric(
-    key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP
+    key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP, step=0
 )
-MLFLOW_METRIC = Metric("metric-key", "metric-value", METRIC_TIMESTAMP_SECONDS)
+MLFLOW_METRIC = Metric("metric-key", "metric-value", METRIC_TIMESTAMP_SECONDS, 0)
 
 FACULTY_PARAM = FacultyParam(key="param-key", value="param-value")
 MLFLOW_PARAM = Param("param-key", "param-value")

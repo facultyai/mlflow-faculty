@@ -166,6 +166,7 @@ def faculty_metric_to_mlflow_metric(faculty_metric):
         timestamp=_datetime_to_mlflow_metric_timestamp(
             faculty_metric.timestamp
         ),
+        step=faculty_metric.step
     )
 
 
@@ -176,6 +177,7 @@ def mlflow_metric_to_faculty_metric(mlflow_metric):
         timestamp=mlflow_timestamp_to_datetime_seconds(
             mlflow_metric.timestamp
         ),
+        step=mlflow_metric.step
     )
 
 
