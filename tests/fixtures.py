@@ -32,7 +32,6 @@ from mlflow.entities import (
     RunTag,
     RunData,
     RunInfo,
-    RunStatus,
 )
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 from pytz import UTC
@@ -108,7 +107,7 @@ def mlflow_experiment(lifecycle_stage=LifecycleStage.ACTIVE):
 
 def mlflow_run(
     name=RUN_NAME,
-    status=RunStatus.RUNNING,
+    status="RUNNING",
     end_time=None,
     lifecycle_stage=LifecycleStage.ACTIVE,
     name_tag=RunTag(MLFLOW_RUN_NAME, RUN_NAME),

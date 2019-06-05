@@ -23,7 +23,7 @@ from faculty.clients.experiment import (
     Pagination,
     Page,
 )
-from mlflow.entities import RunStatus, RunTag, ViewType
+from mlflow.entities import RunTag, ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 import pytest
@@ -525,7 +525,7 @@ def test_update_run_info(mocker):
     store = FacultyRestStore(STORE_URI)
 
     returned_run_info = store.update_run_info(
-        RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
+        RUN_UUID_HEX_STR, "RUNNING", RUN_ENDED_AT_MILLISECONDS
     )
 
     mock_client.update_run_info.assert_called_once_with(
@@ -549,7 +549,7 @@ def test_update_run_info_client_error(mocker):
         match="Experiment run with ID _ not found in project _",
     ):
         store.update_run_info(
-            RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
+            RUN_UUID_HEX_STR, "RUNNING", RUN_ENDED_AT_MILLISECONDS
         )
 
 

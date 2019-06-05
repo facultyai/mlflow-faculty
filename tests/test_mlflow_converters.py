@@ -25,7 +25,7 @@ from faculty.clients.experiment import (
 )
 from faculty.clients.base import HTTPError
 from mlflow.exceptions import MlflowException
-from mlflow.entities import LifecycleStage, RunStatus, RunTag, ViewType
+from mlflow.entities import LifecycleStage, RunTag, ViewType
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 from mlflow_faculty.mlflow_converters import (
@@ -122,10 +122,10 @@ def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
 @pytest.mark.parametrize(
     "faculty_run_status, mlflow_run_status",
     [
-        (FacultyExperimentRunStatus.RUNNING, RunStatus.RUNNING),
-        (FacultyExperimentRunStatus.FINISHED, RunStatus.FINISHED),
-        (FacultyExperimentRunStatus.FAILED, RunStatus.FAILED),
-        (FacultyExperimentRunStatus.SCHEDULED, RunStatus.SCHEDULED),
+        (FacultyExperimentRunStatus.RUNNING, "RUNNING"),
+        (FacultyExperimentRunStatus.FINISHED, "FINISHED"),
+        (FacultyExperimentRunStatus.FAILED, "FAILED"),
+        (FacultyExperimentRunStatus.SCHEDULED, "SCHEDULED"),
     ],
     ids=["running", "finishes", "failed", "scheduled"],
 )

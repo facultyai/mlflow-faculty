@@ -31,7 +31,6 @@ from mlflow.entities import (
     Run,
     RunData,
     RunInfo,
-    RunStatus,
     RunTag,
     ViewType,
 )
@@ -40,18 +39,20 @@ from mlflow.exceptions import MlflowException
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 _FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
-    FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
-    FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
-    FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
-    FacultyExperimentRunStatus.SCHEDULED: RunStatus.SCHEDULED,
+    FacultyExperimentRunStatus.RUNNING: "RUNNING",
+    FacultyExperimentRunStatus.FINISHED: "FINISHED",
+    FacultyExperimentRunStatus.FAILED: "FAILED",
+    FacultyExperimentRunStatus.SCHEDULED: "SCHEDULED",
+    FacultyExperimentRunStatus.KILLED: "KILLED",
 }
 
 
 _MLFLOW_TO_FACULTY_RUN_STATUS_MAP = {
-    RunStatus.RUNNING: FacultyExperimentRunStatus.RUNNING,
-    RunStatus.FINISHED: FacultyExperimentRunStatus.FINISHED,
-    RunStatus.FAILED: FacultyExperimentRunStatus.FAILED,
-    RunStatus.SCHEDULED: FacultyExperimentRunStatus.SCHEDULED,
+    "RUNNING": FacultyExperimentRunStatus.RUNNING,
+    "FINISHED": FacultyExperimentRunStatus.FINISHED,
+    "FAILED": FacultyExperimentRunStatus.FAILED,
+    "SCHEDULED": FacultyExperimentRunStatus.SCHEDULED,
+    "KILLED": FacultyExperimentRunStatus.KILLED,
 }
 
 
