@@ -121,15 +121,10 @@ def mlflow_run(
     info = RunInfo(
         RUN_UUID_HEX_STR,
         EXPERIMENT_ID,
-        name,
-        "",  # source_type
-        "",  # source_name
-        "",  # entry_point_name
         "",  # user_id
         status,
         RUN_STARTED_AT_MILLISECONDS,
         end_time,
-        "",  # source_version
         lifecycle_stage,
         ARTIFACT_LOCATION,
     )
