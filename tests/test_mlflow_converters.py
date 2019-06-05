@@ -34,7 +34,6 @@ from mlflow_faculty.mlflow_converters import (
     faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
     mlflow_timestamp_to_datetime_milliseconds,
-    mlflow_timestamp_to_datetime_seconds,
     faculty_tag_to_mlflow_tag,
     mlflow_metric_to_faculty_metric,
     mlflow_param_to_faculty_param,
@@ -254,17 +253,6 @@ def test_mlflow_timestamp_to_datetime_milliseconds(
         mlflow_timestamp_to_datetime_milliseconds(timestamp)
         == expected_datetime
     )
-
-
-@pytest.mark.parametrize(
-    "timestamp, expected_datetime",
-    [
-        (0, datetime(1970, 1, 1, tzinfo=UTC)),
-        (1552484641, datetime(2019, 3, 13, 13, 44, 1, tzinfo=UTC)),
-    ],
-)
-def test_mlflow_timestamp_to_datetime_seconds(timestamp, expected_datetime):
-    assert mlflow_timestamp_to_datetime_seconds(timestamp) == expected_datetime
 
 
 def test_faculty_tag_to_mlflow_tag():
