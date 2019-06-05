@@ -51,7 +51,9 @@ METRIC_TIMESTAMP_SECONDS = to_timestamp(METRIC_TIMESTAMP)
 FACULTY_METRIC = FacultyMetric(
     key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP, step=0
 )
-MLFLOW_METRIC = Metric("metric-key", "metric-value", METRIC_TIMESTAMP_SECONDS, 0)
+MLFLOW_METRIC = Metric(
+    "metric-key", "metric-value", METRIC_TIMESTAMP_SECONDS, 0
+)
 
 FACULTY_PARAM = FacultyParam(key="param-key", value="param-value")
 MLFLOW_PARAM = Param("param-key", "param-value")
@@ -127,5 +129,6 @@ def mlflow_run(
         end_time,
         lifecycle_stage,
         ARTIFACT_LOCATION,
+        RUN_UUID_HEX_STR,
     )
     return Run(info, data)

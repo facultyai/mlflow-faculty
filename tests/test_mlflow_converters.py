@@ -82,17 +82,9 @@ def mlflow_object_equals(first, other):
 def run_data_equals(first, other):
 
     return (
-        contain_same_elements(
-            first.metrics,
-            other.metrics,
-            lambda m: (m.key, m.value, m.timestamp, m.step),
-        )
-        and contain_same_elements(
-            first.params, other.params, lambda p: (p.key, p.value)
-        )
-        and contain_same_elements(
-            first.tags, other.tags, lambda t: (t.key, t.value)
-        )
+        first.metrics == other.metrics
+        and first.params == other.params
+        and first.tags == other.tags
     )
 
 

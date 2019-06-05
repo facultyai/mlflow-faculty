@@ -105,14 +105,6 @@ def faculty_run_to_mlflow_run(faculty_run):
 
     tag_dict = {tag.key: tag.value for tag in faculty_run.tags}
 
-    # Read run name from tag if not set, falling back to ""
-    if faculty_run.name:
-        name_attribute = faculty_run.name
-    elif MLFLOW_RUN_NAME in tag_dict:
-        name_attribute = tag_dict[MLFLOW_RUN_NAME]
-    else:
-        name_attribute = ""
-
     extra_mlflow_tags = []
 
     # Set run name tag if set as attribute but not already a tag
@@ -137,6 +129,7 @@ def faculty_run_to_mlflow_run(faculty_run):
         end_time,
         lifecycle_stage,
         faculty_run.artifact_location,
+        faculty_run.id.hex,
     )
     run_data = RunData(
         params=[
@@ -161,7 +154,7 @@ def faculty_metric_to_mlflow_metric(faculty_metric):
         timestamp=_datetime_to_mlflow_metric_timestamp(
             faculty_metric.timestamp
         ),
-        step=faculty_metric.step
+        step=faculty_metric.step,
     )
 
 
@@ -172,7 +165,7 @@ def mlflow_metric_to_faculty_metric(mlflow_metric):
         timestamp=mlflow_timestamp_to_datetime_seconds(
             mlflow_metric.timestamp
         ),
-        step=mlflow_metric.step
+        step=mlflow_metric.step,
     )
 
 
