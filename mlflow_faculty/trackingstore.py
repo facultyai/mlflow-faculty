@@ -401,36 +401,3 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
-
-    def log_metric(self, run_id, metric):
-        """
-        Log a metric for the specified run
-
-        :param run_uuid: String id for the run
-        :param metric: :py:class:`mlflow.entities.Metric` instance to log
-        """
-        # TODO: Remove this method once the functionality is moved
-        # into the abstract store in mlflow.
-        return self.log_batch(run_id, metrics=[metric])
-
-    def log_param(self, run_id, param):
-        """
-        Log a param for the specified run
-
-        :param run_uuid: String id for the run
-        :param param: :py:class:`mlflow.entities.Param` instance to log
-        """
-        # TODO: Remove this method once the functionality is moved
-        # into the abstract store in mlflow.
-        return self.log_batch(run_id, params=[param])
-
-    def set_tag(self, run_id, tag):
-        """
-        Set a tag for the specified run
-
-        :param run_uuid: String id for the run
-        :param tag: :py:class:`mlflow.entities.RunTag` instance to set
-        """
-        # TODO: Remove this method once the functionality is moved
-        # into the abstract store in mlflow.
-        return self.log_batch(run_id, tags=[tag])
