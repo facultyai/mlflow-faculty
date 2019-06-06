@@ -268,11 +268,7 @@ def test_rename_experiment_client_error(mocker):
         store.rename_experiment(EXPERIMENT_ID, "new name")
 
 
-@pytest.mark.parametrize(
-    "mlflow_parent_run_id, faculty_parent_run_id",
-    [(None, None), (PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID)],
-)
-def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
+def test_create_run(mocker):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
@@ -300,20 +296,10 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
     )
 
     experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
     store = FacultyRestStore(STORE_URI)
 
     returned_run = store.create_run(
-        experiment_id,
-        "unused-mlflow-user-id",
-        run_name,
-        "unused-source-type",
-        "unused-source-name",
-        "unused-entry-point-name",
-        mlflow_timestamp,
-        "unused-source-version",
-        [mlflow_tag],
-        mlflow_parent_run_id,
+        experiment_id, "unused-mlflow-user-id", mlflow_timestamp, [mlflow_tag]
     )
 
     timestamp_converter_mock.assert_called_once_with(mlflow_timestamp)
@@ -321,9 +307,9 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID,
         experiment_id,
-        run_name,
+        "",
         faculty_datetime,
-        faculty_parent_run_id,
+        None,
         tags=[faculty_tag],
     )
     run_converter_mock.assert_called_once_with(faculty_run)
@@ -352,7 +338,6 @@ def test_create_run_experiment_deleted(mocker):
 
     mocker.patch("faculty.client", return_value=mock_client)
     experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
 
     store = FacultyRestStore(STORE_URI)
 
@@ -360,46 +345,23 @@ def test_create_run_experiment_deleted(mocker):
         store.create_run(
             experiment_id,
             "unused-mlflow-user-id",
-            run_name,
-            "unused-source-type",
-            "unused-source-name",
-            "unused-entry-point-name",
             mlflow_timestamp,
-            "unused-source-version",
             [mlflow_tag],
-            PARENT_RUN_UUID_HEX_STR,
         )
 
 
 @pytest.mark.parametrize(
-    "run_name_arg, run_name_tag, expected_run_name",
-    [
-        ("arg name", "tag name", "arg name"),
-        ("arg name", None, "arg name"),
-        ("", "tag name", "tag name"),
-        (None, "tag name", "tag name"),
-        (None, None, ""),
-    ],
+    "run_name_tag, expected_run_name",
+    [("tag name", "tag name"), ("", ""), (None, "")],
 )
 @pytest.mark.parametrize(
-    "parent_run_id_arg, parent_run_id_tag, expected_parent_run_id",
-    [
-        (PARENT_RUN_UUID_HEX_STR, "other", PARENT_RUN_UUID),
-        (PARENT_RUN_UUID_HEX_STR, None, PARENT_RUN_UUID),
-        ("", PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID),
-        (None, PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID),
-        ("", "", None),
-        ("", None, None),
-        (None, "", None),
-        (None, None, None),
-    ],
+    "parent_run_id_tag, expected_parent_run_id",
+    [(PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID), ("", None), (None, None)],
 )
 def test_create_run_backwards_compatability(
     mocker,
-    run_name_arg,
     run_name_tag,
     expected_run_name,
-    parent_run_id_arg,
     parent_run_id_tag,
     expected_parent_run_id,
 ):
@@ -423,16 +385,7 @@ def test_create_run_backwards_compatability(
     store = FacultyRestStore(STORE_URI)
 
     store.create_run(
-        mocker.Mock(),
-        "unused-mlflow-user-id",
-        run_name_arg,
-        "unused-source-type",
-        "unused-source-name",
-        "unused-entry-point-name",
-        mocker.Mock(),
-        "unused-source-version",
-        tags,
-        parent_run_id_arg,
+        mocker.Mock(), "unused-mlflow-user-id", mocker.Mock(), tags
     )
 
     args, _ = mock_client.create_run.call_args
@@ -452,7 +405,6 @@ def test_create_run_client_error(mocker):
     mocker.patch("faculty.client", return_value=mock_client)
 
     experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
     mlflow_timestamp = mocker.Mock()
     mlflow_tag = mocker.Mock()
 
@@ -462,14 +414,8 @@ def test_create_run_client_error(mocker):
         store.create_run(
             experiment_id,
             "unused-mlflow-user-id",
-            run_name,
-            "unused-source-type",
-            "unused-source-name",
-            "unused-entry-point-name",
             mlflow_timestamp,
-            "unused-source-version",
             [mlflow_tag],
-            PARENT_RUN_UUID_HEX_STR,
         )
 
 

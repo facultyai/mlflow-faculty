@@ -219,19 +219,7 @@ class FacultyRestStore(AbstractStore):
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
             return mlflow_run.info
 
-    def create_run(
-        self,
-        experiment_id,
-        user_id,
-        run_name,
-        source_type,
-        source_name,
-        entry_point_name,
-        start_time,
-        source_version,
-        tags,
-        parent_run_id,
-    ):
+    def create_run(self, experiment_id, user_id, start_time, tags):
         """
         Creates a run under the specified experiment ID, setting the run's
         status to "RUNNING" and the start time to the current time.
@@ -248,10 +236,8 @@ class FacultyRestStore(AbstractStore):
         # For backward compatability, fall back to run name or parent run ID
         # set in tags
         tag_dict = {tag.key: tag.value for tag in tags}
-        run_name = run_name or tag_dict.get(MLFLOW_RUN_NAME) or ""
-        parent_run_id = (
-            parent_run_id or tag_dict.get(MLFLOW_PARENT_RUN_ID) or None
-        )
+        run_name = tag_dict.get(MLFLOW_RUN_NAME) or ""
+        parent_run_id = tag_dict.get(MLFLOW_PARENT_RUN_ID) or None
 
         try:
             faculty_run = self._client.create_run(
