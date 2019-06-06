@@ -31,6 +31,7 @@ from mlflow.entities import (
     Run,
     RunData,
     RunInfo,
+    RunStatus,
     RunTag,
     ViewType,
 )
@@ -53,6 +54,11 @@ _MLFLOW_TO_FACULTY_RUN_STATUS_MAP = {
     "FAILED": FacultyExperimentRunStatus.FAILED,
     "SCHEDULED": FacultyExperimentRunStatus.SCHEDULED,
     "KILLED": FacultyExperimentRunStatus.KILLED,
+    RunStatus.RUNNING: FacultyExperimentRunStatus.RUNNING,
+    RunStatus.FINISHED: FacultyExperimentRunStatus.FINISHED,
+    RunStatus.FAILED: FacultyExperimentRunStatus.FAILED,
+    RunStatus.SCHEDULED: FacultyExperimentRunStatus.SCHEDULED,
+    RunStatus.KILLED: FacultyExperimentRunStatus.KILLED,
 }
 
 
