@@ -516,7 +516,6 @@ def test_create_run_invalid_parent_run_id(mocker):
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(ValueError):
-        store.log_batch("invalid-run-id")
         store.create_run(
             EXPERIMENT_ID,
             "unused-mlflow-user-id",
