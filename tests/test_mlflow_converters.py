@@ -33,7 +33,7 @@ from mlflow_faculty.mlflow_converters import (
     faculty_experiment_to_mlflow_experiment,
     faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
-    mlflow_timestamp_to_datetime_milliseconds,
+    mlflow_timestamp_to_datetime,
     faculty_tag_to_mlflow_tag,
     mlflow_metric_to_faculty_metric,
     mlflow_param_to_faculty_param,
@@ -241,13 +241,8 @@ def test_faculty_metric_to_mlflow_metric():
         (1551884271987, datetime(2019, 3, 6, 14, 57, 51, 987000, tzinfo=UTC)),
     ],
 )
-def test_mlflow_timestamp_to_datetime_milliseconds(
-    timestamp, expected_datetime
-):
-    assert (
-        mlflow_timestamp_to_datetime_milliseconds(timestamp)
-        == expected_datetime
-    )
+def test_mlflow_timestamp_to_datetime(timestamp, expected_datetime):
+    assert mlflow_timestamp_to_datetime(timestamp) == expected_datetime
 
 
 def test_faculty_tag_to_mlflow_tag():

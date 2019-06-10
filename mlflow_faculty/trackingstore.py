@@ -33,7 +33,7 @@ from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
-    mlflow_timestamp_to_datetime_milliseconds,
+    mlflow_timestamp_to_datetime,
     mlflow_metric_to_faculty_metric,
     mlflow_param_to_faculty_param,
     mlflow_tag_to_faculty_tag,
@@ -211,7 +211,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id,
                 UUID(run_uuid),
                 mlflow_to_faculty_run_status(run_status),
-                mlflow_timestamp_to_datetime_milliseconds(end_time),
+                mlflow_timestamp_to_datetime(end_time),
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -244,7 +244,7 @@ class FacultyRestStore(AbstractStore):
                 self._project_id,
                 experiment_id,
                 run_name,
-                mlflow_timestamp_to_datetime_milliseconds(start_time),
+                mlflow_timestamp_to_datetime(start_time),
                 None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
