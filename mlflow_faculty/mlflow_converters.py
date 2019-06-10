@@ -48,6 +48,8 @@ _FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
 }
 
 
+# Below we are mapping both strings and RunStatus objects to Faculty RunStatus
+# objects so we are less sensitive to future MLflow API changes
 _MLFLOW_TO_FACULTY_RUN_STATUS_MAP = {
     "RUNNING": FacultyExperimentRunStatus.RUNNING,
     "FINISHED": FacultyExperimentRunStatus.FINISHED,
