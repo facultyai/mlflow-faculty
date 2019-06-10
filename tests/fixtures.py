@@ -120,14 +120,14 @@ def mlflow_run(
         tags.append(parent_run_id_tag)
     data = RunData(params=[MLFLOW_PARAM], metrics=[MLFLOW_METRIC], tags=tags)
     info = RunInfo(
-        RUN_UUID_HEX_STR,
-        EXPERIMENT_ID,
-        "",  # user_id
-        status,
-        RUN_STARTED_AT_MILLISECONDS,
-        end_time,
-        lifecycle_stage,
-        ARTIFACT_LOCATION,
-        RUN_UUID_HEX_STR,
+        run_uuid=RUN_UUID_HEX_STR,
+        experiment_id=EXPERIMENT_ID,
+        user_id="",
+        status=status,
+        start_time=RUN_STARTED_AT_MILLISECONDS,
+        end_time=end_time,
+        lifecycle_stage=lifecycle_stage,
+        artifact_uri=ARTIFACT_LOCATION,
+        run_id=RUN_UUID_HEX_STR,
     )
     return Run(info, data)
