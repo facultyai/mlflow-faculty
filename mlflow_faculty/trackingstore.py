@@ -368,7 +368,7 @@ class FacultyRestStore(AbstractStore):
         try:
             faculty_runs = []
             experiment_ids = (
-                experiment_ids
+                None
                 if experiment_ids is None
                 else list(map(int, experiment_ids))
             )
