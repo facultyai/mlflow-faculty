@@ -69,17 +69,12 @@ def experiment_equals(first, other):
     )
 
 
-def contain_same_elements(first, other, hasher):
-    return set(map(hasher, first)) == set(map(hasher, other))
-
-
 def mlflow_object_equals(first, other):
     # mlflow objects return their properties as (key, value) when iterated over
     return all(x == y for x, y in zip(first, other))
 
 
 def run_data_equals(first, other):
-
     return (
         first.metrics == other.metrics
         and first.params == other.params
