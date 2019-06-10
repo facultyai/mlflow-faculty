@@ -121,8 +121,9 @@ def test_faculty_experiment_to_mlflow_experiment(deleted_at, lifecycle_stage):
         (FacultyExperimentRunStatus.FINISHED, "FINISHED"),
         (FacultyExperimentRunStatus.FAILED, "FAILED"),
         (FacultyExperimentRunStatus.SCHEDULED, "SCHEDULED"),
+        (FacultyExperimentRunStatus.KILLED, "KILLED"),
     ],
-    ids=["running", "finishes", "failed", "scheduled"],
+    ids=["running", "finished", "failed", "scheduled", "killed"],
 )
 @pytest.mark.parametrize(
     "deleted_at, lifecycle_stage",

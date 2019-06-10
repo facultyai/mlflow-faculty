@@ -16,14 +16,14 @@ import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
     ExperimentNameConflict,
-    ExperimentRunStatus,
+    ExperimentRunStatus as FacultyExperimentRunStatus,
     ListExperimentRunsResponse,
     DeleteExperimentRunsResponse,
     RestoreExperimentRunsResponse,
     Pagination,
     Page,
 )
-from mlflow.entities import RunTag, ViewType
+from mlflow.entities import RunStatus, RunTag, ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 import pytest
@@ -450,7 +450,22 @@ def test_get_run_client_error(mocker):
         store.get_run(RUN_UUID_HEX_STR)
 
 
-def test_update_run_info(mocker):
+@pytest.mark.parametrize(
+    "run_status, faculty_run_status",
+    [
+        ("RUNNING", FacultyExperimentRunStatus.RUNNING),
+        ("FINISHED", FacultyExperimentRunStatus.FINISHED),
+        ("FAILED", FacultyExperimentRunStatus.FAILED),
+        ("SCHEDULED", FacultyExperimentRunStatus.SCHEDULED),
+        ("KILLED", FacultyExperimentRunStatus.KILLED),
+        (RunStatus.RUNNING, FacultyExperimentRunStatus.RUNNING),
+        (RunStatus.FINISHED, FacultyExperimentRunStatus.FINISHED),
+        (RunStatus.FAILED, FacultyExperimentRunStatus.FAILED),
+        (RunStatus.SCHEDULED, FacultyExperimentRunStatus.SCHEDULED),
+        (RunStatus.KILLED, FacultyExperimentRunStatus.KILLED),
+    ],
+)
+def test_update_run_info(mocker, run_status, faculty_run_status):
     faculty_run = mocker.Mock()
     mock_client = mocker.Mock()
     mock_client.update_run_info.return_value = faculty_run
@@ -467,11 +482,11 @@ def test_update_run_info(mocker):
     store = FacultyRestStore(STORE_URI)
 
     returned_run_info = store.update_run_info(
-        RUN_UUID_HEX_STR, "RUNNING", RUN_ENDED_AT_MILLISECONDS
+        RUN_UUID_HEX_STR, run_status, RUN_ENDED_AT_MILLISECONDS
     )
 
     mock_client.update_run_info.assert_called_once_with(
-        PROJECT_ID, RUN_UUID, ExperimentRunStatus.RUNNING, RUN_ENDED_AT
+        PROJECT_ID, RUN_UUID, faculty_run_status, RUN_ENDED_AT
     )
     run_converter_mock.assert_called_once_with(faculty_run)
     assert returned_run_info == mlflow_run_info
