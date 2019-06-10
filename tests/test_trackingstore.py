@@ -172,7 +172,6 @@ def test_get_experiment_client_error(mocker):
 
 def test_get_experiment_invalid_experiment_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -463,6 +462,7 @@ def test_get_run(mocker):
     mock_client = mocker.Mock()
     mock_client.get_run.return_value = FACULTY_RUN
     mocker.patch("faculty.client", return_value=mock_client)
+
     mock_mlflow_run = mocker.Mock()
     converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
@@ -566,7 +566,6 @@ def test_update_run_info_client_error(mocker):
 
 def test_update_run_info_invalid_run_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -629,7 +628,6 @@ def test_delete_run_client_error(mocker):
 
 def test_delete_run_invalid_run_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -690,7 +688,6 @@ def test_restore_run_client_error(mocker):
 
 def test_restore_run_invalid_run_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -736,13 +733,11 @@ def test_get_metric_history(mocker):
     ]
 
 
-def test_get_metric_history_error(mocker):
-    mock_client = mocker.Mock(
-        get_metric_history=mocker.Mock(
-            side_effect=HttpError(mocker.Mock(), "Dummy client error.")
-        )
+def test_get_metric_history_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get_metric_history.side_effect = HttpError(
+        mocker.Mock(), "Dummy client error."
     )
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -753,7 +748,6 @@ def test_get_metric_history_error(mocker):
 
 def test_get_metric_history_invalid_run_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -887,9 +881,8 @@ def test_search_runs_client_error(mocker):
         store.search_runs([123], search_expressions=None, run_view_type=None)
 
 
-def test_invalid_experiment_id(mocker):
+def test_search_runs_invalid_experiment_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -903,6 +896,7 @@ def test_invalid_experiment_id(mocker):
 def test_log_batch(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
@@ -989,7 +983,6 @@ def test_log_batch_error(mocker):
 
 def test_log_batch_invalid_run_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -1001,13 +994,16 @@ def test_log_batch_invalid_run_id(mocker):
 def test_log_metric(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
         return_value=mlflow_metric,
     )
+
     store = FacultyRestStore(STORE_URI)
     store.log_metric(RUN_UUID_HEX_STR, MLFLOW_METRIC)
+
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[mlflow_metric], params=[], tags=[]
     )
@@ -1017,13 +1013,16 @@ def test_log_metric(mocker):
 def test_log_param(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_param = mocker.Mock()
     param_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_param_to_faculty_param",
         return_value=mlflow_param,
     )
+
     store = FacultyRestStore(STORE_URI)
     store.log_param(RUN_UUID_HEX_STR, MLFLOW_PARAM)
+
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[mlflow_param], tags=[]
     )
@@ -1033,13 +1032,16 @@ def test_log_param(mocker):
 def test_set_tag(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
         return_value=mlflow_tag,
     )
+
     store = FacultyRestStore(STORE_URI)
     store.set_tag(RUN_UUID_HEX_STR, MLFLOW_TAG)
+
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[mlflow_tag]
     )
@@ -1056,7 +1058,7 @@ def test_delete_experiment(mocker):
     mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
-def test_delete_client_error(mocker):
+def test_delete_experiment_client_error(mocker):
     mock_client = mocker.Mock()
     mock_client.delete.side_effect = HttpError(
         mocker.Mock(), "Experiment with ID _ not found in project _"
@@ -1075,7 +1077,6 @@ def test_delete_client_error(mocker):
 
 def test_delete_experiment_invalid_experiment_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
@@ -1094,7 +1095,7 @@ def test_restore_experiment(mocker):
     mock_client.restore.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
-def test_restore_client_error(mocker):
+def test_restore_experiment_client_error(mocker):
     mock_client = mocker.Mock()
     mock_client.restore.side_effect = HttpError(
         mocker.Mock(), "Experiment with ID _ not found in project _"
@@ -1111,9 +1112,8 @@ def test_restore_client_error(mocker):
     mock_client.restore.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
-def test_restore_invalid_experiment_id(mocker):
+def test_restore_experiment_invalid_experiment_id(mocker):
     mock_client = mocker.Mock()
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
