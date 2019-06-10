@@ -124,15 +124,15 @@ def faculty_run_to_mlflow_run(faculty_run):
         )
 
     run_info = RunInfo(
-        faculty_run.id.hex,
-        faculty_run.experiment_id,
-        "",  # user_id
-        _FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
-        start_time,
-        end_time,
-        lifecycle_stage,
-        faculty_run.artifact_location,
-        faculty_run.id.hex,
+        run_uuid=faculty_run.id.hex,
+        experiment_id=faculty_run.experiment_id,
+        user_id="",
+        status=_FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
+        start_time=start_time,
+        end_time=end_time,
+        lifecycle_stage=lifecycle_stage,
+        artifact_uri=faculty_run.artifact_location,
+        run_id=faculty_run.id.hex,
     )
     run_data = RunData(
         params=[
