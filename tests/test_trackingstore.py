@@ -272,7 +272,7 @@ def test_create_run(mocker):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore." "mlflow_timestamp_to_datetime",
+        "mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime",
         return_value=faculty_datetime,
     )
 
@@ -318,7 +318,7 @@ def test_create_run(mocker):
 def test_create_run_experiment_deleted(mocker):
     mlflow_timestamp = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.trackingstore." "mlflow_timestamp_to_datetime",
+        "mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime",
         return_value=mocker.Mock(),
     )
 
@@ -363,9 +363,7 @@ def test_create_run_backwards_compatability(
     parent_run_id_tag,
     expected_parent_run_id,
 ):
-    mocker.patch(
-        "mlflow_faculty.trackingstore." "mlflow_timestamp_to_datetime"
-    )
+    mocker.patch("mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime")
     mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
 
     mock_client = mocker.Mock()
@@ -391,9 +389,7 @@ def test_create_run_backwards_compatability(
 
 
 def test_create_run_client_error(mocker):
-    mocker.patch(
-        "mlflow_faculty.trackingstore." "mlflow_timestamp_to_datetime"
-    )
+    mocker.patch("mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime")
     mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
 
     mock_client = mocker.Mock()
