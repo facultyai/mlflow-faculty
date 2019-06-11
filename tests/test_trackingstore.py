@@ -16,7 +16,7 @@ import faculty
 from faculty.clients.base import HttpError
 from faculty.clients.experiment import (
     ExperimentNameConflict,
-    ExperimentRunStatus,
+    ExperimentRunStatus as FacultyExperimentRunStatus,
     ListExperimentRunsResponse,
     DeleteExperimentRunsResponse,
     RestoreExperimentRunsResponse,
@@ -34,6 +34,7 @@ from tests.fixtures import (
     EXPERIMENT_ID,
     RUN_ENDED_AT,
     RUN_ENDED_AT_MILLISECONDS,
+    RUN_STARTED_AT_MILLISECONDS,
     RUN_UUID,
     RUN_UUID_HEX_STR,
     PARENT_RUN_UUID,
@@ -168,6 +169,16 @@ def test_get_experiment_client_error(mocker):
         store.get_experiment(EXPERIMENT_ID)
 
 
+def test_get_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.get_experiment("invalid-experiment-id")
+
+
 def test_list_experiments(mocker):
     faculty_experiment = mocker.Mock()
     mock_client = mocker.Mock()
@@ -268,16 +279,21 @@ def test_rename_experiment_client_error(mocker):
         store.rename_experiment(EXPERIMENT_ID, "new name")
 
 
-@pytest.mark.parametrize(
-    "mlflow_parent_run_id, faculty_parent_run_id",
-    [(None, None), (PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID)],
-)
-def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
+def test_rename_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.rename_experiment("invalid-experiment-id", "new name")
+
+
+def test_create_run(mocker):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore."
-        "mlflow_timestamp_to_datetime_milliseconds",
+        "mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime",
         return_value=faculty_datetime,
     )
 
@@ -299,31 +315,20 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
         return_value=mlflow_run,
     )
 
-    experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
     store = FacultyRestStore(STORE_URI)
 
     returned_run = store.create_run(
-        experiment_id,
-        "unused-mlflow-user-id",
-        run_name,
-        "unused-source-type",
-        "unused-source-name",
-        "unused-entry-point-name",
-        mlflow_timestamp,
-        "unused-source-version",
-        [mlflow_tag],
-        mlflow_parent_run_id,
+        EXPERIMENT_ID, "unused-mlflow-user-id", mlflow_timestamp, [mlflow_tag]
     )
 
     timestamp_converter_mock.assert_called_once_with(mlflow_timestamp)
     tag_converter_mock.assert_called_once_with(mlflow_tag)
     mock_client.create_run.assert_called_once_with(
         PROJECT_ID,
-        experiment_id,
-        run_name,
+        EXPERIMENT_ID,
+        "",
         faculty_datetime,
-        faculty_parent_run_id,
+        None,
         tags=[faculty_tag],
     )
     run_converter_mock.assert_called_once_with(faculty_run)
@@ -331,14 +336,11 @@ def test_create_run(mocker, mlflow_parent_run_id, faculty_parent_run_id):
 
 
 def test_create_run_experiment_deleted(mocker):
-    mlflow_timestamp = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.trackingstore."
-        "mlflow_timestamp_to_datetime_milliseconds",
+        "mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime",
         return_value=mocker.Mock(),
     )
 
-    mlflow_tag = mocker.Mock()
     mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
         return_value=mocker.Mock(),
@@ -351,62 +353,34 @@ def test_create_run_experiment_deleted(mocker):
     mock_client.create_run.side_effect = exception
 
     mocker.patch("faculty.client", return_value=mock_client)
-    experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
 
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="experiment"):
         store.create_run(
-            experiment_id,
+            EXPERIMENT_ID,
             "unused-mlflow-user-id",
-            run_name,
-            "unused-source-type",
-            "unused-source-name",
-            "unused-entry-point-name",
-            mlflow_timestamp,
-            "unused-source-version",
-            [mlflow_tag],
-            PARENT_RUN_UUID_HEX_STR,
+            RUN_STARTED_AT_MILLISECONDS,
+            tags=[],
         )
 
 
 @pytest.mark.parametrize(
-    "run_name_arg, run_name_tag, expected_run_name",
-    [
-        ("arg name", "tag name", "arg name"),
-        ("arg name", None, "arg name"),
-        ("", "tag name", "tag name"),
-        (None, "tag name", "tag name"),
-        (None, None, ""),
-    ],
+    "run_name_tag, expected_run_name",
+    [("tag name", "tag name"), ("", ""), (None, "")],
 )
 @pytest.mark.parametrize(
-    "parent_run_id_arg, parent_run_id_tag, expected_parent_run_id",
-    [
-        (PARENT_RUN_UUID_HEX_STR, "other", PARENT_RUN_UUID),
-        (PARENT_RUN_UUID_HEX_STR, None, PARENT_RUN_UUID),
-        ("", PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID),
-        (None, PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID),
-        ("", "", None),
-        ("", None, None),
-        (None, "", None),
-        (None, None, None),
-    ],
+    "parent_run_id_tag, expected_parent_run_id",
+    [(PARENT_RUN_UUID_HEX_STR, PARENT_RUN_UUID), ("", None), (None, None)],
 )
 def test_create_run_backwards_compatability(
     mocker,
-    run_name_arg,
     run_name_tag,
     expected_run_name,
-    parent_run_id_arg,
     parent_run_id_tag,
     expected_parent_run_id,
 ):
-    mocker.patch(
-        "mlflow_faculty.trackingstore."
-        "mlflow_timestamp_to_datetime_milliseconds"
-    )
+    mocker.patch("mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime")
     mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
 
     mock_client = mocker.Mock()
@@ -423,16 +397,10 @@ def test_create_run_backwards_compatability(
     store = FacultyRestStore(STORE_URI)
 
     store.create_run(
-        mocker.Mock(),
+        EXPERIMENT_ID,
         "unused-mlflow-user-id",
-        run_name_arg,
-        "unused-source-type",
-        "unused-source-name",
-        "unused-entry-point-name",
-        mocker.Mock(),
-        "unused-source-version",
+        RUN_STARTED_AT_MILLISECONDS,
         tags,
-        parent_run_id_arg,
     )
 
     args, _ = mock_client.create_run.call_args
@@ -441,35 +409,51 @@ def test_create_run_backwards_compatability(
 
 
 def test_create_run_client_error(mocker):
-    mocker.patch(
-        "mlflow_faculty.trackingstore."
-        "mlflow_timestamp_to_datetime_milliseconds"
-    )
+    mocker.patch("mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime")
     mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
 
     mock_client = mocker.Mock()
     mock_client.create_run.side_effect = HttpError(mocker.Mock(), "Some error")
     mocker.patch("faculty.client", return_value=mock_client)
 
-    experiment_id = mocker.Mock()
-    run_name = mocker.Mock()
-    mlflow_timestamp = mocker.Mock()
-    mlflow_tag = mocker.Mock()
-
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Some error"):
         store.create_run(
-            experiment_id,
+            EXPERIMENT_ID,
             "unused-mlflow-user-id",
-            run_name,
-            "unused-source-type",
-            "unused-source-name",
-            "unused-entry-point-name",
-            mlflow_timestamp,
-            "unused-source-version",
-            [mlflow_tag],
-            PARENT_RUN_UUID_HEX_STR,
+            RUN_STARTED_AT_MILLISECONDS,
+            tags=[],
+        )
+
+
+def test_create_run_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.create_run(
+            "invalid-experiment-id",
+            "unused-mlflow-user-id",
+            RUN_STARTED_AT_MILLISECONDS,
+            tags=[],
+        )
+
+
+def test_create_run_invalid_parent_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.create_run(
+            EXPERIMENT_ID,
+            "unused-mlflow-user-id",
+            RUN_STARTED_AT_MILLISECONDS,
+            [RunTag(key=MLFLOW_PARENT_RUN_ID, value="invalid-uuid")],
         )
 
 
@@ -477,6 +461,7 @@ def test_get_run(mocker):
     mock_client = mocker.Mock()
     mock_client.get_run.return_value = FACULTY_RUN
     mocker.patch("faculty.client", return_value=mock_client)
+
     mock_mlflow_run = mocker.Mock()
     converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
@@ -508,7 +493,32 @@ def test_get_run_client_error(mocker):
         store.get_run(RUN_UUID_HEX_STR)
 
 
-def test_update_run_info(mocker):
+def test_get_run_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.get_run("invalid-run-id")
+
+
+@pytest.mark.parametrize(
+    "run_status, faculty_run_status",
+    [
+        ("RUNNING", FacultyExperimentRunStatus.RUNNING),
+        ("FINISHED", FacultyExperimentRunStatus.FINISHED),
+        ("FAILED", FacultyExperimentRunStatus.FAILED),
+        ("SCHEDULED", FacultyExperimentRunStatus.SCHEDULED),
+        ("KILLED", FacultyExperimentRunStatus.KILLED),
+        (RunStatus.RUNNING, FacultyExperimentRunStatus.RUNNING),
+        (RunStatus.FINISHED, FacultyExperimentRunStatus.FINISHED),
+        (RunStatus.FAILED, FacultyExperimentRunStatus.FAILED),
+        (RunStatus.SCHEDULED, FacultyExperimentRunStatus.SCHEDULED),
+        (RunStatus.KILLED, FacultyExperimentRunStatus.KILLED),
+    ],
+)
+def test_update_run_info(mocker, run_status, faculty_run_status):
     faculty_run = mocker.Mock()
     mock_client = mocker.Mock()
     mock_client.update_run_info.return_value = faculty_run
@@ -525,11 +535,11 @@ def test_update_run_info(mocker):
     store = FacultyRestStore(STORE_URI)
 
     returned_run_info = store.update_run_info(
-        RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
+        RUN_UUID_HEX_STR, run_status, RUN_ENDED_AT_MILLISECONDS
     )
 
     mock_client.update_run_info.assert_called_once_with(
-        PROJECT_ID, RUN_UUID, ExperimentRunStatus.RUNNING, RUN_ENDED_AT
+        PROJECT_ID, RUN_UUID, faculty_run_status, RUN_ENDED_AT
     )
     run_converter_mock.assert_called_once_with(faculty_run)
     assert returned_run_info == mlflow_run_info
@@ -549,7 +559,19 @@ def test_update_run_info_client_error(mocker):
         match="Experiment run with ID _ not found in project _",
     ):
         store.update_run_info(
-            RUN_UUID_HEX_STR, RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
+            RUN_UUID_HEX_STR, "RUNNING", RUN_ENDED_AT_MILLISECONDS
+        )
+
+
+def test_update_run_info_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.update_run_info(
+            "invalid-run-id", RunStatus.RUNNING, RUN_ENDED_AT_MILLISECONDS
         )
 
 
@@ -603,6 +625,16 @@ def test_delete_run_client_error(mocker):
         store.delete_run(RUN_UUID_HEX_STR)
 
 
+def test_delete_run_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.delete_run("invalid-run-id")
+
+
 def test_restore_run(mocker):
     mock_client = mocker.Mock()
     mock_client.restore_runs.return_value = RestoreExperimentRunsResponse(
@@ -653,6 +685,16 @@ def test_restore_run_client_error(mocker):
         store.restore_run(RUN_UUID_HEX_STR)
 
 
+def test_restore_run_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.restore_run("invalid-run-id")
+
+
 def test_get_metric_history(mocker):
     metric_key = "metric_key"
     first_faculty_metric = mocker.Mock()
@@ -690,19 +732,27 @@ def test_get_metric_history(mocker):
     ]
 
 
-def test_get_metric_history_error(mocker):
-    mock_client = mocker.Mock(
-        get_metric_history=mocker.Mock(
-            side_effect=HttpError(mocker.Mock(), "Dummy client error.")
-        )
+def test_get_metric_history_client_error(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get_metric_history.side_effect = HttpError(
+        mocker.Mock(), "Dummy client error."
     )
-
     mocker.patch("faculty.client", return_value=mock_client)
 
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(MlflowException, match="Dummy client error."):
         store.get_metric_history(RUN_UUID_HEX_STR, "metric-key")
+
+
+def test_get_metric_history_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.get_metric_history("invalid-run-id", "metric-key")
 
 
 def test_search_runs(mocker):
@@ -830,9 +880,22 @@ def test_search_runs_client_error(mocker):
         store.search_runs([123], search_expressions=None, run_view_type=None)
 
 
+def test_search_runs_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.search_runs(
+            ["invalid-experiment-id", "invalid-experiment-id"], None, None
+        )
+
+
 def test_log_batch(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
@@ -917,16 +980,29 @@ def test_log_batch_error(mocker):
     )
 
 
+def test_log_batch_invalid_run_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.log_batch("invalid-run-id")
+
+
 def test_log_metric(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
         return_value=mlflow_metric,
     )
+
     store = FacultyRestStore(STORE_URI)
     store.log_metric(RUN_UUID_HEX_STR, MLFLOW_METRIC)
+
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[mlflow_metric], params=[], tags=[]
     )
@@ -936,13 +1012,16 @@ def test_log_metric(mocker):
 def test_log_param(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_param = mocker.Mock()
     param_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_param_to_faculty_param",
         return_value=mlflow_param,
     )
+
     store = FacultyRestStore(STORE_URI)
     store.log_param(RUN_UUID_HEX_STR, MLFLOW_PARAM)
+
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[mlflow_param], tags=[]
     )
@@ -952,13 +1031,16 @@ def test_log_param(mocker):
 def test_set_tag(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
+
     mlflow_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
         "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
         return_value=mlflow_tag,
     )
+
     store = FacultyRestStore(STORE_URI)
     store.set_tag(RUN_UUID_HEX_STR, MLFLOW_TAG)
+
     mock_client.log_run_data.assert_called_once_with(
         PROJECT_ID, RUN_UUID, metrics=[], params=[], tags=[mlflow_tag]
     )
@@ -975,7 +1057,7 @@ def test_delete_experiment(mocker):
     mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
-def test_delete_client_error(mocker):
+def test_delete_experiment_client_error(mocker):
     mock_client = mocker.Mock()
     mock_client.delete.side_effect = HttpError(
         mocker.Mock(), "Experiment with ID _ not found in project _"
@@ -992,6 +1074,16 @@ def test_delete_client_error(mocker):
     mock_client.delete.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
+def test_delete_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.delete_experiment("invalid-experiment-id")
+
+
 def test_restore_experiment(mocker):
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
@@ -1002,7 +1094,7 @@ def test_restore_experiment(mocker):
     mock_client.restore.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
 
 
-def test_restore_client_error(mocker):
+def test_restore_experiment_client_error(mocker):
     mock_client = mocker.Mock()
     mock_client.restore.side_effect = HttpError(
         mocker.Mock(), "Experiment with ID _ not found in project _"
@@ -1017,3 +1109,13 @@ def test_restore_client_error(mocker):
         store.restore_experiment(EXPERIMENT_ID)
 
     mock_client.restore.assert_called_once_with(PROJECT_ID, EXPERIMENT_ID)
+
+
+def test_restore_experiment_invalid_experiment_id(mocker):
+    mock_client = mocker.Mock()
+    mocker.patch("faculty.client", return_value=mock_client)
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(ValueError):
+        store.restore_experiment("invalid-experiment-id")

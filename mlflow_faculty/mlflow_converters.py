@@ -40,18 +40,27 @@ from mlflow.exceptions import MlflowException
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 _FACULTY_TO_MLFLOW_RUN_STATUS_MAP = {
-    FacultyExperimentRunStatus.RUNNING: RunStatus.RUNNING,
-    FacultyExperimentRunStatus.FINISHED: RunStatus.FINISHED,
-    FacultyExperimentRunStatus.FAILED: RunStatus.FAILED,
-    FacultyExperimentRunStatus.SCHEDULED: RunStatus.SCHEDULED,
+    FacultyExperimentRunStatus.RUNNING: "RUNNING",
+    FacultyExperimentRunStatus.FINISHED: "FINISHED",
+    FacultyExperimentRunStatus.FAILED: "FAILED",
+    FacultyExperimentRunStatus.SCHEDULED: "SCHEDULED",
+    FacultyExperimentRunStatus.KILLED: "KILLED",
 }
 
 
+# Below we are mapping both strings and RunStatus objects to Faculty RunStatus
+# objects so we are less sensitive to future MLflow API changes
 _MLFLOW_TO_FACULTY_RUN_STATUS_MAP = {
+    "RUNNING": FacultyExperimentRunStatus.RUNNING,
+    "FINISHED": FacultyExperimentRunStatus.FINISHED,
+    "FAILED": FacultyExperimentRunStatus.FAILED,
+    "SCHEDULED": FacultyExperimentRunStatus.SCHEDULED,
+    "KILLED": FacultyExperimentRunStatus.KILLED,
     RunStatus.RUNNING: FacultyExperimentRunStatus.RUNNING,
     RunStatus.FINISHED: FacultyExperimentRunStatus.FINISHED,
     RunStatus.FAILED: FacultyExperimentRunStatus.FAILED,
     RunStatus.SCHEDULED: FacultyExperimentRunStatus.SCHEDULED,
+    RunStatus.KILLED: FacultyExperimentRunStatus.KILLED,
 }
 
 
@@ -64,10 +73,6 @@ _LIFECYCLE_STAGE_CONVERSION_MAP = {
 
 def _datetime_to_mlflow_timestamp(dt):
     return to_timestamp(dt) * 1000
-
-
-def _datetime_to_mlflow_metric_timestamp(dt):
-    return to_timestamp(dt)
 
 
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
@@ -105,14 +110,6 @@ def faculty_run_to_mlflow_run(faculty_run):
 
     tag_dict = {tag.key: tag.value for tag in faculty_run.tags}
 
-    # Read run name from tag if not set, falling back to ""
-    if faculty_run.name:
-        name_attribute = faculty_run.name
-    elif MLFLOW_RUN_NAME in tag_dict:
-        name_attribute = tag_dict[MLFLOW_RUN_NAME]
-    else:
-        name_attribute = ""
-
     extra_mlflow_tags = []
 
     # Set run name tag if set as attribute but not already a tag
@@ -129,19 +126,15 @@ def faculty_run_to_mlflow_run(faculty_run):
         )
 
     run_info = RunInfo(
-        faculty_run.id.hex,
-        faculty_run.experiment_id,
-        name_attribute,  # name
-        "",  # source_type
-        "",  # source_name
-        "",  # entry_point_name
-        "",  # user_id
-        _FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
-        start_time,
-        end_time,
-        "",  # source version
-        lifecycle_stage,
-        faculty_run.artifact_location,
+        run_uuid=faculty_run.id.hex,
+        experiment_id=faculty_run.experiment_id,
+        user_id="",
+        status=_FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
+        start_time=start_time,
+        end_time=end_time,
+        lifecycle_stage=lifecycle_stage,
+        artifact_uri=faculty_run.artifact_location,
+        run_id=faculty_run.id.hex,
     )
     run_data = RunData(
         params=[
@@ -163,9 +156,8 @@ def faculty_metric_to_mlflow_metric(faculty_metric):
     return Metric(
         key=faculty_metric.key,
         value=faculty_metric.value,
-        timestamp=_datetime_to_mlflow_metric_timestamp(
-            faculty_metric.timestamp
-        ),
+        timestamp=_datetime_to_mlflow_timestamp(faculty_metric.timestamp),
+        step=faculty_metric.step,
     )
 
 
@@ -173,9 +165,8 @@ def mlflow_metric_to_faculty_metric(mlflow_metric):
     return FacultyMetric(
         key=mlflow_metric.key,
         value=mlflow_metric.value,
-        timestamp=mlflow_timestamp_to_datetime_seconds(
-            mlflow_metric.timestamp
-        ),
+        timestamp=mlflow_timestamp_to_datetime(mlflow_metric.timestamp),
+        step=mlflow_metric.step,
     )
 
 
@@ -195,12 +186,8 @@ def faculty_tag_to_mlflow_tag(faculty_tag):
     return RunTag(key=faculty_tag.key, value=faculty_tag.value)
 
 
-def mlflow_timestamp_to_datetime_milliseconds(mlflow_timestamp):
+def mlflow_timestamp_to_datetime(mlflow_timestamp):
     return datetime.fromtimestamp(mlflow_timestamp / 1000.0, tz=UTC)
-
-
-def mlflow_timestamp_to_datetime_seconds(mlflow_timestamp):
-    return datetime.fromtimestamp(mlflow_timestamp, tz=UTC)
 
 
 def mlflow_viewtype_to_faculty_lifecycle_stage(mlflow_view_type):

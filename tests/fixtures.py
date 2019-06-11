@@ -32,7 +32,6 @@ from mlflow.entities import (
     RunTag,
     RunData,
     RunInfo,
-    RunStatus,
 )
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 from pytz import UTC
@@ -47,11 +46,13 @@ NAME = "experiment name"
 ARTIFACT_LOCATION = "scheme://artifact-location"
 
 METRIC_TIMESTAMP = datetime(2019, 3, 13, 17, 0, 15, tzinfo=UTC)
-METRIC_TIMESTAMP_SECONDS = to_timestamp(METRIC_TIMESTAMP)
+METRIC_TIMESTAMP_MILLISECONDS = to_timestamp(METRIC_TIMESTAMP) * 1000
 FACULTY_METRIC = FacultyMetric(
-    key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP
+    key="metric-key", value="metric-value", timestamp=METRIC_TIMESTAMP, step=0
 )
-MLFLOW_METRIC = Metric("metric-key", "metric-value", METRIC_TIMESTAMP_SECONDS)
+MLFLOW_METRIC = Metric(
+    "metric-key", "metric-value", METRIC_TIMESTAMP_MILLISECONDS, 0
+)
 
 FACULTY_PARAM = FacultyParam(key="param-key", value="param-value")
 MLFLOW_PARAM = Param("param-key", "param-value")
@@ -106,7 +107,7 @@ def mlflow_experiment(lifecycle_stage=LifecycleStage.ACTIVE):
 
 def mlflow_run(
     name=RUN_NAME,
-    status=RunStatus.RUNNING,
+    status="RUNNING",
     end_time=None,
     lifecycle_stage=LifecycleStage.ACTIVE,
     name_tag=RunTag(MLFLOW_RUN_NAME, RUN_NAME),
@@ -119,18 +120,14 @@ def mlflow_run(
         tags.append(parent_run_id_tag)
     data = RunData(params=[MLFLOW_PARAM], metrics=[MLFLOW_METRIC], tags=tags)
     info = RunInfo(
-        RUN_UUID_HEX_STR,
-        EXPERIMENT_ID,
-        name,
-        "",  # source_type
-        "",  # source_name
-        "",  # entry_point_name
-        "",  # user_id
-        status,
-        RUN_STARTED_AT_MILLISECONDS,
-        end_time,
-        "",  # source_version
-        lifecycle_stage,
-        ARTIFACT_LOCATION,
+        run_uuid=RUN_UUID_HEX_STR,
+        experiment_id=EXPERIMENT_ID,
+        user_id="",
+        status=status,
+        start_time=RUN_STARTED_AT_MILLISECONDS,
+        end_time=end_time,
+        lifecycle_stage=lifecycle_stage,
+        artifact_uri=ARTIFACT_LOCATION,
+        run_id=RUN_UUID_HEX_STR,
     )
     return Run(info, data)

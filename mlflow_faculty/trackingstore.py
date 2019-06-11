@@ -33,7 +33,7 @@ from mlflow_faculty.mlflow_converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_metric_to_mlflow_metric,
     faculty_run_to_mlflow_run,
-    mlflow_timestamp_to_datetime_milliseconds,
+    mlflow_timestamp_to_datetime,
     mlflow_metric_to_faculty_metric,
     mlflow_param_to_faculty_param,
     mlflow_tag_to_faculty_tag,
@@ -119,7 +119,7 @@ class FacultyRestStore(AbstractStore):
         """
         try:
             faculty_experiment = self._client.get(
-                self._project_id, experiment_id
+                self._project_id, int(experiment_id)
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -147,7 +147,7 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.delete(self._project_id, experiment_id)
+            self._client.delete(self._project_id, int(experiment_id))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
 
@@ -158,7 +158,7 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.restore(self._project_id, experiment_id)
+            self._client.restore(self._project_id, int(experiment_id))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
 
@@ -169,37 +169,37 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.update(self._project_id, experiment_id, name=new_name)
+            self._client.update(
+                self._project_id, int(experiment_id), name=new_name
+            )
         except faculty.clients.experiment.ExperimentNameConflict as e:
             raise MlflowException(str(e))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
 
-    def get_run(self, run_uuid):
+    def get_run(self, run_id):
         """
         Fetches the run from backend store
 
-        :param run_uuid: string containing run UUID
+        :param run_id: string containing run UUID
             (32 hex characters = a uuid4 stripped off of dashes)
 
         :return: A single :py:class:`mlflow.entities.Run` object if it exists,
             otherwise raises an exception
         """
         try:
-            faculty_run = self._client.get_run(
-                self._project_id, UUID(run_uuid)
-            )
+            faculty_run = self._client.get_run(self._project_id, UUID(run_id))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
             return mlflow_run
 
-    def update_run_info(self, run_uuid, run_status, end_time):
+    def update_run_info(self, run_id, run_status, end_time):
         """
         Updates the metadata of the specified run.
 
-        :param run_uuid: string containing run UUID
+        :param run_id: string containing run UUID
         :param run_status: RunStatus to update the run to, optional
         :param end_time: timestamp to update the run ended_at to, optional
 
@@ -209,9 +209,9 @@ class FacultyRestStore(AbstractStore):
         try:
             faculty_run = self._client.update_run_info(
                 self._project_id,
-                UUID(run_uuid),
+                UUID(run_id),
                 mlflow_to_faculty_run_status(run_status),
-                mlflow_timestamp_to_datetime_milliseconds(end_time),
+                mlflow_timestamp_to_datetime(end_time),
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -219,26 +219,14 @@ class FacultyRestStore(AbstractStore):
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
             return mlflow_run.info
 
-    def create_run(
-        self,
-        experiment_id,
-        user_id,
-        run_name,
-        source_type,
-        source_name,
-        entry_point_name,
-        start_time,
-        source_version,
-        tags,
-        parent_run_id,
-    ):
+    def create_run(self, experiment_id, user_id, start_time, tags):
         """
         Creates a run under the specified experiment ID, setting the run's
         status to "RUNNING" and the start time to the current time.
 
         :param experiment_id: ID of the experiment for this run
         :param user_id: ID of the user launching this run
-        :param source_type: Enum (integer) describing the source of the run
+        :param start_time: Time the run started at in epoch milliseconds.
         :param tags: List of Mlflow Tag entities.
 
         :return: The created Run object
@@ -248,17 +236,15 @@ class FacultyRestStore(AbstractStore):
         # For backward compatability, fall back to run name or parent run ID
         # set in tags
         tag_dict = {tag.key: tag.value for tag in tags}
-        run_name = run_name or tag_dict.get(MLFLOW_RUN_NAME) or ""
-        parent_run_id = (
-            parent_run_id or tag_dict.get(MLFLOW_PARENT_RUN_ID) or None
-        )
+        run_name = tag_dict.get(MLFLOW_RUN_NAME) or ""
+        parent_run_id = tag_dict.get(MLFLOW_PARENT_RUN_ID) or None
 
         try:
             faculty_run = self._client.create_run(
                 self._project_id,
-                experiment_id,
+                int(experiment_id),
                 run_name,
-                mlflow_timestamp_to_datetime_milliseconds(start_time),
+                mlflow_timestamp_to_datetime(start_time),
                 None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
@@ -325,11 +311,11 @@ class FacultyRestStore(AbstractStore):
                 "Could not restore non-existent run {}".format(run_id.hex)
             )
 
-    def get_metric_history(self, run_uuid, metric_key):
+    def get_metric_history(self, run_id, metric_key):
         """
         Returns all logged value for a given metric.
 
-        :param run_uuid: Unique identifier for run
+        :param run_id: Unique identifier for run
         :param metric_key: Metric name within the run
 
         :return: A list of float values logged for the give metric if logged,
@@ -337,7 +323,7 @@ class FacultyRestStore(AbstractStore):
         """
         try:
             metric_history = self._client.get_metric_history(
-                self._project_id, UUID(run_uuid), metric_key
+                self._project_id, UUID(run_id), metric_key
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -365,6 +351,11 @@ class FacultyRestStore(AbstractStore):
 
         try:
             faculty_runs = []
+            experiment_ids = (
+                None
+                if experiment_ids is None
+                else list(map(int, experiment_ids))
+            )
             while True:
                 list_runs_response = self._client.list_runs(
                     self._project_id, experiment_ids=experiment_ids
@@ -384,7 +375,7 @@ class FacultyRestStore(AbstractStore):
         """
         Fetches the experiment by ID from the backend store.
 
-        :param run_uuid: string containing run UUID
+        :param run_id: string containing run UUID
             (32 hex characters = a uuid4 stripped off of dashes)
         :param metrics: List of Mlflow Metric entities.
         :param params: List of Mlflow Param entities
@@ -415,36 +406,3 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
-
-    def log_metric(self, run_id, metric):
-        """
-        Log a metric for the specified run
-
-        :param run_uuid: String id for the run
-        :param metric: :py:class:`mlflow.entities.Metric` instance to log
-        """
-        # TODO: Remove this method once the functionality is moved
-        # into the abstract store in mlflow.
-        return self.log_batch(run_id, metrics=[metric])
-
-    def log_param(self, run_id, param):
-        """
-        Log a param for the specified run
-
-        :param run_uuid: String id for the run
-        :param param: :py:class:`mlflow.entities.Param` instance to log
-        """
-        # TODO: Remove this method once the functionality is moved
-        # into the abstract store in mlflow.
-        return self.log_batch(run_id, params=[param])
-
-    def set_tag(self, run_id, tag):
-        """
-        Set a tag for the specified run
-
-        :param run_uuid: String id for the run
-        :param tag: :py:class:`mlflow.entities.RunTag` instance to set
-        """
-        # TODO: Remove this method once the functionality is moved
-        # into the abstract store in mlflow.
-        return self.log_batch(run_id, tags=[tag])
