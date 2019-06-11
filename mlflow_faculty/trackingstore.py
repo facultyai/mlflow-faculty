@@ -188,9 +188,7 @@ class FacultyRestStore(AbstractStore):
             otherwise raises an exception
         """
         try:
-            faculty_run = self._client.get_run(
-                self._project_id, UUID(run_id)
-            )
+            faculty_run = self._client.get_run(self._project_id, UUID(run_id))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:

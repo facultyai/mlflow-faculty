@@ -35,7 +35,6 @@ from tests.fixtures import (
     RUN_ENDED_AT,
     RUN_ENDED_AT_MILLISECONDS,
     RUN_STARTED_AT_MILLISECONDS,
-    RUN_NAME,
     RUN_UUID,
     RUN_UUID_HEX_STR,
     PARENT_RUN_UUID,
