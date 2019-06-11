@@ -119,7 +119,7 @@ class FacultyRestStore(AbstractStore):
         """
         try:
             faculty_experiment = self._client.get(
-                self._project_id, experiment_id
+                self._project_id, int(experiment_id)
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -147,7 +147,7 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.delete(self._project_id, experiment_id)
+            self._client.delete(self._project_id, int(experiment_id))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
 
@@ -158,7 +158,7 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.restore(self._project_id, experiment_id)
+            self._client.restore(self._project_id, int(experiment_id))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
 
@@ -169,7 +169,9 @@ class FacultyRestStore(AbstractStore):
         :param experiment_id: Integer id for the experiment
         """
         try:
-            self._client.update(self._project_id, experiment_id, name=new_name)
+            self._client.update(
+                self._project_id, int(experiment_id), name=new_name
+            )
         except faculty.clients.experiment.ExperimentNameConflict as e:
             raise MlflowException(str(e))
         except faculty.clients.base.HttpError as e:
@@ -226,7 +228,7 @@ class FacultyRestStore(AbstractStore):
 
         :param experiment_id: ID of the experiment for this run
         :param user_id: ID of the user launching this run
-        :param source_type: Enum (integer) describing the source of the run
+        :param start_time: Time the run started at in epoch milliseconds.
         :param tags: List of Mlflow Tag entities.
 
         :return: The created Run object
@@ -242,7 +244,7 @@ class FacultyRestStore(AbstractStore):
         try:
             faculty_run = self._client.create_run(
                 self._project_id,
-                experiment_id,
+                int(experiment_id),
                 run_name,
                 mlflow_timestamp_to_datetime(start_time),
                 None if parent_run_id is None else UUID(parent_run_id),
@@ -351,6 +353,11 @@ class FacultyRestStore(AbstractStore):
 
         try:
             faculty_runs = []
+            experiment_ids = (
+                None
+                if experiment_ids is None
+                else list(map(int, experiment_ids))
+            )
             while True:
                 list_runs_response = self._client.list_runs(
                     self._project_id, experiment_ids=experiment_ids
