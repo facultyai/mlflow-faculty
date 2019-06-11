@@ -177,11 +177,11 @@ class FacultyRestStore(AbstractStore):
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
 
-    def get_run(self, run_uuid):
+    def get_run(self, run_id):
         """
         Fetches the run from backend store
 
-        :param run_uuid: string containing run UUID
+        :param run_id: string containing run UUID
             (32 hex characters = a uuid4 stripped off of dashes)
 
         :return: A single :py:class:`mlflow.entities.Run` object if it exists,
@@ -189,7 +189,7 @@ class FacultyRestStore(AbstractStore):
         """
         try:
             faculty_run = self._client.get_run(
-                self._project_id, UUID(run_uuid)
+                self._project_id, UUID(run_id)
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -197,11 +197,11 @@ class FacultyRestStore(AbstractStore):
             mlflow_run = faculty_run_to_mlflow_run(faculty_run)
             return mlflow_run
 
-    def update_run_info(self, run_uuid, run_status, end_time):
+    def update_run_info(self, run_id, run_status, end_time):
         """
         Updates the metadata of the specified run.
 
-        :param run_uuid: string containing run UUID
+        :param run_id: string containing run UUID
         :param run_status: RunStatus to update the run to, optional
         :param end_time: timestamp to update the run ended_at to, optional
 
@@ -211,7 +211,7 @@ class FacultyRestStore(AbstractStore):
         try:
             faculty_run = self._client.update_run_info(
                 self._project_id,
-                UUID(run_uuid),
+                UUID(run_id),
                 mlflow_to_faculty_run_status(run_status),
                 mlflow_timestamp_to_datetime(end_time),
             )
@@ -313,11 +313,11 @@ class FacultyRestStore(AbstractStore):
                 "Could not restore non-existent run {}".format(run_id.hex)
             )
 
-    def get_metric_history(self, run_uuid, metric_key):
+    def get_metric_history(self, run_id, metric_key):
         """
         Returns all logged value for a given metric.
 
-        :param run_uuid: Unique identifier for run
+        :param run_id: Unique identifier for run
         :param metric_key: Metric name within the run
 
         :return: A list of float values logged for the give metric if logged,
@@ -325,7 +325,7 @@ class FacultyRestStore(AbstractStore):
         """
         try:
             metric_history = self._client.get_metric_history(
-                self._project_id, UUID(run_uuid), metric_key
+                self._project_id, UUID(run_id), metric_key
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
@@ -377,7 +377,7 @@ class FacultyRestStore(AbstractStore):
         """
         Fetches the experiment by ID from the backend store.
 
-        :param run_uuid: string containing run UUID
+        :param run_id: string containing run UUID
             (32 hex characters = a uuid4 stripped off of dashes)
         :param metrics: List of Mlflow Metric entities.
         :param params: List of Mlflow Param entities
