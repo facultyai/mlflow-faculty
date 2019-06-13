@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from uuid import UUID
+from itertools import islice
 
 from six.moves import urllib
 
@@ -334,7 +335,11 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def search_runs(
-        self, experiment_ids, search_filters=None, run_view_type=None
+        self,
+        experiment_ids,
+        search_filters=None,
+        run_view_type=None,
+        max_results=None,
     ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
@@ -350,27 +355,37 @@ class FacultyRestStore(AbstractStore):
         if search_filters is not None:
             raise NotImplementedError("search_expressions must be set to None")
 
-        try:
-            faculty_runs = []
-            experiment_ids = (
-                None
-                if experiment_ids is None
-                else list(map(int, experiment_ids))
+        experiment_ids = (
+            None if experiment_ids is None else list(map(int, experiment_ids))
+        )
+
+        def _get_runs():
+            response = self._client.list_runs(
+                self._project_id,
+                experiment_ids=experiment_ids,
+                lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
+                    run_view_type
+                ),
             )
-            while True:
-                list_runs_response = self._client.list_runs(
+            yield from response.runs
+            next_page = response.pagination.next
+
+            while next_page is not None:
+                response = self._client.list_runs(
                     self._project_id,
                     experiment_ids=experiment_ids,
                     lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
                         run_view_type
                     ),
+                    start=next_page.start,
+                    limit=next_page.limit,
                 )
-                faculty_runs.extend(list_runs_response.runs)
-                if (
-                    list_runs_response.pagination.next is None
-                    or len(list_runs_response.runs) == 0
-                ):
-                    break
+                yield from response.runs
+                next_page = response.pagination.next
+
+        try:
+            run_generator = _get_runs()
+            faculty_runs = list(islice(run_generator, max_results))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
