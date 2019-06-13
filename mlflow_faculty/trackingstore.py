@@ -334,19 +334,20 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def search_runs(
-        self, experiment_ids, search_expressions=None, run_view_type=None
+        self, experiment_ids, search_filters=None, run_view_type=None
     ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
         expressions are ANDed together for search.
 
         :param experiment_ids: List[int] of experiment ids to scope the search
-        :param search_expression: List of search expressions
+        :param search_filters: List of search expressions
+        :param run_view_type: mlflow.entities.ViewType
 
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        if search_expressions is not None:
+        if search_filters is not None:
             raise NotImplementedError("search_expressions must be set to None")
 
         try:
@@ -360,7 +361,9 @@ class FacultyRestStore(AbstractStore):
                 list_runs_response = self._client.list_runs(
                     self._project_id,
                     experiment_ids=experiment_ids,
-                    lifecycle_stage=run_view_type,
+                    lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
+                        run_view_type
+                    ),
                 )
                 faculty_runs.extend(list_runs_response.runs)
                 if (
