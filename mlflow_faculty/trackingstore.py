@@ -367,7 +367,8 @@ class FacultyRestStore(AbstractStore):
                     run_view_type
                 ),
             )
-            yield from response.runs
+            for run in response.runs:
+                yield run
             next_page = response.pagination.next
 
             while next_page is not None:
@@ -380,7 +381,8 @@ class FacultyRestStore(AbstractStore):
                     start=next_page.start,
                     limit=next_page.limit,
                 )
-                yield from response.runs
+                for run in response.runs:
+                    yield run
                 next_page = response.pagination.next
 
         try:
