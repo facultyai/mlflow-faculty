@@ -949,8 +949,7 @@ def test_search_runs_with_max_runs(mocker):
         ]
     )
     assert (
-        mocker.call(mock_faculty_runs[3]) not in
-        converter_mock.call_args_list
+        mocker.call(mock_faculty_runs[3]) not in converter_mock.call_args_list
     )
 
 
