@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from uuid import UUID
+from itertools import islice
 
 from six.moves import urllib
 
@@ -333,39 +334,60 @@ class FacultyRestStore(AbstractStore):
                 for faculty_metric in metric_history
             ]
 
-    def search_runs(self, experiment_ids, search_expressions, run_view_type):
+    def search_runs(
+        self,
+        experiment_ids,
+        search_filter=None,
+        run_view_type=None,
+        max_results=None,
+    ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
         expressions are ANDed together for search.
 
         :param experiment_ids: List[int] of experiment ids to scope the search
-        :param search_expression: List of search expressions
+        :param search_filter: List of search expressions
+        :param run_view_type: mlflow.entities.ViewType
 
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        if search_expressions is not None:
+        if search_filter is not None:
             raise NotImplementedError("search_expressions must be set to None")
-        if run_view_type is not None:
-            raise NotImplementedError("run_view_type must be set to None")
+
+        experiment_ids = (
+            None if experiment_ids is None else list(map(int, experiment_ids))
+        )
+
+        def _get_runs():
+            response = self._client.list_runs(
+                self._project_id,
+                experiment_ids=experiment_ids,
+                lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
+                    run_view_type
+                ),
+            )
+            for run in response.runs:
+                yield run
+            next_page = response.pagination.next
+
+            while next_page is not None:
+                response = self._client.list_runs(
+                    self._project_id,
+                    experiment_ids=experiment_ids,
+                    lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
+                        run_view_type
+                    ),
+                    start=next_page.start,
+                    limit=next_page.limit,
+                )
+                for run in response.runs:
+                    yield run
+                next_page = response.pagination.next
 
         try:
-            faculty_runs = []
-            experiment_ids = (
-                None
-                if experiment_ids is None
-                else list(map(int, experiment_ids))
-            )
-            while True:
-                list_runs_response = self._client.list_runs(
-                    self._project_id, experiment_ids=experiment_ids
-                )
-                faculty_runs.extend(list_runs_response.runs)
-                if (
-                    list_runs_response.pagination.next is None
-                    or len(list_runs_response.runs) == 0
-                ):
-                    break
+            run_generator = _get_runs()
+            faculty_runs = list(islice(run_generator, max_results))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
