@@ -36,7 +36,7 @@ setup(
     install_requires=["mlflow>=1.0.0", "faculty>=0.23.2", "six", "pytz"],
     entry_points={
         "mlflow.tracking_store": TRACKING_STORE_ENTRYPOINT,
-        "mlflow.artifacts": ARTIFACT_REPOSITORY_ENTRYPOINT,
+        "mlflow.artifact_repository": ARTIFACT_REPOSITORY_ENTRYPOINT,
         "mlflow.run_context_provider": RUN_CONTEXT_ENTRYPOINT,
     },
 )
