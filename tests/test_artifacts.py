@@ -41,8 +41,7 @@ def mock_session(mocker):
 def mock_s3_repo(mocker):
     s3_repo = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.artifacts."
-        "_S3ArtifactRepositoryWithClientOverride",
+        "mlflow_faculty.artifacts._S3ArtifactRepositoryWithClientOverride",
         return_value=s3_repo,
     )
     return s3_repo
@@ -66,8 +65,7 @@ def test_faculty_repo(mocker, mock_session, suffix):
 
     s3_repo = mocker.Mock()
     s3_repo_init = mocker.patch(
-        "mlflow_faculty.artifacts."
-        "_S3ArtifactRepositoryWithClientOverride",
+        "mlflow_faculty.artifacts._S3ArtifactRepositoryWithClientOverride",
         return_value=s3_repo,
     )
 

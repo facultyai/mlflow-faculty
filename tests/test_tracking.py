@@ -192,8 +192,7 @@ def test_list_experiments(mocker):
     )
     lifecycle_stage = mocker.Mock()
     lifecycle_converter = mocker.patch(
-        "mlflow_faculty.tracking"
-        ".mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=lifecycle_stage,
     )
 
@@ -219,8 +218,7 @@ def test_list_experiments_filtered_by_lifecycle_stage(mocker):
     )
     lifecycle_stage = mocker.Mock()
     lifecycle_converter = mocker.patch(
-        "mlflow_faculty.tracking"
-        ".mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=lifecycle_stage,
     )
 
@@ -784,8 +782,7 @@ def test_search_runs(mocker):
     lifecycle_stage_2 = mocker.Mock()
     mock_faculty_lifecycle_stages = [lifecycle_stage_1, lifecycle_stage_2]
     mocker.patch(
-        "mlflow_faculty.tracking."
-        "mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         side_effect=mock_faculty_lifecycle_stages,
     )
 
@@ -831,8 +828,7 @@ def test_search_runs_empty_page(mocker):
 
     mock_faculty_lifecycle_stage = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.tracking."
-        "mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=mock_faculty_lifecycle_stage,
     )
 
@@ -859,8 +855,7 @@ def test_search_runs_filter_by_experiment(mocker):
 
     mock_faculty_lifecycle_stage = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.tracking."
-        "mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=mock_faculty_lifecycle_stage,
     )
 
@@ -914,8 +909,7 @@ def test_search_runs_with_max_runs(mocker):
     lifecycle_stage_2 = mocker.Mock()
     mock_faculty_lifecycle_stages = [lifecycle_stage_1, lifecycle_stage_2]
     mocker.patch(
-        "mlflow_faculty.tracking."
-        "mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         side_effect=mock_faculty_lifecycle_stages,
     )
 
@@ -960,8 +954,7 @@ def test_search_runs_client_error(mocker):
     )
     mocker.patch("faculty.client", return_value=mock_client)
     mocker.patch(
-        "mlflow_faculty.tracking."
-        "mlflow_viewtype_to_faculty_lifecycle_stage",
+        "mlflow_faculty.tracking.mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=mocker.Mock(),
     )
 
