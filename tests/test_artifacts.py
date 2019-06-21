@@ -17,7 +17,7 @@ from uuid import uuid4
 
 import pytest
 
-from mlflow_faculty.artifact_repository import (
+from mlflow_faculty.artifacts import (
     _S3ArtifactRepositoryWithClientOverride,
     FacultyDatasetsArtifactRepository,
 )
@@ -41,7 +41,7 @@ def mock_session(mocker):
 def mock_s3_repo(mocker):
     s3_repo = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.artifact_repository."
+        "mlflow_faculty.artifacts."
         "_S3ArtifactRepositoryWithClientOverride",
         return_value=s3_repo,
     )
@@ -66,7 +66,7 @@ def test_faculty_repo(mocker, mock_session, suffix):
 
     s3_repo = mocker.Mock()
     s3_repo_init = mocker.patch(
-        "mlflow_faculty.artifact_repository."
+        "mlflow_faculty.artifacts."
         "_S3ArtifactRepositoryWithClientOverride",
         return_value=s3_repo,
     )

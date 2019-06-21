@@ -14,7 +14,7 @@
 
 
 from mlflow_faculty.tracking import FacultyRestStore  # noqa F401
-from mlflow_faculty.artifact_repository import (  # noqa F401
+from mlflow_faculty.artifacts import (  # noqa F401
     FacultyDatasetsArtifactRepository,
 )
 from mlflow_faculty.context import FacultyRunContext  # noqa F401
