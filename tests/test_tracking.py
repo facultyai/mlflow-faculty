@@ -28,7 +28,7 @@ from mlflow.exceptions import MlflowException
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 import pytest
 
-from mlflow_faculty.trackingstore import FacultyRestStore
+from mlflow_faculty.tracking import FacultyRestStore
 from tests.fixtures import (
     ARTIFACT_LOCATION,
     EXPERIMENT_ID,
@@ -142,7 +142,7 @@ def test_get_experiment(mocker):
 
     mlflow_experiment = mocker.Mock()
     converter = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
+        "mlflow_faculty.tracking.faculty_experiment_to_mlflow_experiment",
         return_value=mlflow_experiment,
     )
 
@@ -187,12 +187,12 @@ def test_list_experiments(mocker):
 
     mlflow_experiment = mocker.Mock()
     experiment_converter = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
+        "mlflow_faculty.tracking.faculty_experiment_to_mlflow_experiment",
         return_value=mlflow_experiment,
     )
     lifecycle_stage = mocker.Mock()
     lifecycle_converter = mocker.patch(
-        "mlflow_faculty.trackingstore"
+        "mlflow_faculty.tracking"
         ".mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=lifecycle_stage,
     )
@@ -214,12 +214,12 @@ def test_list_experiments_filtered_by_lifecycle_stage(mocker):
 
     mlflow_experiment = mocker.Mock()
     experiment_converter = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_experiment_to_mlflow_experiment",
+        "mlflow_faculty.tracking.faculty_experiment_to_mlflow_experiment",
         return_value=mlflow_experiment,
     )
     lifecycle_stage = mocker.Mock()
     lifecycle_converter = mocker.patch(
-        "mlflow_faculty.trackingstore"
+        "mlflow_faculty.tracking"
         ".mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=lifecycle_stage,
     )
@@ -293,14 +293,14 @@ def test_create_run(mocker):
     mlflow_timestamp = mocker.Mock()
     faculty_datetime = mocker.Mock()
     timestamp_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime",
+        "mlflow_faculty.tracking.mlflow_timestamp_to_datetime",
         return_value=faculty_datetime,
     )
 
     mlflow_tag = mocker.Mock()
     faculty_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        "mlflow_faculty.tracking.mlflow_tag_to_faculty_tag",
         return_value=faculty_tag,
     )
 
@@ -311,7 +311,7 @@ def test_create_run(mocker):
 
     mlflow_run = mocker.Mock()
     run_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        "mlflow_faculty.tracking.faculty_run_to_mlflow_run",
         return_value=mlflow_run,
     )
 
@@ -337,12 +337,12 @@ def test_create_run(mocker):
 
 def test_create_run_experiment_deleted(mocker):
     mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime",
+        "mlflow_faculty.tracking.mlflow_timestamp_to_datetime",
         return_value=mocker.Mock(),
     )
 
     mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        "mlflow_faculty.tracking.mlflow_tag_to_faculty_tag",
         return_value=mocker.Mock(),
     )
 
@@ -380,13 +380,13 @@ def test_create_run_backwards_compatability(
     parent_run_id_tag,
     expected_parent_run_id,
 ):
-    mocker.patch("mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime")
-    mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
+    mocker.patch("mlflow_faculty.tracking.mlflow_timestamp_to_datetime")
+    mocker.patch("mlflow_faculty.tracking.mlflow_tag_to_faculty_tag")
 
     mock_client = mocker.Mock()
     mocker.patch("faculty.client", return_value=mock_client)
 
-    mocker.patch("mlflow_faculty.trackingstore.faculty_run_to_mlflow_run")
+    mocker.patch("mlflow_faculty.tracking.faculty_run_to_mlflow_run")
 
     tags = []
     if run_name_tag is not None:
@@ -409,8 +409,8 @@ def test_create_run_backwards_compatability(
 
 
 def test_create_run_client_error(mocker):
-    mocker.patch("mlflow_faculty.trackingstore.mlflow_timestamp_to_datetime")
-    mocker.patch("mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag")
+    mocker.patch("mlflow_faculty.tracking.mlflow_timestamp_to_datetime")
+    mocker.patch("mlflow_faculty.tracking.mlflow_tag_to_faculty_tag")
 
     mock_client = mocker.Mock()
     mock_client.create_run.side_effect = HttpError(mocker.Mock(), "Some error")
@@ -464,7 +464,7 @@ def test_get_run(mocker):
 
     mock_mlflow_run = mocker.Mock()
     converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        "mlflow_faculty.tracking.faculty_run_to_mlflow_run",
         return_value=mock_mlflow_run,
     )
 
@@ -528,7 +528,7 @@ def test_update_run_info(mocker, run_status, faculty_run_status):
     mlflow_run = mocker.Mock()
     mlflow_run.info = mlflow_run_info
     run_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        "mlflow_faculty.tracking.faculty_run_to_mlflow_run",
         return_value=mlflow_run,
     )
 
@@ -710,7 +710,7 @@ def test_get_metric_history(mocker):
     first_mlflow_metric = mocker.Mock()
     second_mlflow_metric = mocker.Mock()
     metric_converter = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_metric_to_mlflow_metric",
+        "mlflow_faculty.tracking.faculty_metric_to_mlflow_metric",
         side_effect=[first_mlflow_metric, second_mlflow_metric],
     )
 
@@ -776,7 +776,7 @@ def test_search_runs(mocker):
 
     mock_mlflow_runs = [mocker.Mock(), mocker.Mock(), mocker.Mock()]
     converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        "mlflow_faculty.tracking.faculty_run_to_mlflow_run",
         side_effect=mock_mlflow_runs,
     )
 
@@ -784,7 +784,7 @@ def test_search_runs(mocker):
     lifecycle_stage_2 = mocker.Mock()
     mock_faculty_lifecycle_stages = [lifecycle_stage_1, lifecycle_stage_2]
     mocker.patch(
-        "mlflow_faculty.trackingstore."
+        "mlflow_faculty.tracking."
         "mlflow_viewtype_to_faculty_lifecycle_stage",
         side_effect=mock_faculty_lifecycle_stages,
     )
@@ -831,7 +831,7 @@ def test_search_runs_empty_page(mocker):
 
     mock_faculty_lifecycle_stage = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.trackingstore."
+        "mlflow_faculty.tracking."
         "mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=mock_faculty_lifecycle_stage,
     )
@@ -859,7 +859,7 @@ def test_search_runs_filter_by_experiment(mocker):
 
     mock_faculty_lifecycle_stage = mocker.Mock()
     mocker.patch(
-        "mlflow_faculty.trackingstore."
+        "mlflow_faculty.tracking."
         "mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=mock_faculty_lifecycle_stage,
     )
@@ -906,7 +906,7 @@ def test_search_runs_with_max_runs(mocker):
         mocker.Mock(),
     ]
     converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.faculty_run_to_mlflow_run",
+        "mlflow_faculty.tracking.faculty_run_to_mlflow_run",
         side_effect=mock_mlflow_runs,
     )
 
@@ -914,7 +914,7 @@ def test_search_runs_with_max_runs(mocker):
     lifecycle_stage_2 = mocker.Mock()
     mock_faculty_lifecycle_stages = [lifecycle_stage_1, lifecycle_stage_2]
     mocker.patch(
-        "mlflow_faculty.trackingstore."
+        "mlflow_faculty.tracking."
         "mlflow_viewtype_to_faculty_lifecycle_stage",
         side_effect=mock_faculty_lifecycle_stages,
     )
@@ -960,7 +960,7 @@ def test_search_runs_client_error(mocker):
     )
     mocker.patch("faculty.client", return_value=mock_client)
     mocker.patch(
-        "mlflow_faculty.trackingstore."
+        "mlflow_faculty.tracking."
         "mlflow_viewtype_to_faculty_lifecycle_stage",
         return_value=mocker.Mock(),
     )
@@ -989,17 +989,17 @@ def test_log_batch(mocker):
 
     mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
+        "mlflow_faculty.tracking.mlflow_metric_to_faculty_metric",
         return_value=mlflow_metric,
     )
     mlflow_param = mocker.Mock()
     param_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_param_to_faculty_param",
+        "mlflow_faculty.tracking.mlflow_param_to_faculty_param",
         return_value=mlflow_param,
     )
     mlflow_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        "mlflow_faculty.tracking.mlflow_tag_to_faculty_tag",
         return_value=mlflow_tag,
     )
 
@@ -1087,7 +1087,7 @@ def test_log_metric(mocker):
 
     mlflow_metric = mocker.Mock()
     metric_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_metric_to_faculty_metric",
+        "mlflow_faculty.tracking.mlflow_metric_to_faculty_metric",
         return_value=mlflow_metric,
     )
 
@@ -1106,7 +1106,7 @@ def test_log_param(mocker):
 
     mlflow_param = mocker.Mock()
     param_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_param_to_faculty_param",
+        "mlflow_faculty.tracking.mlflow_param_to_faculty_param",
         return_value=mlflow_param,
     )
 
@@ -1125,7 +1125,7 @@ def test_set_tag(mocker):
 
     mlflow_tag = mocker.Mock()
     tag_converter_mock = mocker.patch(
-        "mlflow_faculty.trackingstore.mlflow_tag_to_faculty_tag",
+        "mlflow_faculty.tracking.mlflow_tag_to_faculty_tag",
         return_value=mlflow_tag,
     )
 
