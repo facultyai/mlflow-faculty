@@ -28,7 +28,7 @@ from mlflow.exceptions import MlflowException
 from mlflow.entities import LifecycleStage, RunTag, ViewType
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
-from mlflow_faculty.mlflow_converters import (
+from mlflow_faculty.converters import (
     faculty_http_error_to_mlflow_exception,
     faculty_experiment_to_mlflow_experiment,
     faculty_metric_to_mlflow_metric,
