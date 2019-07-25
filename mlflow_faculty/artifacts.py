@@ -13,25 +13,17 @@
 # limitations under the License.
 
 
+import os
+import posixpath
 from uuid import UUID
-from functools import partial
 
 from six.moves import urllib
-
-from faculty.datasets import session
+import faculty
+from faculty import datasets
+from mlflow.entities import FileInfo
 from mlflow.store.artifact_repo import ArtifactRepository
-from mlflow.store.s3_artifact_repo import S3ArtifactRepository
 
-
-class _S3ArtifactRepositoryWithClientOverride(S3ArtifactRepository):
-    def __init__(self, artifact_uri, client_factory):
-        super(_S3ArtifactRepositoryWithClientOverride, self).__init__(
-            artifact_uri
-        )
-        self._client_factory = client_factory
-
-    def _get_s3_client(self):
-        return self._client_factory()
+from mlflow_faculty.converters import faculty_object_to_mlflow_file_info
 
 
 class FacultyDatasetsArtifactRepository(ArtifactRepository):
@@ -50,10 +42,10 @@ class FacultyDatasetsArtifactRepository(ArtifactRepository):
                 )
             )
 
-        cleaned_path = parsed_uri.path.strip("/")
-        first_part = cleaned_path.split("/")[0]
+        cleaned_path = parsed_uri.path.strip("/") + "/"
+        first_part, self.datasets_artifact_root = cleaned_path.split("/", 1)
         try:
-            project_id = UUID(first_part)
+            self.project_id = UUID(first_part)
         except ValueError:
             raise ValueError(
                 "{} in given URI {} is not a valid UUID".format(
@@ -61,26 +53,80 @@ class FacultyDatasetsArtifactRepository(ArtifactRepository):
                 )
             )
 
-        self._session = session.get()
-        s3_bucket = self._session.bucket(project_id)
-        s3_uri = "s3://{}/{}".format(s3_bucket, cleaned_path)
-        s3_client_factory = partial(self._session.s3_client, project_id)
-
-        self._s3_repository = _S3ArtifactRepositoryWithClientOverride(
-            s3_uri, s3_client_factory
+    def _datasets_path(self, artifact_path):
+        return posixpath.normpath(
+            posixpath.join(
+                self.datasets_artifact_root, artifact_path.lstrip("/")
+            )
         )
 
-    def get_path_module(self):
-        return self._s3_repository.get_path_module()
-
     def log_artifact(self, local_file, artifact_path=None):
-        return self._s3_repository.log_artifact(local_file, artifact_path)
+        if artifact_path is None:
+            artifact_path = os.path.basename(local_file)
+        datasets_path = self._datasets_path(artifact_path)
+        datasets.put(local_file, datasets_path, self.project_id)
 
     def log_artifacts(self, local_dir, artifact_path=None):
-        return self._s3_repository.log_artifacts(local_dir, artifact_path)
+        if artifact_path is None:
+            artifact_path = "./"
+        datasets_path = self._datasets_path(artifact_path)
+        datasets.put(local_dir, datasets_path, self.project_id)
 
-    def list_artifacts(self, path):
-        return self._s3_repository.list_artifacts(path)
+    def list_artifacts(self, path=None):
+        if path is None:
+            path = "./"
+        datasets_path = self._datasets_path(path)
+
+        # Make sure path interpreted as a directory
+        prefix = datasets_path.rstrip("/") + "/"
+
+        # Go directly to the object store so we can get file sizes in the
+        # response
+        client = faculty.client("object")
+
+        list_response = client.list(self.project_id, prefix)
+        objects = list_response.objects
+
+        while list_response.next_page_token is not None:
+            list_response = client.list(
+                self.project_id, prefix, list_response.next_page_token
+            )
+            objects += list_response.objects
+
+        infos = [
+            faculty_object_to_mlflow_file_info(
+                obj, self.datasets_artifact_root
+            )
+            for obj in objects
+        ]
+
+        # Remove root
+        infos = [i for i in infos if i.path not in {".", "/"}]
+
+        explicit_dir_paths = {
+            posixpath.normpath(info.path) for info in infos if info.is_dir
+        }
+        implicit_dir_paths = {
+            posixpath.normpath(path)
+            for info in infos
+            for path in _recursive_dirnames(info.path)
+        }
+
+        extra_dir_infos = [
+            FileInfo(path, True, None)
+            for path in implicit_dir_paths - explicit_dir_paths
+        ]
+
+        return sorted(infos + extra_dir_infos, key=lambda i: i.path)
 
     def _download_file(self, remote_file_path, local_path):
-        return self._s3_repository._download_file(remote_file_path, local_path)
+        datasets_path = self._datasets_path(remote_file_path)
+        datasets.get(datasets_path, local_path, self.project_id)
+
+
+def _recursive_dirnames(path):
+    dirname = posixpath.dirname(path)
+    while dirname != path and dirname not in {"", ".", "/"}:
+        yield dirname
+        path = dirname
+        dirname = posixpath.dirname(path)

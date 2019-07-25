@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import posixpath
 from datetime import datetime
 
 from pytz import UTC
@@ -25,6 +26,7 @@ from faculty.clients.experiment import (
 )
 from mlflow.entities import (
     Experiment,
+    FileInfo,
     LifecycleStage,
     Metric,
     Param,
@@ -172,6 +174,26 @@ def mlflow_metric_to_faculty_metric(mlflow_metric):
 
 def faculty_param_to_mlflow_param(faculty_param):
     return Param(key=faculty_param.key, value=faculty_param.value)
+
+
+def faculty_object_to_mlflow_file_info(faculty_object, artifact_root):
+    abs_artifact_root = posixpath.join("/", artifact_root)
+    abs_path = posixpath.join("/", faculty_object.path)
+
+    if not abs_path.startswith(abs_artifact_root):
+        raise ValueError(
+            "The path of a listed object ({}) does not begin with the "
+            "specified artifact path ({}).".format(abs_path, abs_artifact_root)
+        )
+
+    relative_path = posixpath.relpath(abs_path, abs_artifact_root)
+    is_dir = faculty_object.path.endswith("/")
+
+    return FileInfo(
+        path=relative_path.rstrip("/"),
+        is_dir=is_dir,
+        file_size=None if is_dir else faculty_object.size,
+    )
 
 
 def mlflow_param_to_faculty_param(mlflow_param):
