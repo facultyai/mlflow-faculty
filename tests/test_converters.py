@@ -18,14 +18,15 @@ import pytest
 from pytz import UTC
 from requests import Response
 
+from faculty.clients.base import HTTPError
 from faculty.clients.experiment import (
     ExperimentRunStatus as FacultyExperimentRunStatus,
     LifecycleStage as FacultyLifecycleStage,
     Tag as FacultyTag,
 )
-from faculty.clients.base import HTTPError
+from faculty.clients.object import Object as FacultyObject
 from mlflow.exceptions import MlflowException
-from mlflow.entities import LifecycleStage, RunTag, ViewType
+from mlflow.entities import LifecycleStage, RunTag, ViewType, FileInfo
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 from mlflow_faculty.converters import (
@@ -39,6 +40,7 @@ from mlflow_faculty.converters import (
     mlflow_param_to_faculty_param,
     mlflow_tag_to_faculty_tag,
     mlflow_viewtype_to_faculty_lifecycle_stage,
+    faculty_object_to_mlflow_file_info,
 )
 from mlflow_faculty.py23 import to_timestamp
 from tests.fixtures import (
@@ -272,3 +274,22 @@ def test_mlflow_viewtype_to_faculty_lifecycle_stage():
         mlflow_viewtype_to_faculty_lifecycle_stage(ViewType.DELETED_ONLY)
         == FacultyLifecycleStage.DELETED
     )
+
+
+@pytest.mark.parametrize(
+    "datasets_path, artifact_path, is_directory",
+    [
+        ("/artifacts/", ".", True),
+        ("/artifacts/some/dir/", "some/dir", True),
+        ("/artifacts/some/file", "some/file", False),
+    ],
+)
+@pytest.mark.parametrize("artifact_root", ["artifacts/", "/artifacts/"])
+def test_faculty_object_to_mlflow_file_info(
+    datasets_path, artifact_path, is_directory, artifact_root
+):
+    obj = FacultyObject(datasets_path, 1234, "an etag", DATETIME)
+    expected = FileInfo(
+        artifact_path, is_directory, None if is_directory else 1234
+    )
+    assert faculty_object_to_mlflow_file_info(obj, artifact_root) == expected
