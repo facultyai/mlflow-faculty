@@ -293,3 +293,9 @@ def test_faculty_object_to_mlflow_file_info(
         artifact_path, is_directory, None if is_directory else 1234
     )
     assert faculty_object_to_mlflow_file_info(obj, artifact_root) == expected
+
+
+def test_faculty_object_to_mlflow_file_info_path_outside_root():
+    obj = FacultyObject("/path/not/in/root", 1234, "an etag", DATETIME)
+    with pytest.raises(ValueError):
+        faculty_object_to_mlflow_file_info(obj, "/different/root")
