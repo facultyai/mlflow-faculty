@@ -42,7 +42,8 @@ class FacultyDatasetsArtifactRepository(ArtifactRepository):
             )
 
         cleaned_path = parsed_uri.path.strip("/") + "/"
-        first_part, self.datasets_artifact_root = cleaned_path.split("/", 1)
+        first_part, remainder = cleaned_path.split("/", 1)
+
         try:
             self.project_id = UUID(first_part)
         except ValueError:
@@ -51,6 +52,8 @@ class FacultyDatasetsArtifactRepository(ArtifactRepository):
                     first_part, artifact_uri
                 )
             )
+
+        self.datasets_artifact_root = "/" + remainder
 
     def _datasets_path(self, artifact_path):
         return posixpath.normpath(
