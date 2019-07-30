@@ -17,70 +17,21 @@ from uuid import uuid4
 
 import pytest
 
-from mlflow_faculty.artifacts import (
-    _S3ArtifactRepositoryWithClientOverride,
-    FacultyDatasetsArtifactRepository,
-)
+import faculty
+import faculty.datasets
+from mlflow_faculty.artifacts import FacultyDatasetsArtifactRepository
 
 
 PROJECT_ID = uuid4()
 ARTIFACT_URI = "faculty-datasets:{}/path/in/datasets".format(PROJECT_ID)
-S3_BUCKET_NAME = "faculty-datasets-s3-bucket"
-S3_URI = "s3://{}/{}/path/in/datasets".format(S3_BUCKET_NAME, PROJECT_ID)
-
-
-@pytest.fixture
-def mock_session(mocker):
-    session = mocker.Mock()
-    session.bucket.return_value = S3_BUCKET_NAME
-    mocker.patch("faculty.datasets.session.get", return_value=session)
-    return session
-
-
-@pytest.fixture
-def mock_s3_repo(mocker):
-    s3_repo = mocker.Mock()
-    mocker.patch(
-        "mlflow_faculty.artifacts._S3ArtifactRepositoryWithClientOverride",
-        return_value=s3_repo,
-    )
-    return s3_repo
-
-
-def test_s3_repo_with_client_override(mocker):
-
-    artifact_uri = mocker.Mock()
-    s3_client_factory = mocker.Mock()
-
-    repo = _S3ArtifactRepositoryWithClientOverride(
-        artifact_uri, s3_client_factory
-    )
-
-    assert repo.artifact_uri == artifact_uri
-    assert repo._get_s3_client() == s3_client_factory.return_value
+ARTIFACT_ROOT = "/path/in/datasets/"
 
 
 @pytest.mark.parametrize("suffix", ["", "/"])
-def test_faculty_repo(mocker, mock_session, suffix):
-
-    s3_repo = mocker.Mock()
-    s3_repo_init = mocker.patch(
-        "mlflow_faculty.artifacts._S3ArtifactRepositoryWithClientOverride",
-        return_value=s3_repo,
-    )
-
+def test_faculty_repo_init(suffix):
     repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI + suffix)
-
-    assert repo._s3_repository == s3_repo
-
-    # Check arguments that the S3 repo was built with
-    passed_uri, passed_client_factory = s3_repo_init.call_args[0]
-    # The first argument should be the correct S3 URI
-    assert passed_uri == S3_URI
-    # The second argument should be a function that builds an S3 client with
-    # the correct project ID
-    assert passed_client_factory() == mock_session.s3_client.return_value
-    mock_session.s3_client.assert_called_once_with(PROJECT_ID)
+    assert repo.project_id == PROJECT_ID
+    assert repo.datasets_artifact_root == ARTIFACT_ROOT
 
 
 @pytest.mark.parametrize(
@@ -101,56 +52,110 @@ def test_faculty_repo_invalid_uri(uri, message):
         FacultyDatasetsArtifactRepository(uri)
 
 
-def test_faculty_repo_get_path_module(mock_session, mock_s3_repo):
+@pytest.mark.parametrize("prefix", ["", "/"])
+def test_faculty_repo_log_artifact(mocker, prefix):
+    mocker.patch("faculty.datasets.put")
+
     repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
-    assert repo.get_path_module() == mock_s3_repo.get_path_module.return_value
-    mock_s3_repo.get_path_module.assert_called_once_with()
+    repo.log_artifact("/local/file.txt", prefix + "remote/object.txt")
 
-
-def test_faculty_repo_log_artifact(mocker, mock_session, mock_s3_repo):
-    local_file = mocker.Mock()
-    artifact_path = mocker.Mock()
-    repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
-
-    returned = repo.log_artifact(local_file, artifact_path)
-
-    assert returned == mock_s3_repo.log_artifact.return_value
-    mock_s3_repo.log_artifact.assert_called_once_with(
-        local_file, artifact_path
+    faculty.datasets.put.assert_called_once_with(
+        "/local/file.txt", ARTIFACT_ROOT + "remote/object.txt", PROJECT_ID
     )
 
 
-def test_faculty_repo_log_artifacts(mocker, mock_session, mock_s3_repo):
-    local_file = mocker.Mock()
-    artifact_path = mocker.Mock()
+def test_faculty_repo_log_artifact_default_destination(mocker):
+    mocker.patch("faculty.datasets.put")
+
     repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    repo.log_artifact("/local/file.txt")
 
-    returned = repo.log_artifacts(local_file, artifact_path)
-
-    assert returned == mock_s3_repo.log_artifacts.return_value
-    mock_s3_repo.log_artifacts.assert_called_once_with(
-        local_file, artifact_path
+    faculty.datasets.put.assert_called_once_with(
+        "/local/file.txt", ARTIFACT_ROOT + "file.txt", PROJECT_ID
     )
 
 
-def test_faculty_repo_list_artifacts(mocker, mock_session, mock_s3_repo):
-    path = mocker.Mock()
+@pytest.mark.parametrize("prefix", ["", "/"])
+def test_faculty_repo_log_artifacts(mocker, prefix):
+    mocker.patch("faculty.datasets.put")
+
     repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    repo.log_artifacts("/local/dir", prefix + "remote/folder")
 
-    returned = repo.list_artifacts(path)
+    faculty.datasets.put.assert_called_once_with(
+        "/local/dir", ARTIFACT_ROOT + "remote/folder", PROJECT_ID
+    )
 
-    assert returned == mock_s3_repo.list_artifacts.return_value
-    mock_s3_repo.list_artifacts.assert_called_once_with(path)
 
+def test_faculty_repo_log_artifacts_default_destination(mocker):
+    mocker.patch("faculty.datasets.put")
 
-def test_faculty_repo_download_file(mocker, mock_session, mock_s3_repo):
-    remote_file_path = mocker.Mock()
-    local_path = mocker.Mock()
     repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    repo.log_artifacts("/local/dir")
 
-    returned = repo._download_file(remote_file_path, local_path)
+    faculty.datasets.put.assert_called_once_with(
+        "/local/dir", ARTIFACT_ROOT.rstrip("/"), PROJECT_ID
+    )
 
-    assert returned == mock_s3_repo._download_file.return_value
-    mock_s3_repo._download_file.assert_called_once_with(
-        remote_file_path, local_path
+
+@pytest.mark.parametrize("prefix", ["", "/"])
+@pytest.mark.parametrize("suffix", ["", "/"])
+def test_faculty_repo_list_artifacts(mocker, prefix, suffix):
+    objects = [mocker.Mock() for _ in range(10)]
+    list_response_0 = mocker.Mock(objects=objects[:5], next_page_token="token")
+    list_response_1 = mocker.Mock(objects=objects[5:], next_page_token=None)
+
+    client = mocker.Mock()
+    client.list.side_effect = [list_response_0, list_response_1]
+
+    mocker.patch("faculty.client", return_value=client)
+
+    mock_file_infos = [mocker.Mock() for _ in objects]
+    mock_file_infos[-1].path = "/"
+    converter_mock = mocker.patch(
+        "mlflow_faculty.artifacts.faculty_object_to_mlflow_file_info",
+        side_effect=mock_file_infos,
+    )
+
+    repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    assert (
+        repo.list_artifacts(prefix + "a/dir" + suffix) == mock_file_infos[:-1]
+    )
+
+    faculty.client.assert_called_once_with("object")
+    client.list.assert_has_calls(
+        [
+            mocker.call(PROJECT_ID, ARTIFACT_ROOT + "a/dir/"),
+            mocker.call(PROJECT_ID, ARTIFACT_ROOT + "a/dir/", "token"),
+        ]
+    )
+    converter_mock.assert_has_calls(
+        [mocker.call(obj, ARTIFACT_ROOT) for obj in objects]
+    )
+
+
+def test_faculty_repo_list_artifacts_default_path(mocker):
+    list_response = mocker.Mock(objects=[], next_page_token=None)
+
+    client = mocker.Mock()
+    client.list.side_effect = [list_response]
+
+    mocker.patch("faculty.client", return_value=client)
+
+    repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    assert repo.list_artifacts() == []
+
+    faculty.client.assert_called_once_with("object")
+    client.list.assert_called_once_with(PROJECT_ID, ARTIFACT_ROOT)
+
+
+@pytest.mark.parametrize("prefix", ["", "/"])
+def test_faculty_repo_download_file(mocker, prefix):
+    mocker.patch("faculty.datasets.get")
+
+    repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    repo._download_file(prefix + "path/to/file", "/local/path")
+
+    faculty.datasets.get.assert_called_once_with(
+        ARTIFACT_ROOT + "path/to/file", "/local/path", PROJECT_ID
     )
