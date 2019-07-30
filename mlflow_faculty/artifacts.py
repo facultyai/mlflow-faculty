@@ -20,7 +20,6 @@ from uuid import UUID
 from six.moves import urllib
 import faculty
 from faculty import datasets
-from mlflow.entities import FileInfo
 from mlflow.store.artifact_repo import ArtifactRepository
 
 from mlflow_faculty.converters import faculty_object_to_mlflow_file_info
@@ -101,32 +100,8 @@ class FacultyDatasetsArtifactRepository(ArtifactRepository):
         ]
 
         # Remove root
-        infos = [i for i in infos if i.path not in {".", "/"}]
-
-        explicit_dir_paths = {
-            posixpath.normpath(info.path) for info in infos if info.is_dir
-        }
-        implicit_dir_paths = {
-            posixpath.normpath(path)
-            for info in infos
-            for path in _recursive_dirnames(info.path)
-        }
-
-        extra_dir_infos = [
-            FileInfo(path, True, None)
-            for path in implicit_dir_paths - explicit_dir_paths
-        ]
-
-        return sorted(infos + extra_dir_infos, key=lambda i: i.path)
+        return [i for i in infos if i.path != "/"]
 
     def _download_file(self, remote_file_path, local_path):
         datasets_path = self._datasets_path(remote_file_path)
         datasets.get(datasets_path, local_path, self.project_id)
-
-
-def _recursive_dirnames(path):
-    dirname = posixpath.dirname(path)
-    while dirname != path and dirname not in {"", ".", "/"}:
-        yield dirname
-        path = dirname
-        dirname = posixpath.dirname(path)
