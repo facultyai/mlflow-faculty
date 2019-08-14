@@ -334,12 +334,12 @@ class FacultyRestStore(AbstractStore):
                 for faculty_metric in metric_history
             ]
 
-    def search_runs(
+    def _search_runs(
         self,
         experiment_ids,
-        search_filter=None,
-        run_view_type=None,
-        max_results=None,
+        search_filter,
+        run_view_type,
+        max_results,
     ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
