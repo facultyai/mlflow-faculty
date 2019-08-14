@@ -337,7 +337,7 @@ class FacultyRestStore(AbstractStore):
     def _search_runs(
         self,
         experiment_ids,
-        search_filter,
+        filter_string,
         run_view_type,
         max_results,
     ):
@@ -352,8 +352,8 @@ class FacultyRestStore(AbstractStore):
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        if search_filter is not None:
-            raise NotImplementedError("search_expressions must be set to None")
+        if filter_string is not None or filter_string.strip() != "":
+            raise ValueError("search_expressions must be set to None")
 
         experiment_ids = (
             None if experiment_ids is None else list(map(int, experiment_ids))
