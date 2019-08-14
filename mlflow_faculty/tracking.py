@@ -352,8 +352,8 @@ class FacultyRestStore(AbstractStore):
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        if filter_string is not None or filter_string.strip() != "":
-            raise ValueError("search_expressions must be set to None")
+        if not(filter_string is None or filter_string.strip() == ""):
+            raise ValueError("filter_string are not currently supported")
 
         experiment_ids = (
             None if experiment_ids is None else list(map(int, experiment_ids))
