@@ -33,7 +33,7 @@ setup(
     packages=find_packages(),
     use_scm_version={"version_scheme": "post-release"},
     setup_requires=["setuptools_scm"],
-    install_requires=["mlflow>=1.0.0", "faculty>=0.24.5", "six", "pytz"],
+    install_requires=["mlflow==1.0.0", "faculty>=0.24.5", "six", "pytz"],
     entry_points={
         "mlflow.tracking_store": TRACKING_STORE_ENTRYPOINT,
         "mlflow.artifact_repository": ARTIFACT_REPOSITORY_ENTRYPOINT,
