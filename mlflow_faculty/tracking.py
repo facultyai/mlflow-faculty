@@ -335,11 +335,7 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def _search_runs(
-        self,
-        experiment_ids,
-        filter_string,
-        run_view_type,
-        max_results,
+        self, experiment_ids, filter_string, run_view_type, max_results
     ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
@@ -352,7 +348,7 @@ class FacultyRestStore(AbstractStore):
         :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
             the search expressions
         """
-        if not(filter_string is None or filter_string.strip() == ""):
+        if not (filter_string is None or filter_string.strip() == ""):
             raise ValueError("filter_string are not currently supported")
 
         experiment_ids = (
