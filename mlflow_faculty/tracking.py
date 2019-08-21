@@ -335,13 +335,7 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def _search_runs(
-        self,
-        experiment_ids,
-        filter_string,
-        run_view_type,
-        max_results,
-        order_by,
-        page_token,
+        self, experiment_ids, filter_string, run_view_type, max_results, order_by, page_token
     ):
         """
         Return runs that match the given list of search expressions within the 
@@ -400,8 +394,9 @@ class FacultyRestStore(AbstractStore):
             faculty_runs = list(islice(run_generator, max_results))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
-        else:
-            return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
+        
+        mlflow_runs = [faculty_run_to_mlflow_run(run) for run in faculty_runs]
+        return mlflow_runs, None
 
     def log_batch(self, run_id, metrics=None, params=None, tags=None):
         """
