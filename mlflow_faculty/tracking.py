@@ -335,22 +335,35 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def _search_runs(
-        self, experiment_ids, filter_string, run_view_type, max_results
+        self,
+        experiment_ids,
+        filter_string,
+        run_view_type,
+        max_results,
+        order_by,
+        page_token,
     ):
-        """ Returns runs that match the given list of search expressions within
-        the experiments.  Given multiple search expressions, all these
-        expressions are ANDed together for search.
-
-        :param experiment_ids: List[int] of experiment ids to scope the search
-        :param search_filter: List of search expressions
-        :param run_view_type: mlflow.entities.ViewType
-        :param max_results: Integer specifying maximum number of returned runs
-
-        :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
-            the search expressions
         """
+        Return runs that match the given list of search expressions within the 
+        experiments, as well as a pagination token (indicating where the next 
+        page should start). Subclasses of ``AbstractStore`` should implement 
+        this method to support pagination instead of ``search_runs``.
+        
+        See ``search_runs`` for parameter descriptions.
+        
+        :return: A tuple of ``runs`` and ``token`` where ``runs`` is a list of
+            ``mlflow.entities.Run`` objects that satisfy the search expressions,
+            and ``token`` is the pagination token for the next page of results.
+        """
+
         if filter_string is not None and filter_string.strip() != "":
             raise ValueError("filter_string are not currently supported")
+
+        if order_by is not None and order_by != []:
+            raise ValueError("order_by are not currently supported")
+
+        if page_token is not None:
+            raise ValueError("page_token are not currently supported")
 
         experiment_ids = (
             None if experiment_ids is None else list(map(int, experiment_ids))
