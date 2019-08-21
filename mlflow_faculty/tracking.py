@@ -335,7 +335,13 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def _search_runs(
-        self, experiment_ids, filter_string, run_view_type, max_results, order_by, page_token
+        self,
+        experiment_ids,
+        filter_string,
+        run_view_type,
+        max_results,
+        order_by,
+        page_token,
     ):
         """
         Return runs that match the given list of search expressions within the 
@@ -351,13 +357,13 @@ class FacultyRestStore(AbstractStore):
         """
 
         if filter_string is not None and filter_string.strip() != "":
-            raise ValueError("filter_string are not currently supported")
+            raise ValueError("filter_string not currently supported")
 
         if order_by is not None and order_by != []:
-            raise ValueError("order_by are not currently supported")
+            raise ValueError("order_by not currently supported")
 
         if page_token is not None:
-            raise ValueError("page_token are not currently supported")
+            raise ValueError("page_token not currently supported")
 
         experiment_ids = (
             None if experiment_ids is None else list(map(int, experiment_ids))
@@ -394,7 +400,7 @@ class FacultyRestStore(AbstractStore):
             faculty_runs = list(islice(run_generator, max_results))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
-        
+
         mlflow_runs = [faculty_run_to_mlflow_run(run) for run in faculty_runs]
         return mlflow_runs, None
 

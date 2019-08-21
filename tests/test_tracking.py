@@ -801,7 +801,12 @@ def test_search_runs(mocker, experiment_ids, filter_string, max_results):
 
     store = FacultyRestStore(STORE_URI)
     runs, page_token = store._search_runs(
-        experiment_ids, filter_string, run_view_type, max_results, order_by=None, page_token=None
+        experiment_ids,
+        filter_string,
+        run_view_type,
+        max_results,
+        order_by=None,
+        page_token=None,
     )
 
     assert runs == mock_mlflow_runs[:max_results]
@@ -846,7 +851,12 @@ def test_search_runs_client_error(mocker):
 
     with pytest.raises(MlflowException, match="Dummy client error."):
         store._search_runs(
-            [123], filter_string=None, run_view_type=None, max_results=None, order_by=None, page_token=None
+            [123],
+            filter_string=None,
+            run_view_type=None,
+            max_results=None,
+            order_by=None,
+            page_token=None,
         )
 
 
