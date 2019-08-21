@@ -334,26 +334,37 @@ class FacultyRestStore(AbstractStore):
                 for faculty_metric in metric_history
             ]
 
-    def search_runs(
+    def _search_runs(
         self,
         experiment_ids,
-        search_filter=None,
-        run_view_type=None,
-        max_results=None,
+        filter_string,
+        run_view_type,
+        max_results,
+        order_by,
+        page_token,
     ):
-        """ Returns runs that match the given list of search expressions within
-        the experiments.  Given multiple search expressions, all these
-        expressions are ANDed together for search.
-
-        :param experiment_ids: List[int] of experiment ids to scope the search
-        :param search_filter: List of search expressions
-        :param run_view_type: mlflow.entities.ViewType
-
-        :return: A list of :py:class:`mlflow.entities.Run` objects that satisfy
-            the search expressions
         """
-        if search_filter is not None:
-            raise NotImplementedError("search_expressions must be set to None")
+        Return runs that match the given list of search expressions within the
+        experiments, as well as a pagination token (indicating where the next
+        page should start). Subclasses of ``AbstractStore`` should implement
+        this method to support pagination instead of ``search_runs``.
+
+        See ``search_runs`` for parameter descriptions.
+
+        :return: A tuple of ``runs`` and ``token`` where ``runs`` is a list of
+            ``mlflow.entities.Run`` objects that satisfy the search
+            expressions, and ``token`` is the pagination token for the next
+            page of results.
+        """
+
+        if filter_string is not None and filter_string.strip() != "":
+            raise ValueError("filter_string not currently supported")
+
+        if order_by is not None and order_by != []:
+            raise ValueError("order_by not currently supported")
+
+        if page_token is not None:
+            raise ValueError("page_token not currently supported")
 
         experiment_ids = (
             None if experiment_ids is None else list(map(int, experiment_ids))
@@ -390,8 +401,9 @@ class FacultyRestStore(AbstractStore):
             faculty_runs = list(islice(run_generator, max_results))
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
-        else:
-            return [faculty_run_to_mlflow_run(run) for run in faculty_runs]
+
+        mlflow_runs = [faculty_run_to_mlflow_run(run) for run in faculty_runs]
+        return mlflow_runs, None
 
     def log_batch(self, run_id, metrics=None, params=None, tags=None):
         """
