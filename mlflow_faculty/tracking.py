@@ -335,11 +335,7 @@ class FacultyRestStore(AbstractStore):
             ]
 
     def _search_runs(
-        self,
-        experiment_ids,
-        filter_string,
-        run_view_type,
-        max_results,
+        self, experiment_ids, filter_string, run_view_type, max_results
     ):
         """ Returns runs that match the given list of search expressions within
         the experiments.  Given multiple search expressions, all these
