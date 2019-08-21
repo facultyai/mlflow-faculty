@@ -344,16 +344,17 @@ class FacultyRestStore(AbstractStore):
         page_token,
     ):
         """
-        Return runs that match the given list of search expressions within the 
-        experiments, as well as a pagination token (indicating where the next 
-        page should start). Subclasses of ``AbstractStore`` should implement 
+        Return runs that match the given list of search expressions within the
+        experiments, as well as a pagination token (indicating where the next
+        page should start). Subclasses of ``AbstractStore`` should implement
         this method to support pagination instead of ``search_runs``.
-        
+
         See ``search_runs`` for parameter descriptions.
-        
+
         :return: A tuple of ``runs`` and ``token`` where ``runs`` is a list of
-            ``mlflow.entities.Run`` objects that satisfy the search expressions,
-            and ``token`` is the pagination token for the next page of results.
+            ``mlflow.entities.Run`` objects that satisfy the search
+            expressions, and ``token`` is the pagination token for the next
+            page of results.
         """
 
         if filter_string is not None and filter_string.strip() != "":
