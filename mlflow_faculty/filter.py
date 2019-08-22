@@ -67,33 +67,6 @@ DISCRETE_OPERATORS = {
 }
 
 
-# class ComparisonOperator(Enum):
-#     DEFINED = "defined"
-#     EQUAL_TO = "eq"
-#     NOT_EQUAL_TO = "ne"
-#     LESS_THAN = "lt"
-#     LESS_THAN_OR_EQUAL_TO = "le"
-#     GREATER_THAN = "gt"
-#     GREATER_THAN_OR_EQUAL_TO = "ge"
-
-
-# ProjectIdFilter = namedtuple("ProjectIdFilter", ["operator", "value"])
-# ExperimentIdFilter = namedtuple("ExperimentIdFilter", ["operator", "value"])
-# RunIdFilter = namedtuple("RunIdFilter", ["operator", "value"])
-# DeletedAtFilter = namedtuple("DeletedAtFilter", ["operator", "value"])
-# TagFilter = namedtuple("TagFilter", ["key", "operator", "value"])
-# ParamFilter = namedtuple("ParamFilter", ["key", "operator", "value"])
-# MetricFilter = namedtuple("MetricFilter", ["key", "operator", "value"])
-
-
-# class LogicalOperator(Enum):
-#     AND = "and"
-#     OR = "or"
-
-
-# CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
-
-
 def parse_filter_string(mlflow_filter_string):
     """Parse an MLflow filter string into a Faculty filter object."""
     try:
