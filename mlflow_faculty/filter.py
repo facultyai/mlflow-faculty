@@ -100,7 +100,7 @@ def _is_and(token):
 
 
 def _is_or(token):
-    return token.match(ttype=SqlTokenType.Keyword, values=["AND"])
+    return token.match(ttype=SqlTokenType.Keyword, values=["OR"])
 
 
 def _split_list(source_list, condition):
