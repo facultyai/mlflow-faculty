@@ -440,3 +440,12 @@ class FacultyRestStore(AbstractStore):
             )
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
+            
+    def set_experiment_tag(self, experiment_id, tag):
+        """
+        Set a tag for the specified experiment
+
+        :param experiment_id: String id for the experiment
+        :param tag: ``mlflow.entities.ExperimentTag`` instance to set
+        """
+        raise NotImplementedError("experiment tags are not supported on Faculty")
