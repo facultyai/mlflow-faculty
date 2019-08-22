@@ -1110,6 +1110,5 @@ def test_set_experiment_tag(mocker):
 
     store = FacultyRestStore(STORE_URI)
 
-    with pytest.raises(NotImplementedError, match = "not supported"):
+    with pytest.raises(NotImplementedError, match="not supported"):
         store.set_experiment_tag(EXPERIMENT_ID, mocker.Mock())
-    
