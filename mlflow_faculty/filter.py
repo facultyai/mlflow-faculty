@@ -95,25 +95,6 @@ def parse_filter_string(mlflow_filter_string):
     return _parse_token_list(statement.tokens)
 
 
-def _is_and(token):
-    return token.match(ttype=SqlTokenType.Keyword, values=["AND"])
-
-
-def _is_or(token):
-    return token.match(ttype=SqlTokenType.Keyword, values=["OR"])
-
-
-def _split_list(source_list, condition):
-    chunk = []
-    for value in source_list:
-        if condition(value):
-            yield chunk
-            chunk = []
-        else:
-            chunk.append(value)
-    yield chunk
-
-
 def _parse_token_list(tokens):
     """Parse a list of sqlparse Tokens and return an equivalent filter."""
 
@@ -157,19 +138,23 @@ def _parse_token_list(tokens):
         )
 
 
-def _validate_operator(key_type, operator, value):
-    if key_type in DISCRETE_KEY_TYPES:
-        if operator not in DISCRETE_OPERATORS:
-            raise ValueError(
-                "{} filters can only be used with operators '=', '!=' and "
-                "'IS NULL'".format(key_type.value.capitalize())
-            )
-    elif key_type == _KeyType.PARAM and isinstance(value, str):
-        if operator not in DISCRETE_OPERATORS:
-            raise ValueError(
-                "Param filters with string values can only be used with "
-                "operators '=', '!=' and 'IS NULL'"
-            )
+def _is_and(token):
+    return token.match(ttype=SqlTokenType.Keyword, values=["AND"])
+
+
+def _is_or(token):
+    return token.match(ttype=SqlTokenType.Keyword, values=["OR"])
+
+
+def _split_list(source_list, condition):
+    chunk = []
+    for value in source_list:
+        if condition(value):
+            yield chunk
+            chunk = []
+        else:
+            chunk.append(value)
+    yield chunk
 
 
 def _single_filter_from_tokens(identifier_token, operator_token, value_token):
@@ -224,7 +209,7 @@ def _parse_identifier(token):
     except ValueError:
         raise ValueError(INVALID_IDENTIFIER_TPL.format(token=token.value))
 
-    key = _trim_backticks(_strip_quotes(key))
+    key = _strip_quotes(key, ['"', "`"])
 
     if key_type_string in ATTRIBUTE_IDENTIFIERS:
         if key in RUN_ID_IDENTIFIERS:
@@ -253,6 +238,21 @@ def _parse_operator(token):
             raise ValueError(INVALID_OPERATOR_TPL.format(token=token.value))
     else:
         raise ValueError(INVALID_OPERATOR_TPL.format(token=token.value))
+
+
+def _validate_operator(key_type, operator, value):
+    if key_type in DISCRETE_KEY_TYPES:
+        if operator not in DISCRETE_OPERATORS:
+            raise ValueError(
+                "{} filters can only be used with operators '=', '!=' and "
+                "'IS NULL'".format(key_type.value.capitalize())
+            )
+    elif key_type == _KeyType.PARAM and isinstance(value, str):
+        if operator not in DISCRETE_OPERATORS:
+            raise ValueError(
+                "Param filters with string values can only be used with "
+                "operators '=', '!=' and 'IS NULL'"
+            )
 
 
 def _extract_defined(token):
@@ -284,7 +284,7 @@ def _extract_string(token):
     if token.ttype == SqlTokenType.Literal.String.Single or isinstance(
         token, SqlIdentifier
     ):
-        return _strip_quotes(token.value, require_quotes=True)
+        return _strip_quotes(token.value, ['"', "'"], require_quotes=True)
     else:
         raise ValueError(
             "Expected a quoted string (e.g. 'my-value') "
@@ -311,33 +311,20 @@ def _extract_number_or_string(token):
     )
 
 
-def _strip_quotes(value, require_quotes=False):
-    if _is_quoted(value, "'") or _is_quoted(value, '"'):
-        return _trim_ends(value)
-    elif require_quotes:
+def _strip_quotes(value, quotes, require_quotes=False):
+    for char in quotes:
+        if _is_quoted(value, char):
+            return value[1:-1]
+
+    if require_quotes:
         raise ValueError(
-            "Parameter value is either not quoted or unidentified quote "
-            "types used for string {}. Use either single or double "
-            "quotes.".format(value)
+            "String {} was expected to be quoted with one of {}".format(
+                value, set(quotes)
+            )
         )
     else:
         return value
 
 
-def _trim_backticks(entity_type):
-    """Remove backticks from identifier like `param`, if they exist."""
-    if _is_quoted(entity_type, "`"):
-        return _trim_ends(entity_type)
-    return entity_type
-
-
-def _is_quoted(value, pattern):
-    return (
-        len(value) >= 2
-        and value.startswith(pattern)
-        and value.endswith(pattern)
-    )
-
-
-def _trim_ends(string_value):
-    return string_value[1:-1]
+def _is_quoted(value, quote):
+    return len(value) >= 2 and value[0] == quote and value[-1] == quote

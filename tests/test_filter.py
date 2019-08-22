@@ -16,6 +16,7 @@ from faculty.clients.experiment import (
 
 from mlflow_faculty.filter import parse_filter_string
 
+
 ATTRIBUTE_IDENTIFIERS = ["attribute", "attributes", "attr", "run"]
 
 DEFINED_CASES = [
