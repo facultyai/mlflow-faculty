@@ -46,7 +46,7 @@ class _KeyType(Enum):
 
 
 ATTRIBUTE_IDENTIFIERS = {"attribute", "attributes", "attr", "run"}
-RUN_ID_IDENTIFIERS = {"id", "run_id", "runId"}
+RUN_ID_IDENTIFIERS = {"id", "run_id"}
 PARAM_IDENTIFIERS = {"param", "params", "parameter", "parameters"}
 METRIC_IDENTIFIERS = {"metric", "metrics"}
 TAG_IDENTIFIERS = {"tag", "tags"}
