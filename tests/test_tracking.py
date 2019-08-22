@@ -1097,10 +1097,18 @@ def test_restore_experiment_client_error(mocker):
 
 
 def test_restore_experiment_invalid_experiment_id(mocker):
-    mock_client = mocker.Mock()
-    mocker.patch("faculty.client", return_value=mock_client)
+    mocker.patch("faculty.client")
 
     store = FacultyRestStore(STORE_URI)
 
     with pytest.raises(ValueError):
         store.restore_experiment("invalid-experiment-id")
+
+
+def test_set_experiment_tag(mocker):
+    mocker.patch("faculty.client")
+
+    store = FacultyRestStore(STORE_URI)
+
+    with pytest.raises(NotImplementedError, match="not supported"):
+        store.set_experiment_tag(EXPERIMENT_ID, mocker.Mock())
