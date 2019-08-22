@@ -277,3 +277,22 @@ def test_parse_filter_string_parentheses(filter_string, expected_filter):
     filter = parse_filter_string(filter_string)
     assert filter == expected_filter
     assert isinstance(filter, type(expected_filter))
+
+
+@pytest.mark.parametrize(
+    "filter_string",
+    [
+        "param.alpha IS 'a string'",
+        "param.alpha = string",
+        "metric.accuracy = 'a string'",
+        "tag.`class.name` = 34",
+        "run.id = NULL",
+        "attr.status = NOT NULL",
+        "run.id = 'not-a-uuid'",
+        "attr.status = 'not-a-valid-status'",
+        "param.alpha = `a string`",
+    ],
+)
+def test_parse_filter_string_invalid_value(filter_string):
+    with pytest.raises(ValueError, match="Expected .* but found .*"):
+        parse_filter_string(filter_string)

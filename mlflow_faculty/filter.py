@@ -35,6 +35,7 @@ INVALID_IDENTIFIER_TPL = (
     "or 'params.<key> <comparator> <value>' but found '{token}'."
 )
 INVALID_OPERATOR_TPL = "'{token}' is not a valid operator."
+INVALID_VALUE_TPL = "Expected {} but found {!r}"
 
 
 class _KeyType(Enum):
@@ -168,14 +169,19 @@ def _single_filter_from_tokens(identifier_token, operator_token, value_token):
         try:
             value = UUID(value_string)
         except ValueError:
-            raise ValueError("{!r} is not a valid UUID".format(value_string))
+            raise ValueError(INVALID_VALUE_TPL.format("a UUID", value_string))
     elif key_type == _KeyType.STATUS:
         value_string = _extract_string(value_token)
         try:
             value = ExperimentRunStatus(value_string.lower())
         except ValueError:
             raise ValueError(
-                "{!r} is not a valid run status".format(value_string)
+                INVALID_VALUE_TPL.format(
+                    "a run status (one of {})".format(
+                        set(status.value for status in ExperimentRunStatus)
+                    ),
+                    value_string,
+                )
             )
     elif key_type == _KeyType.PARAM:
         value = _extract_number_or_string(value_token)
@@ -264,7 +270,7 @@ def _extract_defined(token):
         return True
     else:
         raise ValueError(
-            "Expected NULL or NOT NULL but found {!r}".format(token.value)
+            INVALID_VALUE_TPL.format("NULL or NOT NULL", token.value)
         )
 
 
@@ -275,9 +281,7 @@ def _extract_number(token):
         else:
             return float(token.value)
     else:
-        raise ValueError(
-            "Expected a number but found {!r}".format(token.value)
-        )
+        raise ValueError(INVALID_VALUE_TPL.format("a number", token.value))
 
 
 def _extract_string(token):
@@ -287,8 +291,9 @@ def _extract_string(token):
         return _strip_quotes(token.value, ['"', "'"], require_quotes=True)
     else:
         raise ValueError(
-            "Expected a quoted string (e.g. 'my-value') "
-            "but found {!r}".format(token.value)
+            INVALID_VALUE_TPL.format(
+                "a quoted string (e.g. 'my-value')", token.value
+            )
         )
 
 
@@ -307,7 +312,7 @@ def _extract_number_or_string(token):
         pass
 
     raise ValueError(
-        "Expected a number or quoted string but found {!r}".format(token.value)
+        INVALID_VALUE_TPL.format("a number or quoted string", token.value)
     )
 
 
@@ -318,8 +323,8 @@ def _strip_quotes(value, quotes, require_quotes=False):
 
     if require_quotes:
         raise ValueError(
-            "String {} was expected to be quoted with one of {}".format(
-                value, set(quotes)
+            INVALID_VALUE_TPL.format(
+                "a string quoted with one of {}".format(set(quotes)), value
             )
         )
     else:
