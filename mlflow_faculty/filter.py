@@ -23,18 +23,12 @@ from faculty.clients.experiment import (
     TagFilter,
 )
 
-STRING_VALUE_SQL_TYPES = {SqlTokenType.Literal.String.Single}
-NUMERIC_VALUE_SQL_TYPES = {
-    SqlTokenType.Literal.Number.Integer,
-    SqlTokenType.Literal.Number.Float,
-}
-
 INVALID_IDENTIFIER_TPL = (
-    "Expected param, metric or tag identifier of format "
-    "'metric.<key> <comparator> <value>', 'tag.<key> <comparator> <value>', "
-    "or 'params.<key> <comparator> <value>' but found '{token}'."
+    "Invalid identifier {!r}. Expected identifier of format "
+    "'attribute.run_id', 'attribute.status', 'metric.<key>', 'tag.<key>', "
+    "or 'params.<key>'."
 )
-INVALID_OPERATOR_TPL = "'{token}' is not a valid operator."
+INVALID_OPERATOR_TPL = "{!r} is not a valid operator."
 INVALID_VALUE_TPL = "Expected {} but found {!r}"
 
 
@@ -208,12 +202,12 @@ def _single_filter_from_tokens(identifier_token, operator_token, value_token):
 
 def _parse_identifier(token):
     if not isinstance(token, SqlIdentifier):
-        raise ValueError(INVALID_IDENTIFIER_TPL.format(token=token.value))
+        raise ValueError(INVALID_IDENTIFIER_TPL.format(token.value))
 
     try:
         key_type_string, key = token.value.split(".", 1)
     except ValueError:
-        raise ValueError(INVALID_IDENTIFIER_TPL.format(token=token.value))
+        raise ValueError(INVALID_IDENTIFIER_TPL.format(token.value))
 
     key = _strip_quotes(key, ['"', "`"])
 
@@ -223,7 +217,7 @@ def _parse_identifier(token):
         elif key == "status":
             return _KeyType.STATUS, None
         else:
-            raise ValueError("Unsupported filter attribute '{}'".format(key))
+            raise ValueError(INVALID_IDENTIFIER_TPL.format(token.value))
     elif key_type_string in PARAM_IDENTIFIERS:
         return _KeyType.PARAM, key
     elif key_type_string in METRIC_IDENTIFIERS:
@@ -231,7 +225,7 @@ def _parse_identifier(token):
     elif key_type_string in TAG_IDENTIFIERS:
         return _KeyType.TAG, key
     else:
-        raise ValueError("Unsupported filter '{}'.".format(token.value))
+        raise ValueError(INVALID_IDENTIFIER_TPL.format(token.value))
 
 
 def _parse_operator(token):
@@ -241,9 +235,9 @@ def _parse_operator(token):
         try:
             return COMPARISON_OPERATOR_MAPPING[token.value]
         except KeyError:
-            raise ValueError(INVALID_OPERATOR_TPL.format(token=token.value))
+            raise ValueError(INVALID_OPERATOR_TPL.format(token.value))
     else:
-        raise ValueError(INVALID_OPERATOR_TPL.format(token=token.value))
+        raise ValueError(INVALID_OPERATOR_TPL.format(token.value))
 
 
 def _validate_operator(key_type, operator, value):

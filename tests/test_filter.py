@@ -282,6 +282,25 @@ def test_parse_filter_string_parentheses(filter_string, expected_filter):
 @pytest.mark.parametrize(
     "filter_string",
     [
+        "param = 'a string'",
+        "alpha = 'a string'",
+        "p.alpha = 'a string'",
+        "attribute.unsupported = 'a string'",
+    ],
+)
+def test_parse_filter_string_invalid_identifier(filter_string):
+    with pytest.raises(ValueError, match="Invalid identifier"):
+        parse_filter_string(filter_string)
+
+
+def test_parse_filter_string_unrecognised_operator():
+    with pytest.raises(ValueError, match="is not a valid operator"):
+        parse_filter_string("param.alpha IN 'a string'")
+
+
+@pytest.mark.parametrize(
+    "filter_string",
+    [
         "param.alpha IS 'a string'",
         "param.alpha = string",
         "metric.accuracy = 'a string'",
@@ -295,4 +314,18 @@ def test_parse_filter_string_parentheses(filter_string, expected_filter):
 )
 def test_parse_filter_string_invalid_value(filter_string):
     with pytest.raises(ValueError, match="Expected .* but found .*"):
+        parse_filter_string(filter_string)
+
+
+@pytest.mark.parametrize(
+    "filter_string",
+    [
+        "run.id > '{}'".format(RUN_ID),
+        "attr.status >= 'FINISHED'",
+        "param.alpha < 'a string'",
+        "tag.`class.name` <= 'a string'",
+    ],
+)
+def test_parse_filter_string_invalid_operator(filter_string):
+    with pytest.raises(ValueError, match="can only be used with operators"):
         parse_filter_string(filter_string)
