@@ -35,7 +35,7 @@ setup(
     setup_requires=["setuptools_scm"],
     install_requires=[
         "mlflow==1.2.0",
-        "faculty>=0.24.5",
+        "faculty>=0.25.1",
         "enum34; python_version<'3.4'",
         "six",
         "pytz",
