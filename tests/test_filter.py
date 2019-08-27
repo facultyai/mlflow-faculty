@@ -352,84 +352,100 @@ NUMBER_CASES = [("2", 2), ("2.1", 2.1)]
 
 
 def _build_defined_test_cases(builder, identifier):
+    cases = []
     for sql_condition, defined in DEFINED_CASES:
         filter_string = "{} {}".format(identifier, sql_condition)
         expected_filter = builder(ComparisonOperator.DEFINED, defined)
-        yield filter_string, expected_filter
+        cases.append((filter_string, expected_filter))
+    return cases
 
 
 def _build_test_cases(builder, identifier, operator_cases, value_cases):
+    cases = []
     for sql_operator, expected_operator in operator_cases:
         for sql_value, expected_value in value_cases:
             filter_string = "{} {} {}".format(
                 identifier, sql_operator, sql_value
             )
             expected_filter = builder(expected_operator, expected_value)
-            yield filter_string, expected_filter
+            cases.append((filter_string, expected_filter))
+    return cases
 
 
 def _run_id_test_cases():
+    cases = []
     for type_identifier in ATTRIBUTE_IDENTIFIERS:
         for sql_key in ["id", "run_id", '"id"', "`run_id`"]:
             identifier = "{}.{}".format(type_identifier, sql_key)
-            yield from _build_defined_test_cases(RunIdFilter, identifier)
-            yield from _build_test_cases(
+            cases += _build_defined_test_cases(RunIdFilter, identifier)
+            cases += _build_test_cases(
                 RunIdFilter, identifier, DISCRETE_OP_CASES, RUN_ID_CASES
             )
+    return cases
 
 
 def _status_test_cases():
+    cases = []
     for type_identifier in ATTRIBUTE_IDENTIFIERS:
         for sql_key in ["status", '"status"', "`status`"]:
             identifier = "{}.{}".format(type_identifier, sql_key)
-            yield from _build_defined_test_cases(RunStatusFilter, identifier)
-            yield from _build_test_cases(
+            cases += _build_defined_test_cases(RunStatusFilter, identifier)
+            cases += _build_test_cases(
                 RunStatusFilter, identifier, DISCRETE_OP_CASES, STATUS_CASES
             )
+    return cases
 
 
 def _param_test_cases():
+    cases = []
     for type_identifier in ["param", "params", "parameter", "parameters"]:
         for sql_key, expected_key in KEY_CASES:
             identifier = "{}.{}".format(type_identifier, sql_key)
             filter_builder = partial(ParamFilter, expected_key)
-            yield from _build_defined_test_cases(filter_builder, identifier)
-            yield from _build_test_cases(
+            cases += _build_defined_test_cases(filter_builder, identifier)
+            cases += _build_test_cases(
                 filter_builder, identifier, DISCRETE_OP_CASES, STRING_CASES
             )
-            yield from _build_test_cases(
+            cases += _build_test_cases(
                 filter_builder, identifier, CONTINUOUS_OP_CASES, NUMBER_CASES
             )
+    return cases
 
 
 def _metric_test_cases():
+    cases = []
     for type_identifier in ["metric", "metrics"]:
         for sql_key, expected_key in KEY_CASES:
             identifier = "{}.{}".format(type_identifier, sql_key)
             filter_builder = partial(MetricFilter, expected_key)
-            yield from _build_defined_test_cases(filter_builder, identifier)
-            yield from _build_test_cases(
+            cases += _build_defined_test_cases(filter_builder, identifier)
+            cases += _build_test_cases(
                 filter_builder, identifier, CONTINUOUS_OP_CASES, NUMBER_CASES
             )
+    return cases
 
 
 def _tag_test_cases():
+    cases = []
     for type_identifier in ["tag", "tags"]:
         for sql_key, expected_key in KEY_CASES:
             identifier = "{}.{}".format(type_identifier, sql_key)
             filter_builder = partial(TagFilter, expected_key)
-            yield from _build_defined_test_cases(filter_builder, identifier)
-            yield from _build_test_cases(
+            cases += _build_defined_test_cases(filter_builder, identifier)
+            cases += _build_test_cases(
                 filter_builder, identifier, DISCRETE_OP_CASES, STRING_CASES
             )
+    return cases
 
 
 def _single_test_cases():
-    yield from _run_id_test_cases()
-    yield from _status_test_cases()
-    yield from _param_test_cases()
-    yield from _metric_test_cases()
-    yield from _tag_test_cases()
+    cases = []
+    cases += _run_id_test_cases()
+    cases += _status_test_cases()
+    cases += _param_test_cases()
+    cases += _metric_test_cases()
+    cases += _tag_test_cases()
+    return cases
 
 
 @pytest.mark.parametrize(
