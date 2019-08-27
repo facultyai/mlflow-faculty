@@ -1,6 +1,7 @@
 from enum import Enum
 from uuid import UUID
 
+import six
 import sqlparse
 from sqlparse.sql import (
     Comparison as SqlComparison,
@@ -319,7 +320,7 @@ def _validate_operator(key_type, operator, value):
                 "{} filters can only be used with operators '=', '!=' and "
                 "'IS NULL'".format(key_type.value.capitalize())
             )
-    elif key_type == _KeyType.PARAM and isinstance(value, str):
+    elif key_type == _KeyType.PARAM and isinstance(value, six.string_types):
         if operator not in DISCRETE_OPERATORS:
             raise ValueError(
                 "Param filters with string values can only be used with "
