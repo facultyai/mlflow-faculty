@@ -20,7 +20,6 @@ from faculty.clients.experiment import (
     ListExperimentRunsResponse,
     DeleteExperimentRunsResponse,
     RestoreExperimentRunsResponse,
-    Pagination,
     Page,
 )
 from mlflow.entities import RunStatus, RunTag, ViewType
