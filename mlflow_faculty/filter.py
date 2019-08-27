@@ -364,7 +364,7 @@ def _extract_string(token):
 
 
 def _extract_number_or_string(token):
-    #  Number takes priority
+    # Number takes priority
     try:
         return _extract_number(token)
     except ValueError:
