@@ -65,10 +65,41 @@ DISCRETE_OPERATORS = {
 }
 
 
+class MatchesNothing(Exception):
+    """Raised when a filter always matches nothing."""
+
+    pass
+
+
+def build_search_runs_filter(experiment_ids, filter_string, view_type):
+    """Build a filter from the inputs to search_runs in the tracking store."""
+
+    filter_parts = []
+
+    if experiment_ids is not None:
+        filter_parts.append(filter_by_experiment_id(experiment_ids))
+
+    deleted_at_filter = filter_by_mlflow_view_type(view_type)
+    if deleted_at_filter is not None:
+        filter_parts.append(deleted_at_filter)
+
+    if filter_string is not None and filter_string.strip() != "":
+        filter_parts.append(parse_filter_string(filter_string))
+
+    if len(filter_parts) == 0:
+        return None
+    elif len(filter_parts) == 1:
+        return filter_parts[0]
+    else:
+        return CompoundFilter(LogicalOperator.AND, filter_parts)
+
+
 def filter_by_experiment_id(experiment_ids):
     """Build a filter that a run is in one of a sequence of experiment IDs."""
+
     if len(experiment_ids) == 0:
-        raise ValueError("Must pass at least one experiment ID")
+        # Cannot build a filter for this
+        raise MatchesNothing()
 
     parts = [
         ExperimentIdFilter(ComparisonOperator.EQUAL_TO, int(experiment_id))

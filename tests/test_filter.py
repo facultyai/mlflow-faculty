@@ -17,11 +17,233 @@ from faculty.clients.experiment import (
 )
 from mlflow.entities import ViewType
 
+import mlflow_faculty.filter
 from mlflow_faculty.filter import (
+    MatchesNothing,
+    build_search_runs_filter,
     filter_by_experiment_id,
     filter_by_mlflow_view_type,
     parse_filter_string,
 )
+
+
+def test_build_search_runs_filter(mocker):
+    experiment_ids = [1, 2, 3]
+    view_type = mocker.Mock()
+    filter_string = "param.alpha > 0.2"
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = CompoundFilter(
+        LogicalOperator.AND,
+        [
+            mlflow_faculty.filter.filter_by_experiment_id.return_value,
+            mlflow_faculty.filter.filter_by_mlflow_view_type.return_value,
+            mlflow_faculty.filter.parse_filter_string.return_value,
+        ],
+    )
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+        experiment_ids
+    )
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+        filter_string
+    )
+
+
+def test_build_search_runs_filter_no_experiment_ids(mocker):
+    experiment_ids = None
+    view_type = mocker.Mock()
+    filter_string = "param.alpha > 0.2"
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = CompoundFilter(
+        LogicalOperator.AND,
+        [
+            mlflow_faculty.filter.filter_by_mlflow_view_type.return_value,
+            mlflow_faculty.filter.parse_filter_string.return_value,
+        ],
+    )
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+        filter_string
+    )
+
+
+def test_build_search_runs_filter_no_view_type_filer(mocker):
+    experiment_ids = [1, 2, 3]
+    view_type = mocker.Mock()
+    filter_string = "param.alpha > 0.2"
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch(
+        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+    )
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = CompoundFilter(
+        LogicalOperator.AND,
+        [
+            mlflow_faculty.filter.filter_by_experiment_id.return_value,
+            mlflow_faculty.filter.parse_filter_string.return_value,
+        ],
+    )
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+        experiment_ids
+    )
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+        filter_string
+    )
+
+
+@pytest.mark.parametrize("filter_string", [None, "", " "])
+def test_build_search_runs_filter_no_filter_string(mocker, filter_string):
+    experiment_ids = [1, 2, 3]
+    view_type = mocker.Mock()
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = CompoundFilter(
+        LogicalOperator.AND,
+        [
+            mlflow_faculty.filter.filter_by_experiment_id.return_value,
+            mlflow_faculty.filter.filter_by_mlflow_view_type.return_value,
+        ],
+    )
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+        experiment_ids
+    )
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+
+
+def test_build_search_runs_filter_only_experiment_ids(mocker):
+    experiment_ids = [1, 2, 3]
+    view_type = mocker.Mock()
+    filter_string = ""
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch(
+        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+    )
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = (
+        mlflow_faculty.filter.filter_by_experiment_id.return_value
+    )
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+        experiment_ids
+    )
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+
+
+def test_build_search_runs_filter_only_view_type(mocker):
+    experiment_ids = None
+    view_type = mocker.Mock()
+    filter_string = ""
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = (
+        mlflow_faculty.filter.filter_by_mlflow_view_type.return_value
+    )
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+
+
+def test_build_search_runs_filter_only_filter_string(mocker):
+    experiment_ids = None
+    view_type = mocker.Mock()
+    filter_string = "param.alpha > 0.2"
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch(
+        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+    )
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    expected_filter = mlflow_faculty.filter.parse_filter_string.return_value
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter == expected_filter
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+        filter_string
+    )
+
+
+def test_build_search_runs_filter_no_filters(mocker):
+    experiment_ids = None
+    view_type = mocker.Mock()
+    filter_string = ""
+
+    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch(
+        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+    )
+    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+
+    filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
+    assert filter is None
+
+    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+        view_type
+    )
+    mlflow_faculty.filter.parse_filter_string.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -55,7 +277,7 @@ def test_filter_by_experiment_id(experiment_ids, expected_filter):
 
 
 def test_filter_by_experiment_id_empty_list():
-    with pytest.raises(ValueError):
+    with pytest.raises(MatchesNothing):
         filter_by_experiment_id([])
 
 
