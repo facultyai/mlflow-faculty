@@ -14,6 +14,7 @@ from sqlparse.tokens import Token as SqlTokenType
 from faculty.clients.experiment import (
     ComparisonOperator,
     CompoundFilter,
+    DeletedAtFilter,
     ExperimentIdFilter,
     ExperimentRunStatus,
     LogicalOperator,
@@ -23,6 +24,7 @@ from faculty.clients.experiment import (
     RunStatusFilter,
     TagFilter,
 )
+from mlflow.entities import ViewType
 
 INVALID_IDENTIFIER_TPL = (
     "Invalid identifier {!r}. Expected identifier of format "
@@ -77,6 +79,27 @@ def filter_by_experiment_id(experiment_ids):
         return parts[0]
     else:
         return CompoundFilter(LogicalOperator.OR, parts)
+
+
+def filter_by_mlflow_view_type(view_type):
+    """Build a filter for an MLflow view type.
+
+    Parameters
+    ----------
+    view_type : mlflow.entities.ViewType
+
+    Returns
+    -------
+    A Faculty library filter object, or None if no filter is to be applied.
+    """
+    if view_type == ViewType.ACTIVE_ONLY:
+        return DeletedAtFilter(ComparisonOperator.DEFINED, False)
+    elif view_type == ViewType.DELETED_ONLY:
+        return DeletedAtFilter(ComparisonOperator.DEFINED, True)
+    elif view_type == ViewType.ALL:
+        return None
+    else:
+        raise ValueError("Invalid ViewType: {}".format(view_type))
 
 
 def parse_filter_string(mlflow_filter_string):

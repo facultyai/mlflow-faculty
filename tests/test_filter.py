@@ -5,6 +5,7 @@ import pytest
 from faculty.clients.experiment import (
     ComparisonOperator,
     CompoundFilter,
+    DeletedAtFilter,
     ExperimentIdFilter,
     ExperimentRunStatus,
     LogicalOperator,
@@ -14,8 +15,13 @@ from faculty.clients.experiment import (
     RunStatusFilter,
     TagFilter,
 )
+from mlflow.entities import ViewType
 
-from mlflow_faculty.filter import filter_by_experiment_id, parse_filter_string
+from mlflow_faculty.filter import (
+    filter_by_experiment_id,
+    filter_by_mlflow_view_type,
+    parse_filter_string,
+)
 
 
 @pytest.mark.parametrize(
@@ -51,6 +57,24 @@ def test_filter_by_experiment_id(experiment_ids, expected_filter):
 def test_filter_by_experiment_id_empty_list():
     with pytest.raises(ValueError):
         filter_by_experiment_id([])
+
+
+@pytest.mark.parametrize(
+    "view_type, expected_filter",
+    [
+        (
+            ViewType.DELETED_ONLY,
+            DeletedAtFilter(ComparisonOperator.DEFINED, True),
+        ),
+        (
+            ViewType.ACTIVE_ONLY,
+            DeletedAtFilter(ComparisonOperator.DEFINED, False),
+        ),
+        (ViewType.ALL, None),
+    ],
+)
+def test_filter_by_mlflow_view_type(view_type, expected_filter):
+    assert filter_by_mlflow_view_type(view_type) == expected_filter
 
 
 ATTRIBUTE_IDENTIFIERS = ["attribute", "attributes", "attr", "run"]
