@@ -5,6 +5,7 @@ import pytest
 from faculty.clients.experiment import (
     ComparisonOperator,
     CompoundFilter,
+    ExperimentIdFilter,
     ExperimentRunStatus,
     LogicalOperator,
     MetricFilter,
@@ -14,7 +15,42 @@ from faculty.clients.experiment import (
     TagFilter,
 )
 
-from mlflow_faculty.filter import parse_filter_string
+from mlflow_faculty.filter import filter_by_experiment_id, parse_filter_string
+
+
+@pytest.mark.parametrize(
+    "experiment_ids, expected_filter",
+    [
+        ([1], ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 1)),
+        (
+            [1, 2],
+            CompoundFilter(
+                LogicalOperator.OR,
+                [
+                    ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 1),
+                    ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 2),
+                ],
+            ),
+        ),
+        (
+            ["3", "4"],
+            CompoundFilter(
+                LogicalOperator.OR,
+                [
+                    ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 3),
+                    ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 4),
+                ],
+            ),
+        ),
+    ],
+)
+def test_filter_by_experiment_id(experiment_ids, expected_filter):
+    assert filter_by_experiment_id(experiment_ids) == expected_filter
+
+
+def test_filter_by_experiment_id_empty_list():
+    with pytest.raises(ValueError):
+        filter_by_experiment_id([])
 
 
 ATTRIBUTE_IDENTIFIERS = ["attribute", "attributes", "attr", "run"]

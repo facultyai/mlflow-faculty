@@ -14,6 +14,7 @@ from sqlparse.tokens import Token as SqlTokenType
 from faculty.clients.experiment import (
     ComparisonOperator,
     CompoundFilter,
+    ExperimentIdFilter,
     ExperimentRunStatus,
     LogicalOperator,
     MetricFilter,
@@ -60,6 +61,22 @@ DISCRETE_OPERATORS = {
     ComparisonOperator.EQUAL_TO,
     ComparisonOperator.NOT_EQUAL_TO,
 }
+
+
+def filter_by_experiment_id(experiment_ids):
+    """Build a filter that a run is in one of a sequence of experiment IDs."""
+    if len(experiment_ids) == 0:
+        raise ValueError("Must pass at least one experiment ID")
+
+    parts = [
+        ExperimentIdFilter(ComparisonOperator.EQUAL_TO, int(experiment_id))
+        for experiment_id in experiment_ids
+    ]
+
+    if len(parts) == 1:
+        return parts[0]
+    else:
+        return CompoundFilter(LogicalOperator.OR, parts)
 
 
 def parse_filter_string(mlflow_filter_string):
