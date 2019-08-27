@@ -78,14 +78,14 @@ def build_search_runs_filter(experiment_ids, filter_string, view_type):
     filter_parts = []
 
     if experiment_ids is not None:
-        filter_parts.append(filter_by_experiment_id(experiment_ids))
+        filter_parts.append(_filter_by_experiment_id(experiment_ids))
 
-    deleted_at_filter = filter_by_mlflow_view_type(view_type)
+    deleted_at_filter = _filter_by_mlflow_view_type(view_type)
     if deleted_at_filter is not None:
         filter_parts.append(deleted_at_filter)
 
     if filter_string is not None and filter_string.strip() != "":
-        filter_parts.append(parse_filter_string(filter_string))
+        filter_parts.append(_parse_filter_string(filter_string))
 
     if len(filter_parts) == 0:
         return None
@@ -95,7 +95,7 @@ def build_search_runs_filter(experiment_ids, filter_string, view_type):
         return CompoundFilter(LogicalOperator.AND, filter_parts)
 
 
-def filter_by_experiment_id(experiment_ids):
+def _filter_by_experiment_id(experiment_ids):
     """Build a filter that a run is in one of a sequence of experiment IDs."""
 
     if len(experiment_ids) == 0:
@@ -113,7 +113,7 @@ def filter_by_experiment_id(experiment_ids):
         return CompoundFilter(LogicalOperator.OR, parts)
 
 
-def filter_by_mlflow_view_type(view_type):
+def _filter_by_mlflow_view_type(view_type):
     """Build a filter for an MLflow view type.
 
     Parameters
@@ -134,7 +134,7 @@ def filter_by_mlflow_view_type(view_type):
         raise ValueError("Invalid ViewType: {}".format(view_type))
 
 
-def parse_filter_string(mlflow_filter_string):
+def _parse_filter_string(mlflow_filter_string):
     """Parse an MLflow filter string into a Faculty filter object."""
     try:
         parsed = sqlparse.parse(mlflow_filter_string)

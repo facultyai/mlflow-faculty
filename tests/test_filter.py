@@ -21,9 +21,9 @@ import mlflow_faculty.filter
 from mlflow_faculty.filter import (
     MatchesNothing,
     build_search_runs_filter,
-    filter_by_experiment_id,
-    filter_by_mlflow_view_type,
-    parse_filter_string,
+    _filter_by_experiment_id,
+    _filter_by_mlflow_view_type,
+    _parse_filter_string,
 )
 
 
@@ -32,29 +32,29 @@ def test_build_search_runs_filter(mocker):
     view_type = mocker.Mock()
     filter_string = "param.alpha > 0.2"
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
-    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     expected_filter = CompoundFilter(
         LogicalOperator.AND,
         [
-            mlflow_faculty.filter.filter_by_experiment_id.return_value,
-            mlflow_faculty.filter.filter_by_mlflow_view_type.return_value,
-            mlflow_faculty.filter.parse_filter_string.return_value,
+            mlflow_faculty.filter._filter_by_experiment_id.return_value,
+            mlflow_faculty.filter._filter_by_mlflow_view_type.return_value,
+            mlflow_faculty.filter._parse_filter_string.return_value,
         ],
     )
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_called_once_with(
         experiment_ids
     )
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+    mlflow_faculty.filter._parse_filter_string.assert_called_once_with(
         filter_string
     )
 
@@ -64,26 +64,26 @@ def test_build_search_runs_filter_no_experiment_ids(mocker):
     view_type = mocker.Mock()
     filter_string = "param.alpha > 0.2"
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
-    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     expected_filter = CompoundFilter(
         LogicalOperator.AND,
         [
-            mlflow_faculty.filter.filter_by_mlflow_view_type.return_value,
-            mlflow_faculty.filter.parse_filter_string.return_value,
+            mlflow_faculty.filter._filter_by_mlflow_view_type.return_value,
+            mlflow_faculty.filter._parse_filter_string.return_value,
         ],
     )
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+    mlflow_faculty.filter._parse_filter_string.assert_called_once_with(
         filter_string
     )
 
@@ -93,30 +93,30 @@ def test_build_search_runs_filter_no_view_type_filer(mocker):
     view_type = mocker.Mock()
     filter_string = "param.alpha > 0.2"
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
     mocker.patch(
-        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+        "mlflow_faculty.filter._filter_by_mlflow_view_type", return_value=None
     )
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     expected_filter = CompoundFilter(
         LogicalOperator.AND,
         [
-            mlflow_faculty.filter.filter_by_experiment_id.return_value,
-            mlflow_faculty.filter.parse_filter_string.return_value,
+            mlflow_faculty.filter._filter_by_experiment_id.return_value,
+            mlflow_faculty.filter._parse_filter_string.return_value,
         ],
     )
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_called_once_with(
         experiment_ids
     )
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+    mlflow_faculty.filter._parse_filter_string.assert_called_once_with(
         filter_string
     )
 
@@ -126,28 +126,28 @@ def test_build_search_runs_filter_no_filter_string(mocker, filter_string):
     experiment_ids = [1, 2, 3]
     view_type = mocker.Mock()
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
-    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     expected_filter = CompoundFilter(
         LogicalOperator.AND,
         [
-            mlflow_faculty.filter.filter_by_experiment_id.return_value,
-            mlflow_faculty.filter.filter_by_mlflow_view_type.return_value,
+            mlflow_faculty.filter._filter_by_experiment_id.return_value,
+            mlflow_faculty.filter._filter_by_mlflow_view_type.return_value,
         ],
     )
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_called_once_with(
         experiment_ids
     )
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+    mlflow_faculty.filter._parse_filter_string.assert_not_called()
 
 
 def test_build_search_runs_filter_only_experiment_ids(mocker):
@@ -155,26 +155,26 @@ def test_build_search_runs_filter_only_experiment_ids(mocker):
     view_type = mocker.Mock()
     filter_string = ""
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
     mocker.patch(
-        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+        "mlflow_faculty.filter._filter_by_mlflow_view_type", return_value=None
     )
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     expected_filter = (
-        mlflow_faculty.filter.filter_by_experiment_id.return_value
+        mlflow_faculty.filter._filter_by_experiment_id.return_value
     )
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_called_once_with(
         experiment_ids
     )
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+    mlflow_faculty.filter._parse_filter_string.assert_not_called()
 
 
 def test_build_search_runs_filter_only_view_type(mocker):
@@ -182,22 +182,22 @@ def test_build_search_runs_filter_only_view_type(mocker):
     view_type = mocker.Mock()
     filter_string = ""
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
-    mocker.patch("mlflow_faculty.filter.filter_by_mlflow_view_type")
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_mlflow_view_type")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     expected_filter = (
-        mlflow_faculty.filter.filter_by_mlflow_view_type.return_value
+        mlflow_faculty.filter._filter_by_mlflow_view_type.return_value
     )
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+    mlflow_faculty.filter._parse_filter_string.assert_not_called()
 
 
 def test_build_search_runs_filter_only_filter_string(mocker):
@@ -205,22 +205,22 @@ def test_build_search_runs_filter_only_filter_string(mocker):
     view_type = mocker.Mock()
     filter_string = "param.alpha > 0.2"
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
     mocker.patch(
-        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+        "mlflow_faculty.filter._filter_by_mlflow_view_type", return_value=None
     )
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
-    expected_filter = mlflow_faculty.filter.parse_filter_string.return_value
+    expected_filter = mlflow_faculty.filter._parse_filter_string.return_value
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter == expected_filter
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_called_once_with(
+    mlflow_faculty.filter._parse_filter_string.assert_called_once_with(
         filter_string
     )
 
@@ -230,20 +230,20 @@ def test_build_search_runs_filter_no_filters(mocker):
     view_type = mocker.Mock()
     filter_string = ""
 
-    mocker.patch("mlflow_faculty.filter.filter_by_experiment_id")
+    mocker.patch("mlflow_faculty.filter._filter_by_experiment_id")
     mocker.patch(
-        "mlflow_faculty.filter.filter_by_mlflow_view_type", return_value=None
+        "mlflow_faculty.filter._filter_by_mlflow_view_type", return_value=None
     )
-    mocker.patch("mlflow_faculty.filter.parse_filter_string")
+    mocker.patch("mlflow_faculty.filter._parse_filter_string")
 
     filter = build_search_runs_filter(experiment_ids, filter_string, view_type)
     assert filter is None
 
-    mlflow_faculty.filter.filter_by_experiment_id.assert_not_called()
-    mlflow_faculty.filter.filter_by_mlflow_view_type.assert_called_once_with(
+    mlflow_faculty.filter._filter_by_experiment_id.assert_not_called()
+    mlflow_faculty.filter._filter_by_mlflow_view_type.assert_called_once_with(
         view_type
     )
-    mlflow_faculty.filter.parse_filter_string.assert_not_called()
+    mlflow_faculty.filter._parse_filter_string.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -273,17 +273,17 @@ def test_build_search_runs_filter_no_filters(mocker):
     ],
 )
 def test_filter_by_experiment_id(experiment_ids, expected_filter):
-    assert filter_by_experiment_id(experiment_ids) == expected_filter
+    assert _filter_by_experiment_id(experiment_ids) == expected_filter
 
 
 def test_filter_by_experiment_id_invalid_id():
     with pytest.raises(ValueError):
-        filter_by_experiment_id("not a valid integer")
+        _filter_by_experiment_id("not a valid integer")
 
 
 def test_filter_by_experiment_id_empty_list():
     with pytest.raises(MatchesNothing):
-        filter_by_experiment_id([])
+        _filter_by_experiment_id([])
 
 
 @pytest.mark.parametrize(
@@ -301,7 +301,7 @@ def test_filter_by_experiment_id_empty_list():
     ],
 )
 def test_filter_by_mlflow_view_type(view_type, expected_filter):
-    assert filter_by_mlflow_view_type(view_type) == expected_filter
+    assert _filter_by_mlflow_view_type(view_type) == expected_filter
 
 
 ATTRIBUTE_IDENTIFIERS = ["attribute", "attributes", "attr", "run"]
@@ -452,7 +452,7 @@ def _single_test_cases():
     "filter_string, expected_filter", _single_test_cases()
 )
 def test_parse_filter_string_single(filter_string, expected_filter):
-    filter = parse_filter_string(filter_string)
+    filter = _parse_filter_string(filter_string)
     assert filter == expected_filter
     assert isinstance(filter, type(expected_filter))
 
@@ -508,7 +508,7 @@ def test_parse_filter_string_logical_operator(
     expected_filter = CompoundFilter(
         expected_operator, [left_filter, right_filter]
     )
-    filter = parse_filter_string(filter_string)
+    filter = _parse_filter_string(filter_string)
     assert filter == expected_filter
     assert isinstance(filter, type(expected_filter))
 
@@ -526,7 +526,7 @@ OPERATOR_PRECEDENCE_FILTER = CompoundFilter(
 
 
 def test_parse_filter_string_operator_precedence():
-    filter = parse_filter_string(OPERATOR_PRECEDENCE_FILTER_STRING)
+    filter = _parse_filter_string(OPERATOR_PRECEDENCE_FILTER_STRING)
     assert filter == OPERATOR_PRECEDENCE_FILTER
     assert isinstance(filter, type(OPERATOR_PRECEDENCE_FILTER))
 
@@ -577,7 +577,7 @@ NESTED_PAREN_FILTER = CompoundFilter(
     ],
 )
 def test_parse_filter_string_parentheses(filter_string, expected_filter):
-    filter = parse_filter_string(filter_string)
+    filter = _parse_filter_string(filter_string)
     assert filter == expected_filter
     assert isinstance(filter, type(expected_filter))
 
@@ -593,12 +593,12 @@ def test_parse_filter_string_parentheses(filter_string, expected_filter):
 )
 def test_parse_filter_string_invalid_identifier(filter_string):
     with pytest.raises(ValueError, match="Invalid identifier"):
-        parse_filter_string(filter_string)
+        _parse_filter_string(filter_string)
 
 
 def test_parse_filter_string_unrecognised_operator():
     with pytest.raises(ValueError, match="is not a valid operator"):
-        parse_filter_string("param.alpha IN 'a string'")
+        _parse_filter_string("param.alpha IN 'a string'")
 
 
 @pytest.mark.parametrize(
@@ -617,7 +617,7 @@ def test_parse_filter_string_unrecognised_operator():
 )
 def test_parse_filter_string_invalid_value(filter_string):
     with pytest.raises(ValueError, match="Expected .* but found .*"):
-        parse_filter_string(filter_string)
+        _parse_filter_string(filter_string)
 
 
 @pytest.mark.parametrize(
@@ -631,4 +631,4 @@ def test_parse_filter_string_invalid_value(filter_string):
 )
 def test_parse_filter_string_invalid_operator(filter_string):
     with pytest.raises(ValueError, match="can only be used with operators"):
-        parse_filter_string(filter_string)
+        _parse_filter_string(filter_string)
