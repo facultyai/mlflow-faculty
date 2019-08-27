@@ -276,6 +276,11 @@ def test_filter_by_experiment_id(experiment_ids, expected_filter):
     assert filter_by_experiment_id(experiment_ids) == expected_filter
 
 
+def test_filter_by_experiment_id_invalid_id():
+    with pytest.raises(ValueError):
+        filter_by_experiment_id("not a valid integer")
+
+
 def test_filter_by_experiment_id_empty_list():
     with pytest.raises(MatchesNothing):
         filter_by_experiment_id([])
