@@ -240,11 +240,12 @@ def _single_filter_from_tokens(identifier_token, operator_token, value_token):
         try:
             value = ExperimentRunStatus(value_string.lower())
         except ValueError:
+            valid_statuses = {
+                status.value.upper() for status in ExperimentRunStatus
+            }
             raise ValueError(
                 INVALID_VALUE_TPL.format(
-                    "a run status (one of {})".format(
-                        set(status.value for status in ExperimentRunStatus)
-                    ),
+                    "a run status (one of {})".format(valid_statuses),
                     value_string,
                 )
             )
