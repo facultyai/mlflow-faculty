@@ -227,35 +227,7 @@ def _split_list(source_list, condition):
 def _single_filter_from_tokens(identifier_token, operator_token, value_token):
     key_type, key = _parse_identifier(identifier_token)
     operator = _parse_operator(operator_token)
-
-    if operator == ComparisonOperator.DEFINED:
-        value = _extract_defined(value_token)
-    elif key_type == _KeyType.RUN_ID:
-        value_string = _extract_string(value_token)
-        try:
-            value = UUID(value_string)
-        except ValueError:
-            raise ValueError(INVALID_VALUE_TPL.format("a UUID", value_string))
-    elif key_type == _KeyType.STATUS:
-        value_string = _extract_string(value_token)
-        try:
-            value = ExperimentRunStatus(value_string.lower())
-        except ValueError:
-            valid_statuses = {
-                status.value.upper() for status in ExperimentRunStatus
-            }
-            raise ValueError(
-                INVALID_VALUE_TPL.format(
-                    "a run status (one of {})".format(valid_statuses),
-                    value_string,
-                )
-            )
-    elif key_type == _KeyType.PARAM:
-        value = _extract_number_or_string(value_token)
-    elif key_type == _KeyType.METRIC:
-        value = _extract_number(value_token)
-    elif key_type == _KeyType.TAG:
-        value = _extract_string(value_token)
+    value = _parse_value(key_type, operator, value_token)
 
     _validate_operator(key_type, operator, value)
 
@@ -311,6 +283,39 @@ def _parse_operator(token):
             raise ValueError(INVALID_OPERATOR_TPL.format(token.value))
     else:
         raise ValueError(INVALID_OPERATOR_TPL.format(token.value))
+
+
+def _parse_value(key_type, operator, value_token):
+    if operator == ComparisonOperator.DEFINED:
+        return _extract_defined(value_token)
+    elif key_type == _KeyType.RUN_ID:
+        value_string = _extract_string(value_token)
+        try:
+            return UUID(value_string)
+        except ValueError:
+            raise ValueError(INVALID_VALUE_TPL.format("a UUID", value_string))
+    elif key_type == _KeyType.STATUS:
+        value_string = _extract_string(value_token)
+        try:
+            return ExperimentRunStatus(value_string.lower())
+        except ValueError:
+            valid_statuses = {
+                status.value.upper() for status in ExperimentRunStatus
+            }
+            raise ValueError(
+                INVALID_VALUE_TPL.format(
+                    "a run status (one of {})".format(valid_statuses),
+                    value_string,
+                )
+            )
+    elif key_type == _KeyType.PARAM:
+        return _extract_number_or_string(value_token)
+    elif key_type == _KeyType.METRIC:
+        return _extract_number(value_token)
+    elif key_type == _KeyType.TAG:
+        return _extract_string(value_token)
+    else:
+        raise Exception("Unexpected key_type")
 
 
 def _validate_operator(key_type, operator, value):
