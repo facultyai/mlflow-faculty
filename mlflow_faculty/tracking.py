@@ -20,15 +20,14 @@ from six.moves import urllib
 import faculty
 import faculty.clients.base
 import faculty.clients.experiment
-from faculty.clients.experiment import (
-    ParamConflict as FacultyParamConflict,
-    ExperimentDeleted as FacultyExperimentDeleted,
-)
+from faculty.clients.experiment import ExperimentDeleted, ParamConflict
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
 from mlflow.store.abstract_store import AbstractStore
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
+import mlflow_faculty.filter
+from mlflow_faculty.filter import build_search_runs_filter
 from mlflow_faculty.converters import (
     faculty_experiment_to_mlflow_experiment,
     faculty_http_error_to_mlflow_exception,
@@ -249,7 +248,7 @@ class FacultyRestStore(AbstractStore):
                 None if parent_run_id is None else UUID(parent_run_id),
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
-        except FacultyExperimentDeleted as conflict:
+        except ExperimentDeleted as conflict:
             raise MlflowException(
                 "Experiment {0} is deleted."
                 " To create runs for this experiment,"
@@ -357,38 +356,31 @@ class FacultyRestStore(AbstractStore):
             page of results.
         """
 
-        if filter_string is not None and filter_string.strip() != "":
-            raise ValueError("filter_string not currently supported")
-
         if order_by is not None and order_by != []:
             raise ValueError("order_by not currently supported")
 
         if page_token is not None:
             raise ValueError("page_token not currently supported")
 
-        experiment_ids = (
-            None if experiment_ids is None else list(map(int, experiment_ids))
-        )
+        try:
+            filter = build_search_runs_filter(
+                experiment_ids, filter_string, run_view_type
+            )
+        except mlflow_faculty.filter.MatchesNothing:
+            return [], None
+        except ValueError as e:
+            raise MlflowException(str(e))
 
         def _get_runs():
-            response = self._client.list_runs(
-                self._project_id,
-                experiment_ids=experiment_ids,
-                lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
-                    run_view_type
-                ),
-            )
+            response = self._client.query_runs(self._project_id, filter)
             for run in response.runs:
                 yield run
             next_page = response.pagination.next
 
             while next_page is not None:
-                response = self._client.list_runs(
+                response = self._client.query_runs(
                     self._project_id,
-                    experiment_ids=experiment_ids,
-                    lifecycle_stage=mlflow_viewtype_to_faculty_lifecycle_stage(
-                        run_view_type
-                    ),
+                    filter,
                     start=next_page.start,
                     limit=next_page.limit,
                 )
@@ -432,7 +424,7 @@ class FacultyRestStore(AbstractStore):
                 ],
                 tags=[mlflow_tag_to_faculty_tag(tag) for tag in tags],
             )
-        except FacultyParamConflict as conflict:
+        except ParamConflict as conflict:
             raise MlflowException(
                 "Conflicting param keys: {}".format(
                     conflict.conflicting_params
