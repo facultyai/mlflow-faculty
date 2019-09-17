@@ -76,6 +76,19 @@ def test_faculty_repo_log_artifact_default_destination(mocker):
 
 
 @pytest.mark.parametrize("prefix", ["", "/"])
+@pytest.mark.parametrize("suffix", ["", "/"])
+def test_faculty_repo_log_artifact_to_prefix(mocker, prefix, suffix):
+    mocker.patch("faculty.datasets.put")
+
+    repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
+    repo.log_artifact("/local/file.txt", prefix + "remote" + suffix)
+
+    faculty.datasets.put.assert_called_once_with(
+        "/local/file.txt", ARTIFACT_ROOT + "remote/file.txt", PROJECT_ID
+    )
+
+
+@pytest.mark.parametrize("prefix", ["", "/"])
 def test_faculty_repo_log_artifacts(mocker, prefix):
     mocker.patch("faculty.datasets.put")
 
