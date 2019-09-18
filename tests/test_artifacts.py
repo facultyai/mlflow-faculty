@@ -14,6 +14,7 @@
 
 
 from uuid import uuid4
+import posixpath
 
 import pytest
 
@@ -52,15 +53,23 @@ def test_faculty_repo_invalid_uri(uri, message):
         FacultyDatasetsArtifactRepository(uri)
 
 
-@pytest.mark.parametrize("prefix", ["", "/"])
-def test_faculty_repo_log_artifact(mocker, prefix):
+@pytest.mark.parametrize("slash_prefix", ["", "/"])
+@pytest.mark.parametrize("remote_prefix", ["", "remote"])
+@pytest.mark.parametrize("slash_suffix", ["", "/"])
+def test_faculty_repo_log_artifact(
+    mocker, slash_prefix, remote_prefix, slash_suffix
+):
     mocker.patch("faculty.datasets.put")
 
     repo = FacultyDatasetsArtifactRepository(ARTIFACT_URI)
-    repo.log_artifact("/local/file.txt", prefix + "remote/object.txt")
+    repo.log_artifact(
+        "/local/file.txt", slash_prefix + remote_prefix + slash_suffix
+    )
+
+    remote_path = posixpath.join(remote_prefix, "file.txt")
 
     faculty.datasets.put.assert_called_once_with(
-        "/local/file.txt", ARTIFACT_ROOT + "remote/object.txt", PROJECT_ID
+        "/local/file.txt", ARTIFACT_ROOT + remote_path, PROJECT_ID
     )
 
 

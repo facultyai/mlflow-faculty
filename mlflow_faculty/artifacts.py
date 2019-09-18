@@ -64,8 +64,10 @@ class FacultyDatasetsArtifactRepository(ArtifactRepository):
 
     def log_artifact(self, local_file, artifact_path=None):
         if artifact_path is None:
-            artifact_path = os.path.basename(local_file)
-        datasets_path = self._datasets_path(artifact_path)
+            artifact_path = "./"
+        dest_path = posixpath.join(artifact_path, os.path.basename(local_file))
+
+        datasets_path = self._datasets_path(dest_path)
         datasets.put(local_file, datasets_path, self.project_id)
 
     def log_artifacts(self, local_dir, artifact_path=None):
