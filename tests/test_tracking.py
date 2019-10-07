@@ -105,7 +105,7 @@ def test_create_experiment(mocker):
     store = FacultyRestStore(STORE_URI)
     experiment_id = store.create_experiment(NAME, ARTIFACT_LOCATION)
 
-    assert experiment_id == FACULTY_EXPERIMENT.id
+    assert experiment_id == str(FACULTY_EXPERIMENT.id)
     mock_client.create.assert_called_once_with(
         PROJECT_ID, NAME, artifact_location=ARTIFACT_LOCATION
     )

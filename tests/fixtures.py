@@ -102,7 +102,9 @@ FACULTY_RUN = ExperimentRun(
 
 
 def mlflow_experiment(lifecycle_stage=LifecycleStage.ACTIVE):
-    return Experiment(EXPERIMENT_ID, NAME, ARTIFACT_LOCATION, lifecycle_stage)
+    return Experiment(
+        str(EXPERIMENT_ID), NAME, ARTIFACT_LOCATION, lifecycle_stage
+    )
 
 
 def mlflow_run(
@@ -121,7 +123,7 @@ def mlflow_run(
     data = RunData(params=[MLFLOW_PARAM], metrics=[MLFLOW_METRIC], tags=tags)
     info = RunInfo(
         run_uuid=RUN_UUID_HEX_STR,
-        experiment_id=EXPERIMENT_ID,
+        experiment_id=str(EXPERIMENT_ID),
         user_id="",
         status=status,
         start_time=RUN_STARTED_AT_MILLISECONDS,

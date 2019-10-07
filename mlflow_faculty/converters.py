@@ -74,13 +74,13 @@ _LIFECYCLE_STAGE_CONVERSION_MAP = {
 
 
 def _datetime_to_mlflow_timestamp(dt):
-    return to_timestamp(dt) * 1000
+    return int(to_timestamp(dt) * 1000)
 
 
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
     active = faculty_experiment.deleted_at is None
     return Experiment(
-        faculty_experiment.id,
+        str(faculty_experiment.id),
         faculty_experiment.name,
         faculty_experiment.artifact_location,
         LifecycleStage.ACTIVE if active else LifecycleStage.DELETED,
@@ -129,7 +129,7 @@ def faculty_run_to_mlflow_run(faculty_run):
 
     run_info = RunInfo(
         run_uuid=faculty_run.id.hex,
-        experiment_id=faculty_run.experiment_id,
+        experiment_id=str(faculty_run.experiment_id),
         user_id="",
         status=_FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
         start_time=start_time,
