@@ -129,7 +129,7 @@ def faculty_run_to_mlflow_run(faculty_run):
 
     run_info = RunInfo(
         run_uuid=faculty_run.id.hex,
-        experiment_id=faculty_run.experiment_id,
+        experiment_id=str(faculty_run.experiment_id),
         user_id="",
         status=_FACULTY_TO_MLFLOW_RUN_STATUS_MAP[faculty_run.status],
         start_time=start_time,
