@@ -6,4 +6,5 @@ dist/
 pytest_cache/
 __pycache__/
 *.pyc
-.tox
+.tox/
+pip-wheel-metadata/
