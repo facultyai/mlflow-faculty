@@ -27,6 +27,9 @@ from mlflow_faculty.converters import faculty_object_to_mlflow_file_info
 
 class FacultyDatasetsArtifactRepository(ArtifactRepository):
     def __init__(self, artifact_uri):
+
+        super(FacultyDatasetsArtifactRepository, self).__init__(artifact_uri)
+
         parsed_uri = urllib.parse.urlparse(artifact_uri)
         if parsed_uri.scheme != "faculty-datasets":
             raise ValueError(
