@@ -74,7 +74,7 @@ _LIFECYCLE_STAGE_CONVERSION_MAP = {
 
 
 def _datetime_to_mlflow_timestamp(dt):
-    return to_timestamp(dt) * 1000
+    return int(to_timestamp(dt) * 1000)
 
 
 def faculty_experiment_to_mlflow_experiment(faculty_experiment):
