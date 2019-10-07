@@ -97,6 +97,9 @@ class FacultyRestStore(AbstractStore):
 
         :return: experiment_id (integer) for the newly created experiment.
         """
+        if artifact_location == "":
+            # Assume unspecified artifact location
+            artifact_location = None
         try:
             faculty_experiment = self._client.create(
                 self._project_id, name, artifact_location=artifact_location
