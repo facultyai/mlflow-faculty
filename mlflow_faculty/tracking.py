@@ -95,7 +95,7 @@ class FacultyRestStore(AbstractStore):
         :param artifact_location: Base location for artifacts in runs. May be
             None.
 
-        :return: experiment_id (integer) for the newly created experiment.
+        :return: experiment_id (string) for the newly created experiment.
         """
         if artifact_location == "":
             # Assume unspecified artifact location
@@ -109,7 +109,7 @@ class FacultyRestStore(AbstractStore):
         except faculty.clients.base.HttpError as e:
             raise faculty_http_error_to_mlflow_exception(e)
         else:
-            return faculty_experiment.id
+            return str(faculty_experiment.id)
 
     def get_experiment(self, experiment_id):
         """
