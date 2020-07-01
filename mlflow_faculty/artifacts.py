@@ -20,7 +20,7 @@ from uuid import UUID
 from six.moves import urllib
 import faculty
 from faculty import datasets
-from mlflow.store.artifact_repo import ArtifactRepository
+from mlflow.store.artifact.artifact_repo import ArtifactRepository
 
 from mlflow_faculty.converters import faculty_object_to_mlflow_file_info
 
