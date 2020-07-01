@@ -449,10 +449,9 @@ class FacultyRestStore(AbstractStore):
 
     def record_logged_model(self, run_id, mlflow_model):
         """
-        Record logged model information with tracking store. The list of logged model infos is
-        maintained in a mlflow.models tag in JSON format.
+        Record logged model information with tracking store. The list of logged
+        model infos is maintained in a mlflow.models tag in JSON format.
 
-        NB: This API is experimental and may change in the future. The default implementation is a
-        no-op.
+        Not currently implemented in Faculty.
         """
         raise NotImplementedError("Not currently supported in Faculty")
