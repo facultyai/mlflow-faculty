@@ -455,4 +455,4 @@ class FacultyRestStore(AbstractStore):
         NB: This API is experimental and may change in the future. The default implementation is a
         no-op.
         """
-        pass
+        raise NotImplementedError("Not currently supported in Faculty")
