@@ -23,11 +23,7 @@ import faculty.clients.experiment
 from faculty.clients.experiment import ExperimentDeleted, ParamConflict
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
-
-try:
-    from mlflow.store.tracking.abstract_store import AbstractStore
-except ImportError:
-    from mlflow.store.abstract_store import AbstractStore
+from mlflow.store.tracking.abstract_store import AbstractStore
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 import mlflow_faculty.filter

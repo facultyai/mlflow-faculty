@@ -34,7 +34,7 @@ setup(
     use_scm_version={"version_scheme": "post-release"},
     setup_requires=["setuptools_scm"],
     install_requires=[
-        "mlflow>=1.2.0,<1.8.0",
+        "mlflow~=1.7.0",
         "faculty>=0.25.1",
         "enum34; python_version<'3.4'",
         "six",
