@@ -455,6 +455,12 @@ class FacultyRestStore(AbstractStore):
         Record logged model information with tracking store. The list of logged
         model infos is maintained in a mlflow.models tag in JSON format.
 
-        Not currently implemented in Faculty.
+        Note: The actual models are logged as artifacts via artifact repository.
+
+        NB: This API is experimental and may change in the future. The default
+        implementation is a no-op.
+
+        :param run_id: String id for the run
+        :param mlflow_model: Model object to be recorded.
         """
-        raise NotImplementedError("Not currently supported in Faculty")
+        pass
