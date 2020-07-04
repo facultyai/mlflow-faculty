@@ -23,7 +23,7 @@ import faculty.clients.experiment
 from faculty.clients.experiment import ExperimentDeleted, ParamConflict
 from mlflow.entities import ViewType
 from mlflow.exceptions import MlflowException
-from mlflow.store.abstract_store import AbstractStore
+from mlflow.store.tracking.abstract_store import AbstractStore
 from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_PARENT_RUN_ID
 
 import mlflow_faculty.filter
@@ -446,3 +446,19 @@ class FacultyRestStore(AbstractStore):
         raise NotImplementedError(
             "experiment tags are not supported on Faculty"
         )
+
+    def record_logged_model(self, run_id, mlflow_model):
+        """
+        Record logged model information with tracking store. The list of logged
+        model infos is maintained in a mlflow.models tag in JSON format.
+
+        Note: The actual models are logged as artifacts via the
+        artifact repository.
+
+        NB: This API is experimental and may change in the future. The default
+        implementation is a no-op.
+
+        :param run_id: String id for the run
+        :param mlflow_model: Model object to be recorded.
+        """
+        pass
